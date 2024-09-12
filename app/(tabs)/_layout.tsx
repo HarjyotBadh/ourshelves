@@ -1,6 +1,6 @@
 import { Link, Tabs } from 'expo-router'
 import { Button, useTheme } from 'tamagui'
-import { Atom, AudioWaveform } from '@tamagui/lucide-icons'
+import { Atom, AudioWaveform, User } from '@tamagui/lucide-icons'
 
 export default function TabLayout() {
   const theme = useTheme()
@@ -11,6 +11,14 @@ export default function TabLayout() {
         tabBarActiveTintColor: theme.red10.val,
       }}
     >
+      <Tabs.Screen
+        name="profile_page"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <User color={color} />,
+        }}
+      />
+
       <Tabs.Screen
         name="index"
         options={{
