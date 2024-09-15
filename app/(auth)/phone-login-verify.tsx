@@ -21,7 +21,6 @@ export default function PhoneLoginVerifyScreen() {
     const phoneNumber = params.phoneNumber;
     const [verificationCode, setVerificationCode] = useState("");
     const [timeLeft, setTimeLeft] = useState(60);
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const recaptchaVerifierOptions = JSON.parse(params.recaptchaVerifierOptions || "{}");
     const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
@@ -30,7 +29,6 @@ export default function PhoneLoginVerifyScreen() {
 
     useEffect(() => {
         if (!verificationId) {
-            setError("Invalid verification session. Please try again.");
             return;
         }
 
@@ -42,28 +40,24 @@ export default function PhoneLoginVerifyScreen() {
 
     const handleVerify = async () => {
         if (!verificationId) {
-            setError("Invalid verification session. Please try again.");
             return;
         }
 
         setLoading(true);
-        setError("");
         try {
             const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
             await signInWithCredential(auth, credential);
 
             const user = auth.currentUser;
-            
+
             // If the user does not have a display name, route them to 'register-display-name'
             if (user && !user.displayName) {
                 router.replace("/register-display-name");
             } else {
                 router.replace("/(tabs)");
             }
-            
         } catch (err) {
             console.error("Error during verification:", err);
-            setError("Invalid verification code. Please try again.");
             show("Verification failed. Please try again.");
         } finally {
             setLoading(false);
@@ -72,17 +66,14 @@ export default function PhoneLoginVerifyScreen() {
 
     const handleResendCode = async () => {
         if (!phoneNumber) {
-            setError("Phone number is missing. Please go back and try again.");
             return;
         }
 
         if (!recaptchaVerifier.current) {
-            setError("reCAPTCHA has not loaded yet. Please try again.");
             return;
         }
 
         setTimeLeft(60); // Reset the timer
-        setError("");
 
         try {
             const phoneProvider = new PhoneAuthProvider(auth);
@@ -94,7 +85,6 @@ export default function PhoneLoginVerifyScreen() {
             router.setParams({ verificationId: newVerificationId });
         } catch (err) {
             console.error("Error resending code:", err);
-            setError("Failed to resend verification code. Please try again.");
         }
     };
 
@@ -102,7 +92,6 @@ export default function PhoneLoginVerifyScreen() {
         return (
             <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
                 <Stack f={1} ai="center" jc="center">
-                    {/* <Text color="$red10">Invalid verification session. Please try again.</Text> */}
                     <Button onPress={() => router.back()} mt="$4">
                         Go Back
                     </Button>
@@ -170,7 +159,7 @@ export default function PhoneLoginVerifyScreen() {
                     </XStack>
                 </YStack>
             </Stack>
-            {toast?.message && ( // Check if toast message exists
+            {toast?.message && (
                 <Toast
                     key={toast.id}
                     duration={3000}

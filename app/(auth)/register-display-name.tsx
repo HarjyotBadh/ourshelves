@@ -15,7 +15,8 @@ export default function DisplayNameInputScreen() {
     const handleSignOut = async () => {
         try {
             await auth.signOut();
-            // router.replace("/login");
+
+            // User should be auto rerouted to login screen by the onAuthStateChanged listener in _layout.tsx
         } catch (err) {
             console.error("Failed to sign out:", err);
         }
@@ -31,13 +32,12 @@ export default function DisplayNameInputScreen() {
 
                 if (user) {
                     // @TODO: Update the user's display name in the database
-                    
+
                     // Update the displayName of the current user
                     await updateProfile(user, {
                         displayName: displayName,
                     });
 
-                    // Navigate to the main screen or wherever needed after updating displayName
                     router.replace("/(tabs)");
                 } else {
                     setError("No user is signed in.");
@@ -109,12 +109,3 @@ export default function DisplayNameInputScreen() {
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    input: {
-        width: "100%",
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-    },
-});

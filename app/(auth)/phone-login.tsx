@@ -19,29 +19,28 @@ export default function PhoneLoginScreen() {
 
     const handleNext = async () => {
         const checkValid = phoneInput.current?.isValidNumber(phoneNumber);
-        console.log("Phone number submitted:", formattedValue, "Valid:", checkValid);
-    
+
         if (checkValid) {
-            setError(""); // Clear any existing error
+            setError("");
             try {
                 if (!recaptchaVerifier.current) {
                     setError("reCAPTCHA has not loaded yet. Please try again.");
                     return;
                 }
-                
+
                 const phoneProvider = new PhoneAuthProvider(auth);
                 const verificationId = await phoneProvider.verifyPhoneNumber(
                     formattedValue,
                     recaptchaVerifier.current
                 );
-                
+
                 // Navigate to verification screen
                 router.push({
                     pathname: "/(auth)/phone-login-verify",
-                    params: { 
-                        verificationId, 
+                    params: {
+                        verificationId,
                         phoneNumber: formattedValue,
-                        recaptchaVerifierOptions: JSON.stringify(recaptchaVerifier.current.props)
+                        recaptchaVerifierOptions: JSON.stringify(recaptchaVerifier.current.props),
                     },
                 });
             } catch (err) {
@@ -58,7 +57,6 @@ export default function PhoneLoginScreen() {
             <FirebaseRecaptchaVerifierModal
                 ref={recaptchaVerifier}
                 firebaseConfig={auth.app.options}
-                // Uncomment the line below if you want to use the invisible recaptcha
                 attemptInvisibleVerification={true}
             />
             <Stack f={1} ai="center" jc="center">
@@ -94,7 +92,7 @@ export default function PhoneLoginScreen() {
                                 layout="first"
                                 onChangeText={(text) => {
                                     setPhoneNumber(text);
-                                    setError(""); // Clear error when user types
+                                    setError("");
                                 }}
                                 onChangeFormattedText={(text) => {
                                     setFormattedValue(text);
