@@ -12,7 +12,7 @@ export default function TabOneScreen() {
     try {
       await signOut(auth);
       // After successful sign out, redirect to login screen
-      router.replace('/(auth)/login');
+      // Should be auto rerouted to login screen by the onAuthStateChanged listener in _layout.tsx
     } catch (error) {
       console.error('Error signing out: ', error);
       // You might want to show an error message to the user here

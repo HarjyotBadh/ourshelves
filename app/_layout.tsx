@@ -65,9 +65,8 @@ export default function RootLayout() {
         return null;
     }
 
-    // If authentication state is still being determined, you might want to show a loading screen
     if (isUserAuthenticated === null) {
-        return null; // or return a loading component
+        return null;
     }
 
     return <RootLayoutNav />;

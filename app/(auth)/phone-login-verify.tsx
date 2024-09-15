@@ -50,7 +50,8 @@ export default function PhoneLoginVerifyScreen() {
         setError("");
         try {
             const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
-            const userCredential = await signInWithCredential(auth, credential);
+            await signInWithCredential(auth, credential);
+
             // Navigate to the main app
             router.replace("/(tabs)");
         } catch (err) {
