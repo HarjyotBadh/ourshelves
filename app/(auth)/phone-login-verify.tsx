@@ -1,81 +1,115 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack, Input } from "tamagui";
+import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack } from "tamagui";
 import { SafeAreaView } from "react-native";
 import { Feather } from "@expo/vector-icons";
-
-const VerificationInput = ({ code, setCode }) => {
-    const theme = useTheme();
-    const inputRefs = useRef([]);
-
-    const handleChangeText = (text, index) => {
-        const newCode = code.split("");
-        newCode[index] = text;
-        setCode(newCode.join(""));
-
-        if (text && index < 5) {
-            inputRefs.current[index + 1].focus();
-        }
-    };
-
-    const handleKeyPress = (event, index) => {
-        if (event.nativeEvent.key === "Backspace" && !code[index] && index > 0) {
-            inputRefs.current[index - 1].focus();
-        }
-    };
-
-    return (
-        <XStack space="$2" justifyContent="center">
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-                <Input
-                    key={index}
-                    ref={(ref) => (inputRefs.current[index] = ref)}
-                    value={code[index] || ""}
-                    onChangeText={(text) => handleChangeText(text, index)}
-                    onKeyPress={(event) => handleKeyPress(event, index)}
-                    keyboardType="number-pad"
-                    maxLength={1}
-                    textAlign="center"
-                    fontSize="$6"
-                    width={50}
-                    height={50}
-                    borderRadius="$3"
-                    borderColor={theme.borderColor.get()}
-                    focusStyle={{ borderColor: theme.borderColorFocus.get() }}
-                />
-            ))}
-        </XStack>
-    );
-};
+import { auth } from "firebaseConfig";
+import { signInWithCredential, PhoneAuthProvider } from "firebase/auth";
+import VerificationInput from "components/VerificationInput";
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import { Toast, useToast, useToastState } from "@tamagui/toast";
 
 export default function PhoneLoginVerifyScreen() {
     const router = useRouter();
     const theme = useTheme();
-    const { phoneNumber } = useLocalSearchParams<{ phoneNumber: string }>();
+    const params = useLocalSearchParams<{
+        phoneNumber: string;
+        verificationId: string;
+        recaptchaVerifierOptions: string;
+    }>();
+    const verificationId = params.verificationId;
+    const phoneNumber = params.phoneNumber;
     const [verificationCode, setVerificationCode] = useState("");
     const [timeLeft, setTimeLeft] = useState(60);
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const recaptchaVerifierOptions = JSON.parse(params.recaptchaVerifierOptions || "{}");
+    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
+    const toast = useToastState();
+    const { show } = useToast();
 
     useEffect(() => {
+        if (!verificationId) {
+            setError("Invalid verification session. Please try again.");
+            return;
+        }
+
         if (timeLeft > 0) {
             const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
             return () => clearTimeout(timerId);
         }
-    }, [timeLeft]);
+    }, [timeLeft, verificationId]);
 
-    const handleVerify = () => {
-        console.log("Verification code submitted:", verificationCode);
-        // If successful, navigate to the main app
-        // router.replace('/(app)');
+    const handleVerify = async () => {
+        if (!verificationId) {
+            setError("Invalid verification session. Please try again.");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+        try {
+            const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
+            const userCredential = await signInWithCredential(auth, credential);
+            // Navigate to the main app
+            router.replace("/(tabs)");
+        } catch (err) {
+            console.error("Error during verification:", err);
+            setError("Invalid verification code. Please try again.");
+            show("Verification failed. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleResendCode = () => {
-        console.log("Resending code to:", phoneNumber);
-        // Implement resend code logic here
-        setTimeLeft(60);
+    const handleResendCode = async () => {
+        if (!phoneNumber) {
+            setError("Phone number is missing. Please go back and try again.");
+            return;
+        }
+
+        if (!recaptchaVerifier.current) {
+            setError("reCAPTCHA has not loaded yet. Please try again.");
+            return;
+        }
+
+        setTimeLeft(60); // Reset the timer
+        setError("");
+
+        try {
+            const phoneProvider = new PhoneAuthProvider(auth);
+            const newVerificationId = await phoneProvider.verifyPhoneNumber(
+                phoneNumber,
+                recaptchaVerifier.current
+            );
+            // Update the verificationId state
+            router.setParams({ verificationId: newVerificationId });
+        } catch (err) {
+            console.error("Error resending code:", err);
+            setError("Failed to resend verification code. Please try again.");
+        }
     };
+
+    if (!verificationId || !phoneNumber) {
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+                <Stack f={1} ai="center" jc="center">
+                    {/* <Text color="$red10">Invalid verification session. Please try again.</Text> */}
+                    <Button onPress={() => router.back()} mt="$4">
+                        Go Back
+                    </Button>
+                </Stack>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+            <FirebaseRecaptchaVerifierModal
+                ref={recaptchaVerifier}
+                firebaseConfig={auth.app.options}
+                {...recaptchaVerifierOptions}
+            />
             <Stack f={1} ai="center" jc="center">
                 <XStack
                     position="absolute"
@@ -113,9 +147,9 @@ export default function PhoneLoginVerifyScreen() {
                             <Button
                                 width="100%"
                                 onPress={handleVerify}
-                                disabled={verificationCode.length !== 6}
+                                disabled={verificationCode.length !== 6 || loading}
                             >
-                                Verify
+                                {loading ? "Verifying..." : "Verify"}
                             </Button>
                         </YStack>
                     </Form>
@@ -128,6 +162,23 @@ export default function PhoneLoginVerifyScreen() {
                     </XStack>
                 </YStack>
             </Stack>
+            {toast?.message && ( // Check if toast message exists
+                <Toast
+                    key={toast.id}
+                    duration={3000}
+                    enterStyle={{ opacity: 0, scale: 0.5, y: -25 }}
+                    exitStyle={{ opacity: 0, scale: 1, y: -20 }}
+                    y={0}
+                    opacity={1}
+                    scale={1}
+                    animation="quick"
+                    viewportName="root"
+                >
+                    <YStack>
+                        <Paragraph color="$color">{toast.message}</Paragraph>
+                    </YStack>
+                </Toast>
+            )}
         </SafeAreaView>
     );
 }

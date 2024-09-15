@@ -1,13 +1,38 @@
 import { ExternalLink } from '@tamagui/lucide-icons'
-import { Anchor, H2, Paragraph, XStack, YStack } from 'tamagui'
+import { Anchor, H2, Paragraph, XStack, YStack, Button } from 'tamagui'
 import { ToastControl } from 'app/CurrentToast'
+import { auth } from "firebaseConfig";
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'expo-router';
 
 export default function TabOneScreen() {
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      // After successful sign out, redirect to login screen
+      router.replace('/(auth)/login');
+    } catch (error) {
+      console.error('Error signing out: ', error);
+      // You might want to show an error message to the user here
+    }
+  };
+
   return (
     <YStack f={1} ai="center" gap="$8" px="$10" pt="$5">
       <H2>Tamagui + Expo</H2>
 
       <ToastControl />
+
+      <Button
+        onPress={handleSignOut}
+        backgroundColor="$red10"
+        color="white"
+        pressStyle={{ backgroundColor: '$red8' }}
+      >
+        Sign Out
+      </Button>
 
       <XStack ai="center" jc="center" fw="wrap" gap="$1.5" pos="absolute" b="$8">
         <Paragraph fos="$5">Add</Paragraph>
