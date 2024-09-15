@@ -31,7 +31,7 @@
     "expo": "^51.0.32",
     "expo-constants": "^16.0.2",
     "expo-firebase-core": "^6.0.0",
-    "expo-firebase-recaptcha": "patch:expo-firebase-recaptcha@npm%3A2.3.1#~/.yarn/patches/expo-firebase-recaptcha-npm-2.3.1-6b374029cd.patch",
+    "expo-firebase-recaptcha": "2.3.1",
     "expo-font": "^12.0.10",
     "expo-linking": "~6.3.1",
     "expo-router": "~3.5.15",
