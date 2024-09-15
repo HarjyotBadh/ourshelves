@@ -1,33 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { FlatList } from 'react-native';
-import { Text, View, Button, Image, YStack } from 'tamagui';
-//import { useAuth } from '../path/to/your/auth/hook'; // You'll need to create this
-import { db } from "firebaseConfig.js";
-import { doc, getDoc, updateDoc, arrayUnion, runTransaction } from 'firebase/firestore';
-
-interface Item {
-    itemId: string;
-    coinCost: number;
-    imageUri: string;
-    name: string;
-}
-
-interface PurchasedItem extends Item {
-  purchaseDate: Date;
-}
+import { Text, View, Button } from 'tamagui';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { purchaseItem } from 'functions/shopFunctions';
+import db from "firebaseConfig";
+import Item, { ItemData } from 'components/item';
 
 interface User {
   userId: string;
   coins: number;
-  inventory: PurchasedItem[];
+  inventory: ItemData[];
 }
 
 export default function ShopScreen() {
-    const [item, setItem] = useState<Item | null>(null);
-    const [user, setUser] = useState<User | null>(null);
+  const [items, setItems] = useState<ItemData[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  //const { userId } = useAuth(); // Assuming you have an auth hook
+  const [refreshTime, setRefreshTime] = useState(0);
   const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
 
   useEffect(() => {
@@ -36,40 +26,35 @@ export default function ShopScreen() {
         setLoading(true);
         setError(null);
 
-        // Fetch the specific item from Firestore
-        const itemDocRef = doc(db, 'Items', '9ngGTOJz71VI1gLMkGEe');
-        const itemDoc = await getDoc(itemDocRef);
-        if (itemDoc.exists()) {
-          const itemData = itemDoc.data();
-          const fetchedItem: Item = {
-            itemId: itemDoc.id,
-            coinCost: itemData.coinCost,
-            imageUri: itemData.imageUri,
-            name: itemData.name,
-          };
-          setItem(fetchedItem);
-        } else {
-          throw new Error('Item not found');
-        }
+        // Fetch items from Firestore
+        const itemsCollectionRef = collection(db, 'Items');
+        const itemsSnapshot = await getDocs(itemsCollectionRef);
+        const fetchedItems = itemsSnapshot.docs.map(doc => ({
+          itemId: doc.id,
+          ...doc.data()
+        } as ItemData));
+        setItems(fetchedItems);
 
         // Fetch user data
         if (userId) {
-            const userDocRef = doc(db, 'Users', userId);
-            const userDoc = await getDoc(userDocRef);
+          const userDocRef = doc(db, 'Users', userId);
+          const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            const fetchedUser: User = {
+            setUser({
               userId: userDoc.id,
               coins: userData.coins,
               inventory: userData.inventory || [],
-            };
-            setUser(fetchedUser);
+            });
           } else {
             throw new Error('User not found');
           }
         } else {
           throw new Error('User not authenticated');
         }
+
+        // Set refresh time (24 hours from now)
+        setRefreshTime(24 * 60 * 60);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
@@ -80,58 +65,30 @@ export default function ShopScreen() {
     fetchData();
   }, [userId]);
 
-  const handlePurchase = async () => {
-    if (!user || !item) return;
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRefreshTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+    }, 1000);
 
-    if (user.coins < item.coinCost) {
-      setError('Not enough coins!');
-      return;
-    }
+    return () => clearInterval(timer);
+  }, []);
 
-    try {
-      setLoading(true);
-      setError(null);
+  const handlePurchase = async (item: ItemData) => {
+    if (!user) return;
 
-      await runTransaction(db, async (transaction) => {
-        const userRef = doc(db, 'users', user.userId);
-        const userDoc = await transaction.get(userRef);
-
-        if (!userDoc.exists()) {
-          throw new Error('User not found');
-        }
-
-        const userData = userDoc.data() as User;
-
-        if (userData.coins < item.coinCost) {
-          throw new Error('Not enough coins');
-        }
-
-        const purchasedItem: PurchasedItem = {
-          ...item,
-          purchaseDate: new Date(),
-        };
-
-        transaction.update(userRef, {
-          coins: userData.coins - item.coinCost,
-          inventory: arrayUnion(purchasedItem),
-        });
-      });
-
-      // Update local user state
-      setUser((prevUser) => {
+    const result = await purchaseItem(item);
+    if (result.success) {
+      setUser(prevUser => {
         if (!prevUser) return null;
         return {
           ...prevUser,
-          coins: prevUser.coins - item.coinCost,
-          inventory: [...prevUser.inventory, { ...item, purchaseDate: new Date() }],
+          coins: prevUser.coins - item.cost,
+          inventory: [...prevUser.inventory, item],
         };
       });
-
-      alert('Item purchased successfully!');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setLoading(false);
+      alert("Purchase successful!");
+    } else {
+      alert(result.message);
     }
   };
 
@@ -143,24 +100,56 @@ export default function ShopScreen() {
     return <Text color="$red10">{error}</Text>;
   }
 
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <View flex={1} padding="$4">
-      <Text fontSize="$6" fontWeight="bold" marginBottom="$4">
+    <View flex={1} padding="$4" backgroundColor="$pink6">
+      <Text fontSize="$8" fontWeight="bold" textAlign="center" marginBottom="$2">
+        OurShelves
+      </Text>
+      <Text fontSize="$6" fontWeight="bold" textAlign="center" marginBottom="$4">
         Shop
       </Text>
       {user && (
-        <Text fontSize="$4" marginBottom="$4">
-          Your Coins: {user.coins}
+        <Text fontSize="$4" fontWeight="bold" marginBottom="$4">
+          🪙 {user.coins}
         </Text>
       )}
-      {item && (
-        <YStack gap="$2" alignItems="center">
-          <Image source={{ uri: item.imageUri }} width={100} height={100} />
-          <Text fontSize="$5">{item.name}</Text>
-          <Text>{item.coinCost} coins</Text>
-          <Button onPress={handlePurchase}>Buy</Button>
-        </YStack>
-      )}
+      <FlatList
+        data={items}
+        renderItem={({ item }) => (
+          <View width="30%" marginBottom="$4">
+            <Item
+              item={item}
+              showName={true}
+              showCost={true}
+            />
+            <Button
+              onPress={() => handlePurchase(item)}
+              backgroundColor={user && user.coins >= item.cost ? '$green8' : '$red8'}
+              color="$white"
+              fontSize="$2"
+              marginTop="$1"
+            >
+              Buy
+            </Button>
+          </View>
+        )}
+        keyExtractor={(item) => item.itemId}
+        numColumns={3}
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
+      />
+      <Text fontSize="$4" textAlign="center" marginTop="$4">
+        Shop Refreshes In:
+      </Text>
+      <Text fontSize="$5" fontWeight="bold" textAlign="center">
+        {formatTime(refreshTime)}
+      </Text>
     </View>
   );
 }
