@@ -4,7 +4,6 @@ import {
     Button,
     H1,
     Paragraph,
-    Theme,
     Stack,
     YStack,
     useTheme,
@@ -37,20 +36,9 @@ export default function LoginScreen() {
     };
 
     const handleLogin = async () => {
-        // if (!validator.isEmail(email)) {
-        //     setEmailError("Please enter a valid email address");
-        //     return;
-        // }
-
-        try {
-            const docRef = await addDoc(collection(db, "users"), {
-                email: email,
-            });
-            console.log("Document written with ID: ", docRef.id);
-            // You can add a success message or navigate to another screen here
-        } catch (e) {
-            console.error("Error adding document: ", e);
-            // You can set an error state and display it to the user here
+        if (!validator.isEmail(email)) {
+            setEmailError("Please enter a valid email address");
+            return;
         }
     };
 
@@ -158,4 +146,3 @@ export default function LoginScreen() {
         </SafeAreaView>
     );
 }
-

@@ -1,8 +1,14 @@
-module.exports = (api) => {
-  api.cache(true)
+module.exports = function(api) {
+  api.cache(true);
   return {
     presets: [['babel-preset-expo', { jsxRuntime: 'automatic' }]],
     plugins: [
+      [
+        'transform-inline-environment-variables',
+        {
+          include: 'TAMAGUI_TARGET',
+        },
+      ],
       [
         '@tamagui/babel-plugin',
         {
@@ -12,9 +18,7 @@ module.exports = (api) => {
           disableExtraction: process.env.NODE_ENV === 'development',
         },
       ],
-
-      // NOTE: this is only necessary if you are using reanimated for animations
       'react-native-reanimated/plugin',
     ],
-  }
-}
+  };
+};

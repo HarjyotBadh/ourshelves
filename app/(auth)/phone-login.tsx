@@ -4,6 +4,9 @@ import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack, Text } fr
 import { SafeAreaView, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import PhoneInput from "react-native-phone-number-input";
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import { PhoneAuthProvider } from "firebase/auth";
+import { auth } from "firebaseConfig";
 
 export default function PhoneLoginScreen() {
     const router = useRouter();
@@ -12,17 +15,38 @@ export default function PhoneLoginScreen() {
     const [formattedValue, setFormattedValue] = useState("");
     const [error, setError] = useState("");
     const phoneInput = useRef<PhoneInput>(null);
+    const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
 
-    const handleNext = () => {
+    const handleNext = async () => {
         const checkValid = phoneInput.current?.isValidNumber(phoneNumber);
-        console.log("Phone number submitted:", formattedValue, "Valid:", checkValid);
 
         if (checkValid) {
-            setError(""); // Clear any existing error
-            router.push({
-                pathname: "/(auth)/phone-login-verify",
-                params: { phoneNumber: formattedValue },
-            });
+            setError("");
+            try {
+                if (!recaptchaVerifier.current) {
+                    setError("reCAPTCHA has not loaded yet. Please try again.");
+                    return;
+                }
+
+                const phoneProvider = new PhoneAuthProvider(auth);
+                const verificationId = await phoneProvider.verifyPhoneNumber(
+                    formattedValue,
+                    recaptchaVerifier.current
+                );
+
+                // Navigate to verification screen
+                router.push({
+                    pathname: "/(auth)/phone-login-verify",
+                    params: {
+                        verificationId,
+                        phoneNumber: formattedValue,
+                        recaptchaVerifierOptions: JSON.stringify(recaptchaVerifier.current.props),
+                    },
+                });
+            } catch (err) {
+                console.error(err);
+                setError("Failed to send verification code. Please try again.");
+            }
         } else {
             setError("Please enter a valid phone number.");
         }
@@ -30,6 +54,11 @@ export default function PhoneLoginScreen() {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+            <FirebaseRecaptchaVerifierModal
+                ref={recaptchaVerifier}
+                firebaseConfig={auth.app.options}
+                attemptInvisibleVerification={true}
+            />
             <Stack f={1} ai="center" jc="center">
                 <XStack
                     position="absolute"
@@ -63,7 +92,7 @@ export default function PhoneLoginScreen() {
                                 layout="first"
                                 onChangeText={(text) => {
                                     setPhoneNumber(text);
-                                    setError(""); // Clear error when user types
+                                    setError("");
                                 }}
                                 onChangeFormattedText={(text) => {
                                     setFormattedValue(text);
