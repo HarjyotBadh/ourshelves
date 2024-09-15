@@ -5492,6 +5492,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/expo@npm:^33.0.1":
+  version: 33.0.1
+  resolution: "@types/expo@npm:33.0.1"
+  dependencies:
+    expo: "npm:*"
+  checksum: b63bdb493a285f0690546616727b14d4600b47bddbccc6e5da4e4e45d8448130c3ace6e2b47bd9d04b82d788da21211a697cccf829dd441aafdb80d5165be28d
+  languageName: node
+  linkType: hard
+
 "@types/fs-extra@npm:^9.0.13":
   version: 9.0.13
   resolution: "@types/fs-extra@npm:9.0.13"
@@ -7849,7 +7858,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-font@npm:~12.0.10, expo-font@npm:~12.0.6":
+"expo-font@npm:^12.0.10, expo-font@npm:~12.0.10":
   version: 12.0.10
   resolution: "expo-font@npm:12.0.10"
   dependencies:
@@ -7977,7 +7986,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo@npm:^51.0.32":
+"expo@npm:*, expo@npm:^51.0.32":
   version: 51.0.32
   resolution: "expo@npm:51.0.32"
   dependencies:
@@ -11147,6 +11156,7 @@ __metadata:
     "@tamagui/theme-base": "npm:^1.110.5"
     "@tamagui/themes": "npm:^1.110.5"
     "@tamagui/toast": "npm:^1.110.5"
+    "@types/expo": "npm:^33.0.1"
     "@types/react": "npm:~18.2.79"
     "@types/react-native": "npm:^0.73.0"
     "@types/validator": "npm:^13"
@@ -11157,7 +11167,7 @@ __metadata:
     expo-constants: "npm:^16.0.2"
     expo-firebase-core: "npm:^6.0.0"
     expo-firebase-recaptcha: "patch:expo-firebase-recaptcha@npm%3A2.3.1#~/.yarn/patches/expo-firebase-recaptcha-npm-2.3.1-6b374029cd.patch"
-    expo-font: "npm:~12.0.6"
+    expo-font: "npm:^12.0.10"
     expo-linking: "npm:~6.3.1"
     expo-router: "npm:~3.5.15"
     expo-splash-screen: "npm:~0.27.4"
