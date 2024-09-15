@@ -19,6 +19,8 @@ export default function TabOneScreen() {
     }
   };
 
+  console.log("signed in user: ", auth.currentUser.displayName);
+
   return (
     <YStack f={1} ai="center" gap="$8" px="$10" pt="$5">
       <H2>Tamagui + Expo</H2>

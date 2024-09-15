@@ -49,8 +49,13 @@ export default function RootLayout() {
             setIsUserAuthenticated(!!user);
             setTimeout(() => {
                 if (user) {
-                    console.log("User is signed in:", user.uid);
-                    router.replace("/(tabs)");
+                    // if the user does not have a display name, route them to 'register-display-name'
+                    if (!user.displayName) {
+                        router.replace("/register-display-name");
+                        return;
+                    } else {
+                        router.replace("/(tabs)");
+                    }
                 } else {
                     console.log("User is signed out");
                     router.replace("/(auth)/login");

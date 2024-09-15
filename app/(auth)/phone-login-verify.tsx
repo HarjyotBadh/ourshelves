@@ -52,8 +52,15 @@ export default function PhoneLoginVerifyScreen() {
             const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
             await signInWithCredential(auth, credential);
 
-            // Navigate to the main app
-            router.replace("/(tabs)");
+            const user = auth.currentUser;
+            
+            // If the user does not have a display name, route them to 'register-display-name'
+            if (user && !user.displayName) {
+                router.replace("/register-display-name");
+            } else {
+                router.replace("/(tabs)");
+            }
+            
         } catch (err) {
             console.error("Error during verification:", err);
             setError("Invalid verification code. Please try again.");
