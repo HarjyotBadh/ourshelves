@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useColorScheme, LogBox } from "react-native";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack, useRouter } from "expo-router";
+import { SplashScreen, Slot, useRouter, useSegments } from "expo-router";
 import { Provider } from "./Provider";
 import { auth } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -22,93 +22,60 @@ export {
 } from "expo-router";
 
 export const unstable_settings = {
-    // Ensure that reloading on `/modal` keeps a back button present.
-    initialRouteName: "(tabs)",
+    initialRouteName: "(auth)/login",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+function RootLayoutNav() {
+    const [user, setUser] = useState(auth.currentUser);
+    const segments = useSegments();
+    const router = useRouter();
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUser(user);
+        });
+
+        return unsubscribe;
+    }, []);
+
+    useEffect(() => {
+        if (!user) {
+            router.replace("/(auth)/login");
+        } else if (user && !user.displayName) {
+            router.replace("/register-display-name");
+        } else if (user && segments[0] !== "(tabs)") {
+            router.replace("/(tabs)");
+        }
+    }, [user, segments]);
+
+    return <Slot />;
+}
 
 export default function RootLayout() {
     const [interLoaded, interError] = useFonts({
         Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
         InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
     });
-    const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean | null>(null);
-    const router = useRouter();
+    const colorScheme = useColorScheme();
 
     useEffect(() => {
         if (interLoaded || interError) {
-            // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
             SplashScreen.hideAsync();
         }
     }, [interLoaded, interError]);
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setIsUserAuthenticated(!!user);
-            setTimeout(() => {
-                if (user) {
-                    // if the user does not have a display name, route them to 'register-display-name'
-                    if (!user.displayName) {
-                        router.replace("/register-display-name");
-                        return;
-                    } else {
-                        router.replace("/(tabs)");
-                    }
-                } else {
-                    console.log("User is signed out");
-                    router.replace("/(auth)/login");
-                }
-            }, 0);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
     if (!interLoaded && !interError) {
         return null;
     }
-
-    if (isUserAuthenticated === null) {
-        return null;
-    }
-
-    return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-    const colorScheme = useColorScheme();
 
     return (
         <TamaguiProvider config={config}>
             <ToastProvider>
                 <Provider>
                     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                        <Stack>
-                            <Stack.Screen
-                                name="(auth)"
-                                options={{
-                                    headerShown: false,
-                                }}
-                            />
-                            <Stack.Screen
-                                name="(tabs)"
-                                options={{
-                                    headerShown: false,
-                                }}
-                            />
-                            <Stack.Screen
-                                name="modal"
-                                options={{
-                                    title: "Tamagui + Expo",
-                                    presentation: "modal",
-                                    animation: "slide_from_right",
-                                    gestureEnabled: true,
-                                    gestureDirection: "horizontal",
-                                }}
-                            />
-                        </Stack>
+                        <RootLayoutNav />
                     </ThemeProvider>
                 </Provider>
             </ToastProvider>
