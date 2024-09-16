@@ -1,12 +1,13 @@
-import { Tabs } from 'expo-router'
-import { useTheme } from 'tamagui'
-import { Home, ShoppingBag } from '@tamagui/lucide-icons'
+import { Link, Tabs } from 'expo-router'
+import { Button, useTheme } from 'tamagui'
+import { Atom, AudioWaveform, Home, ShoppingBag, User } from '@tamagui/lucide-icons'
+
 
 export default function TabLayout() {
     const theme = useTheme();
 
-    return (
-        <Tabs
+  return (
+    <Tabs
         screenOptions={{
           tabBarActiveTintColor: theme.red10.val,
           headerShown: true, // This ensures headers are shown
@@ -16,20 +17,27 @@ export default function TabLayout() {
           headerTintColor: theme.color.val, // Use theme text color for header text
       }}
         >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    title: "Home",
-                    tabBarIcon: ({ color }) => <Home color={color} />,
-                }}
-            />
-            <Tabs.Screen
-                name="shop"
-                options={{
-                    title: 'Shop',
-                    tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
-                }}
-            />
-        </Tabs>
-    )
+      <Tabs.Screen
+        name="profile_page"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <User color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="shop"
+        options={{
+          title: 'Shop',
+          tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
+        }}
+      />
+      <Tabs.Screen
+          name="index"
+          options={{
+              title: "Home",
+              tabBarIcon: ({ color }) => <Home color={color} />,
+          }}
+      />
+    </Tabs>
+  )
 }
