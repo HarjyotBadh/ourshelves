@@ -8070,20 +8070,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-firebase-recaptcha@patch:expo-firebase-recaptcha@npm%3A2.3.1#~/.yarn/patches/expo-firebase-recaptcha-npm-2.3.1-6b374029cd.patch":
-  version: 2.3.1
-  resolution: "expo-firebase-recaptcha@patch:expo-firebase-recaptcha@npm%3A2.3.1#~/.yarn/patches/expo-firebase-recaptcha-npm-2.3.1-6b374029cd.patch::version=2.3.1&hash=086f38"
-  dependencies:
-    expo-firebase-core: "npm:~6.0.0"
-  peerDependencies:
-    react-native-webview: "*"
-  peerDependenciesMeta:
-    react-native-webview:
-      optional: true
-  checksum: 5987a33b8cdf2cce892fe37786266923094fec6a45a45b19557b99f69526db935feb247a63df2d00086cbe4a9934b4c213670c928e267edcbba4bf9f27e158f9
-  languageName: node
-  linkType: hard
-
 "expo-font@npm:^12.0.10, expo-font@npm:~12.0.10":
   version: 12.0.10
   resolution: "expo-font@npm:12.0.10"
@@ -11517,7 +11503,7 @@ __metadata:
     expo: "npm:^51.0.32"
     expo-constants: "npm:^16.0.2"
     expo-firebase-core: "npm:^6.0.0"
-    expo-firebase-recaptcha: "patch:expo-firebase-recaptcha@npm%3A2.3.1#~/.yarn/patches/expo-firebase-recaptcha-npm-2.3.1-6b374029cd.patch"
+    expo-firebase-recaptcha: "npm:2.3.1"
     expo-font: "npm:^12.0.10"
     expo-linking: "npm:~6.3.1"
     expo-router: "npm:~3.5.15"
@@ -11995,7 +11981,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"punycode@npm:^2.1.1":
+"punycode@npm:^2.1.0, punycode@npm:^2.1.1":
   version: 2.3.1
   resolution: "punycode@npm:2.3.1"
   checksum: febdc4362bead22f9e2608ff0171713230b57aff9dddc1c273aa2a651fbd366f94b7d6a71d78342a7c0819906750351ca7f2edd26ea41b626d87d6a13d1bd059

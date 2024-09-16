@@ -8,37 +8,20 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: theme.red10.val,
+        screenOptions={{
+          tabBarActiveTintColor: theme.red10.val,
+          headerShown: true, // This ensures headers are shown
+          headerStyle: {
+              backgroundColor: theme.background.val, // Use theme background color
+          },
+          headerTintColor: theme.color.val, // Use theme text color for header text
       }}
-    >
+        >
       <Tabs.Screen
         name="profile_page"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <User color={color} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <Atom color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Button mr="$4" bg="$purple8" color="$purple12">
-                Hello!
-              </Button>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <AudioWaveform color={color} />,
         }}
       />
       <Tabs.Screen
@@ -48,13 +31,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
         }}
       />
-            <Tabs.Screen
-                name="home"
-                options={{
-                    title: "Home",
-                    tabBarIcon: ({ color }) => <Home color={color} />,
-                }}
-            />
+      <Tabs.Screen
+          name="index"
+          options={{
+              title: "Home",
+              tabBarIcon: ({ color }) => <Home color={color} />,
+          }}
+      />
     </Tabs>
   )
 }
