@@ -3,7 +3,7 @@ import { FlatList } from 'react-native';
 import { Text, View, Button, XStack } from 'tamagui';
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { purchaseItem } from 'functions/shopFunctions';
-import db from "firebaseConfig";
+import { db } from "firebaseConfig";
 import Item, { ItemData } from 'components/item';
 
 interface User {
@@ -80,6 +80,13 @@ export default function ShopScreen() {
     if (result.success) {
       setUser(prevUser => {
         if (!prevUser) return null;
+        const updatedInventory = [...prevUser.inventory, item];
+        
+        // Log the updated inventory to the console
+        console.log("Updated Inventory:");
+        updatedInventory.forEach((invItem, index) => {
+          console.log(`${index + 1}. ${invItem.name} (ID: ${invItem.itemId})`);
+        });
         return {
           ...prevUser,
           coins: prevUser.coins - item.cost,
