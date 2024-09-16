@@ -1,11 +1,20 @@
 import "../tamagui-web.css";
 
-import { useEffect } from "react";
-import { useColorScheme } from "react-native";
+import React, { useEffect, useState } from "react";
+import { useColorScheme, LogBox } from "react-native";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack } from "expo-router";
+import { SplashScreen, Stack, useRouter } from "expo-router";
 import { Provider } from "./Provider";
+import { auth } from "../firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import { TamaguiProvider } from "@tamagui/core";
+import { ToastProvider } from "@tamagui/toast";
+import config from "tamagui.config";
+
+LogBox.ignoreLogs([
+    "FirebaseRecaptcha: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.",
+]);
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -25,6 +34,8 @@ export default function RootLayout() {
         Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
         InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
     });
+    const [isUserAuthenticated, setIsUserAuthenticated] = useState<boolean | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         if (interLoaded || interError) {
@@ -33,7 +44,33 @@ export default function RootLayout() {
         }
     }, [interLoaded, interError]);
 
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setIsUserAuthenticated(!!user);
+            setTimeout(() => {
+                if (user) {
+                    // if the user does not have a display name, route them to 'register-display-name'
+                    if (!user.displayName) {
+                        router.replace("/register-display-name");
+                        return;
+                    } else {
+                        router.replace("/(tabs)");
+                    }
+                } else {
+                    console.log("User is signed out");
+                    router.replace("/(auth)/login");
+                }
+            }, 0);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
     if (!interLoaded && !interError) {
+        return null;
+    }
+
+    if (isUserAuthenticated === null) {
         return null;
     }
 
@@ -44,34 +81,37 @@ function RootLayoutNav() {
     const colorScheme = useColorScheme();
 
     return (
-        <Provider>
-            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                <Stack>
-                    <Stack.Screen
-                        name="(auth)"
-                        options={{
-                            headerShown: false,
-                        }}
-                    />
-                    <Stack.Screen
-                        name="(tabs)"
-                        options={{
-                            headerShown: false,
-                        }}
-                    />
-
-                    <Stack.Screen
-                        name="modal"
-                        options={{
-                            title: "Tamagui + Expo",
-                            presentation: "modal",
-                            animation: "slide_from_right",
-                            gestureEnabled: true,
-                            gestureDirection: "horizontal",
-                        }}
-                    />
-                </Stack>
-            </ThemeProvider>
-        </Provider>
+        <TamaguiProvider config={config}>
+            <ToastProvider>
+                <Provider>
+                    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                        <Stack>
+                            <Stack.Screen
+                                name="(auth)"
+                                options={{
+                                    headerShown: false,
+                                }}
+                            />
+                            <Stack.Screen
+                                name="(tabs)"
+                                options={{
+                                    headerShown: false,
+                                }}
+                            />
+                            <Stack.Screen
+                                name="modal"
+                                options={{
+                                    title: "Tamagui + Expo",
+                                    presentation: "modal",
+                                    animation: "slide_from_right",
+                                    gestureEnabled: true,
+                                    gestureDirection: "horizontal",
+                                }}
+                            />
+                        </Stack>
+                    </ThemeProvider>
+                </Provider>
+            </ToastProvider>
+        </TamaguiProvider>
     );
 }

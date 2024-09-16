@@ -3,7 +3,7 @@ import { Button, useTheme } from 'tamagui'
 import { Atom, AudioWaveform, ShoppingBag } from '@tamagui/lucide-icons'
 
 export default function TabLayout() {
-  const theme = useTheme()
+    const theme = useTheme();
 
   return (
     <Tabs
