@@ -1,9 +1,10 @@
 import { Link, Tabs } from 'expo-router'
 import { Button, useTheme } from 'tamagui'
-import { Atom, AudioWaveform, User } from '@tamagui/lucide-icons'
+import { Atom, AudioWaveform, Home, ShoppingBag, User } from '@tamagui/lucide-icons'
+
 
 export default function TabLayout() {
-  const theme = useTheme()
+    const theme = useTheme();
 
   return (
     <Tabs
@@ -40,6 +41,20 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <AudioWaveform color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="shop"
+        options={{
+          title: 'Shop',
+          tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
+        }}
+      />
+            <Tabs.Screen
+                name="home"
+                options={{
+                    title: "Home",
+                    tabBarIcon: ({ color }) => <Home color={color} />,
+                }}
+            />
     </Tabs>
   )
 }
