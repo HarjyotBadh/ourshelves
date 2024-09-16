@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FlatList } from 'react-native';
-import { Text, View, Button } from 'tamagui';
-import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { Text, View, Button, XStack } from 'tamagui';
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { purchaseItem } from 'functions/shopFunctions';
 import db from "firebaseConfig";
 import Item, { ItemData } from 'components/item';
@@ -92,6 +92,29 @@ export default function ShopScreen() {
     }
   };
 
+  const handleEarnCoins = async () => {
+    if (!user) return;
+
+    try {
+      const userDocRef = doc(db, 'Users', userId);
+      const newCoins = user.coins + 50;
+      await updateDoc(userDocRef, { coins: newCoins });
+      
+      setUser(prevUser => {
+        if (!prevUser) return null;
+        return {
+          ...prevUser,
+          coins: newCoins,
+        };
+      });
+      
+      alert("You've earned 50 coins!");
+    } catch (error) {
+      console.error("Error earning coins:", error);
+      alert("Failed to earn coins. Please try again.");
+    }
+  };
+
   if (loading) {
     return <Text>Loading...</Text>;
   }
@@ -116,9 +139,21 @@ export default function ShopScreen() {
         Shop
       </Text>
       {user && (
-        <Text fontSize="$4" fontWeight="bold" marginBottom="$4">
-          🪙 {user.coins}
-        </Text>
+        <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
+          <Text fontSize="$4" fontWeight="bold">
+            🪙 {user.coins}
+          </Text>
+          <Button
+            onPress={handleEarnCoins}
+            backgroundColor="$blue8"
+            color="$white"
+            fontSize="$1"
+            paddingHorizontal="$2"
+            paddingVertical="$1"
+          >
+            +50 Coins (Test)
+          </Button>
+        </XStack>
       )}
       <FlatList
         data={items}
