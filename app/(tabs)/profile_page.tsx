@@ -9,7 +9,7 @@ export default function TabTwoScreen() {
         <H2>User Profile</H2>
         <Image
             // Eventually make this a set number of predefined icons
-            source={{ width: 100, height: 100, uri: 'https://picsum.photos/200/300' }}
+            source={{ width: 100, height: 100, uri: '' }}
             width="50%"
             height="20%"
         />
