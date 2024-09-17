@@ -7434,7 +7434,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.4.4, dotenv@npm:~16.4.5":
+"dotenv@npm:^16.4.4, dotenv@npm:^16.4.5, dotenv@npm:~16.4.5":
   version: 16.4.5
   resolution: "dotenv@npm:16.4.5"
   checksum: 55a3134601115194ae0f924e54473459ed0d9fc340ae610b676e248cca45aa7c680d86365318ea964e6da4e2ea80c4514c1adab5adb43d6867fb57ff068f95c8
@@ -11517,6 +11517,7 @@ __metadata:
     burnt: "npm:^0.12.2"
     date-fns: "npm:^4.0.0"
     date-fns-tz: "npm:^3.1.3"
+    dotenv: "npm:^16.4.5"
     eslint: "npm:^9.10.0"
     expo: "npm:^51.0.32"
     expo-constants: "npm:^16.0.2"
