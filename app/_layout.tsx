@@ -54,7 +54,7 @@ export default function RootLayout() {
                         router.replace("/register-display-name");
                         return;
                     } else {
-                        router.replace("/(tabs)");
+                        router.replace("/(room)/room");
                     }
                 } else {
                     console.log("User is signed out");
@@ -94,6 +94,12 @@ function RootLayoutNav() {
                             />
                             <Stack.Screen
                                 name="(tabs)"
+                                options={{
+                                    headerShown: false,
+                                }}
+                            />
+                            <Stack.Screen
+                                name="(room)"
                                 options={{
                                     headerShown: false,
                                 }}
