@@ -5,8 +5,6 @@
 # but map can be ignored and just published on npm
 **/types/**/*.d.ts.map
 
-firebaseConfig.js
-
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -72,7 +70,6 @@ yarn-debug.*
 yarn-error.*
 
 # macOS
-.DS_Store
 *.pem
 
 # local env files
