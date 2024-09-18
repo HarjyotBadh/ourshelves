@@ -10,16 +10,17 @@ const Shelf: React.FC<ShelfProps> = ({ shelfNumber }) => {
     return (
         <YStack>
             <XStack
-                backgroundColor="#DEB887"
+                backgroundColor="#DEB887" // shelf background
                 height={120}
                 borderTopLeftRadius="$2"
                 borderTopRightRadius="$2"
                 padding="$2"
+                paddingBottom="$0"
             >
                 <ShelfItems />
             </XStack>
             <XStack
-                backgroundColor="#8B4513"
+                backgroundColor="#8B4513" // shelf
                 height={20}
                 borderBottomLeftRadius="$2"
                 borderBottomRightRadius="$2"
