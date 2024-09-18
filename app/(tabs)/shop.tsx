@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FlatList } from 'react-native';
 import { Text, View, Button, XStack, YStack } from 'tamagui';
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, Timestamp } from 'firebase/firestore';
-import { purchaseItem } from 'functions/shopFunctions';
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { purchaseItem } from 'project-functions/shopFunctions';
 import { db } from "firebaseConfig";
 import Item, { ItemData } from 'components/item';
-import { format, toDate } from 'date-fns-tz';
+import { differenceInSeconds } from 'date-fns';
 
 interface ShopMetadata {
   lastRefresh: Timestamp;
@@ -26,6 +26,7 @@ export default function ShopScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshTime, setRefreshTime] = useState(0);
   const [canClaimDailyGift, setCanClaimDailyGift] = useState(false);
+  const [dailyGiftTimer, setDailyGiftTimer] = useState(0);
   const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
 
   const fetchShopMetadata = async () => {
@@ -37,132 +38,91 @@ export default function ShopScreen() {
     return null;
   };
 
-  const updateShopMetadata = async (metadata: Partial<ShopMetadata>) => {
-    const shopMetadataRef = doc(db, 'GlobalSettings', 'shopMetadata');
-    await updateDoc(shopMetadataRef, metadata);
+  const checkCanClaimDailyGift = (user: User, lastRefresh: Date) => {
+    if (!user.lastDailyGiftClaim) return true;
+    const lastClaimDate = user.lastDailyGiftClaim.toDate();
+    return lastClaimDate < lastRefresh;
   };
 
-  const getNextMidnightEST = () => {
-    const timeZone = 'America/New_York'; // Eastern Time (ET), which handles DST automatically
-    const now = new Date();
-  
-    // Convert the current date to Eastern Time
-    const estNow = toDate(now, { timeZone });
-  
-    // Set to next midnight (00:00:00)
-    const nextMidnight = new Date(estNow);
-    nextMidnight.setHours(24, 0, 0, 0); // Move to midnight of the next day
-  
-    // Convert next midnight to the correct date format
-    const estMidnightFormatted = format(nextMidnight, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone });
-  
-    // Return the formatted Date object
-    return new Date(estMidnightFormatted);
-  };
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const shopRefresh = async () => {
-    const now = Timestamp.now();
+      const shopMetadata = await fetchShopMetadata();
+      if (!shopMetadata) throw new Error('Shop metadata not found');
 
-    if (user) {
-      const canClaim = checkCanClaimDailyGift(user, now);
-      setCanClaimDailyGift(canClaim);
-    }
-  
-    // Here you would typically fetch new items or update existing ones
-    const itemsCollectionRef = collection(db, 'Items');
-    const itemsSnapshot = await getDocs(itemsCollectionRef);
-    const fetchedItems = itemsSnapshot.docs.map(doc => ({
-      itemId: doc.id,
-      ...doc.data()
-    } as ItemData));
-    setItems(fetchedItems);
-  };
+      const now = new Date();
+      const nextRefreshDate = shopMetadata.nextRefresh.toDate();
 
-  const checkCanClaimDailyGift = (user: User, lastRefresh: Timestamp) => {
-    return !user.lastDailyGiftClaim || user.lastDailyGiftClaim.toDate() < lastRefresh.toDate();
-  };
+      // Fetch items
+      const itemsCollectionRef = collection(db, 'Items');
+      const itemsSnapshot = await getDocs(itemsCollectionRef);
+      const fetchedItems = itemsSnapshot.docs.map(doc => ({
+        itemId: doc.id,
+        ...doc.data()
+      } as ItemData));
+      setItems(fetchedItems);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+      // Fetch user data
+      if (userId) {
+        const userDocRef = doc(db, 'Users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data() as User;
+          setUser(userData);
 
-        let shopMetadata = await fetchShopMetadata();
-        const now = Timestamp.now();
+          const lastRefreshDate = shopMetadata.lastRefresh.toDate();
+          const canClaim = checkCanClaimDailyGift(userData, lastRefreshDate);
+          setCanClaimDailyGift(canClaim);
 
-        if (!shopMetadata || now.toDate() >= shopMetadata.nextRefresh.toDate()) {
-          await shopRefresh();
-          shopMetadata = await fetchShopMetadata();
-        } else {
-          const itemsCollectionRef = collection(db, 'Items');
-          const itemsSnapshot = await getDocs(itemsCollectionRef);
-          const fetchedItems = itemsSnapshot.docs.map(doc => ({
-            itemId: doc.id,
-            ...doc.data()
-          } as ItemData));
-          setItems(fetchedItems);
-
-          setRefreshTime(Math.floor((shopMetadata.nextRefresh.toDate().getTime() - now.toDate().getTime()) / 1000));
-        }
-
-        // Fetch user data
-        if (userId) {
-          const userDocRef = doc(db, 'Users', userId);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
-            setUser(userData);
-
-            const canClaim = checkCanClaimDailyGift(userData, shopMetadata!.lastRefresh);
-            setCanClaimDailyGift(canClaim);
-          } else {
-            throw new Error('User not found');
+          if (!canClaim) {
+            const secondsUntilNextClaim = differenceInSeconds(nextRefreshDate, now);
+            setDailyGiftTimer(secondsUntilNextClaim > 0 ? secondsUntilNextClaim : 0);
           }
         } else {
-          throw new Error('User not authenticated');
+          throw new Error('User not found');
         }
-
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
+      } else {
+        throw new Error('User not authenticated');
       }
-    };
 
-    fetchData();
+      // Set refresh timer
+      const secondsUntilRefresh = differenceInSeconds(nextRefreshDate, now);
+      setRefreshTime(secondsUntilRefresh > 0 ? secondsUntilRefresh : 0);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
   }, [userId]);
 
   useEffect(() => {
-    const getInitialRefreshTime = () => {
-      const now = Timestamp.now().toDate();
-      const nextRefresh = getNextMidnightEST();
-      const timeDiffInSeconds = Math.floor((nextRefresh.getTime() - now.getTime()) / 1000);
-      return timeDiffInSeconds > 0 ? timeDiffInSeconds : 24 * 60 * 60;
-    };
-  
-    let initialRefreshTime = getInitialRefreshTime();
-    setRefreshTime(initialRefreshTime);
-  
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setRefreshTime((prevTime) => {
         if (prevTime <= 0) {
-          shopRefresh(); // Call shopRefresh only when timer hits 0
-          const now = Timestamp.now();
-          const nextRefresh = getNextMidnightEST();
-          updateShopMetadata({
-            lastRefresh: now,
-            nextRefresh: Timestamp.fromDate(nextRefresh),
-          });
-          return 24 * 60 * 60; // Reset timer to 24 hours
+          fetchData();
+          return 0;
+        }
+        return prevTime - 1;
+      });
+
+      setDailyGiftTimer((prevTime) => {
+        if (prevTime <= 0) {
+          setCanClaimDailyGift(true);
+          return 0;
         }
         return prevTime - 1;
       });
     }, 1000);
-  
-    return () => clearInterval(timer); // Clean up on unmount
-  }, []);
-  
+
+    return () => clearInterval(timer);
+  }, [fetchData]);
 
   const handleDailyGiftClaim = async () => {
     if (!user || !canClaimDailyGift) return;
@@ -193,16 +153,6 @@ export default function ShopScreen() {
     }
   };
 
-  const handleRefreshNow = async () => {
-    try {
-      await shopRefresh(); // Directly call shopRefresh
-      alert('Shop refreshed successfully!');
-    } catch (error) {
-      console.error('Error refreshing shop:', error);
-      alert('Failed to refresh shop. Please try again.');
-    }
-  };
-
   const handlePurchase = async (item: ItemData) => {
     if (!user) return;
     if (user.inventory.some(invItem => invItem.itemId === item.itemId)) {
@@ -213,12 +163,6 @@ export default function ShopScreen() {
       setUser((prevUser) => {
         if (!prevUser) return null;
         const updatedInventory = [...prevUser.inventory, item];
-
-        // Log the updated inventory to the console
-        console.log("Updated Inventory:");
-        updatedInventory.forEach((invItem, index) => {
-          console.log(`${index + 1}. ${invItem.name} (ID: ${invItem.itemId})`);
-        });
         return {
           ...prevUser,
           coins: prevUser.coins - item.cost,
@@ -254,14 +198,6 @@ export default function ShopScreen() {
     }
   };
 
-  if (loading) {
-    return <Text>Loading...</Text>;
-  }
-
-  if (error) {
-    return <Text color="$red10">{error}</Text>;
-  }
-
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -270,6 +206,37 @@ export default function ShopScreen() {
       .toString()
       .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
+
+  const refreshItems = async () => {
+    const itemsCollectionRef = collection(db, 'Items');
+    const itemsSnapshot = await getDocs(itemsCollectionRef);
+    const fetchedItems = itemsSnapshot.docs.map(doc => ({
+      itemId: doc.id,
+      ...doc.data()
+    } as ItemData));
+    setItems(fetchedItems);
+  };
+
+  const handleManualRefresh = async () => {
+    setLoading(true);
+    try {
+      await refreshItems();
+      setCanClaimDailyGift(true);
+    } catch (error) {
+      console.error("Error refreshing shop:", error);
+      setError("Failed to refresh shop. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
+  if (error) {
+    return <Text color="$red10">{error}</Text>;
+  }
 
   return (
     <YStack flex={1} padding="$4" backgroundColor="$pink6">
@@ -321,7 +288,7 @@ export default function ShopScreen() {
                     itemId: "daily-gift",
                     name: "Daily Gift",
                     imageUri:
-                      "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/dailygift.png?alt=media&token=865d3646-df64-4d45-98f5-30d5713982de", // Replace with actual image URL
+                      "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/items%2Fdailygift.png?alt=media&token=46ad85b5-9fb5-4ef0-b32f-1894091e82f3",
                     cost: 0,
                   }}
                   showName={true}
@@ -337,15 +304,21 @@ export default function ShopScreen() {
                     Free!
                   </Text>
                 </View>
-                <Button
-                  onPress={handleDailyGiftClaim}
-                  backgroundColor={canClaimDailyGift ? "$green8" : "$gray8"}
-                  color="$white"
-                  fontSize="$2"
-                  marginTop="$1"
-                >
-                  {canClaimDailyGift ? "Claim" : "Claimed"}
-                </Button>
+                {canClaimDailyGift ? (
+                  <Button
+                    onPress={handleDailyGiftClaim}
+                    backgroundColor="$green8"
+                    color="$white"
+                    fontSize="$2"
+                    marginTop="$1"
+                  >
+                    Claim
+                  </Button>
+                ) : (
+                  <Text fontSize="$2" textAlign="center" marginTop="$1">
+                    {formatTime(dailyGiftTimer)}
+                  </Text>
+                )}
               </View>
             );
           }
@@ -383,19 +356,15 @@ export default function ShopScreen() {
       >
         {formatTime(refreshTime)}
       </Text>
-
-      {/* Debug buttons */}
-      <XStack justifyContent="space-between" marginTop="$4">
-        <Button
-          onPress={handleRefreshNow}
-          backgroundColor="$orange8"
-          color="$white"
-          fontSize="$2"
-          padding="$2"
-        >
-          Refresh Now
-        </Button>
-      </XStack>
+      <Button
+        onPress={handleManualRefresh}
+        backgroundColor="$orange8"
+        color="$white"
+        fontSize="$3"
+        marginTop="$4"
+      >
+        Refresh Shop
+      </Button>
     </YStack>
   );
 }

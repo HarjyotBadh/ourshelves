@@ -1,12 +1,29 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Get the IP address
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /R /C:"IPv4 Address"') do (
-    set IP=%%a
-    set IP=!IP:~1!
-    goto :found
+REM Find the Wireless LAN adapter Wi-Fi section and get its IPv4 address
+set "found_wifi=0"
+for /f "tokens=*" %%a in ('ipconfig') do (
+    echo %%a | findstr /C:"Wireless LAN adapter Wi-Fi" >nul
+    if !errorlevel! equ 0 (
+        set "found_wifi=1"
+    )
+    if !found_wifi! equ 1 (
+        echo %%a | findstr /C:"IPv4 Address" >nul
+        if !errorlevel! equ 0 (
+            for /f "tokens=2 delims=:" %%b in ("%%a") do (
+                set "IP=%%b"
+                set "IP=!IP:~1!"
+                goto :found
+            )
+        )
+    )
 )
+
+:notfound
+echo Wireless LAN adapter Wi-Fi IPv4 address not found.
+pause
+exit /b 1
 
 :found
 REM Set the environment variable
