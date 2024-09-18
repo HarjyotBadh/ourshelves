@@ -19,7 +19,9 @@ export async function refreshShop() {
 
   // Calculate the next midnight in Eastern Time
   const easternTime = new Date(now.toDate().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  easternTime.setHours(24, 0, 0, 0); // Set to next midnight
+  easternTime.setDate(easternTime.getDate() + 1); // Move to the next day
+  easternTime.setHours(4, 0, 0, 0); // Set to midnight (00:00:00.000)
+  //lol actually setting to 4 am because time zones suck
   const nextRefresh = Timestamp.fromDate(easternTime);
 
   try {

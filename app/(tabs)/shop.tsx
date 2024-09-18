@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FlatList } from 'react-native';
-import { Text, View, Button, XStack, YStack } from 'tamagui';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { FlatList, Animated, Easing} from 'react-native';
+import { Text, View, Button, XStack, YStack, useTheme, Circle } from 'tamagui';
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { differenceInSeconds } from 'date-fns';
 import { db, functions } from "firebaseConfig";
 import { purchaseItem } from 'project-functions/shopFunctions';
 import Item, { ItemData } from 'components/item';
+import { Loader2 } from '@tamagui/lucide-icons';
+import { createAnimations } from '@tamagui/animations-react-native';
+import { AnimatePresence } from '@tamagui/animate-presence';
 
 // Interfaces
 interface ShopMetadata {
@@ -31,6 +34,8 @@ export default function ShopScreen() {
   const [refreshTime, setRefreshTime] = useState(0);
   const [canClaimDailyGift, setCanClaimDailyGift] = useState(false);
   const [dailyGiftTimer, setDailyGiftTimer] = useState(0);
+  const theme = useTheme();
+
   
   // TODO: Replace with actual user authentication
   const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
@@ -199,6 +204,27 @@ export default function ShopScreen() {
     }
   };
 
+  // Handle losing coins (for testing purposes)
+  const handleLoseCoins = async () => {
+    if (!user) return;
+
+    try {
+      const userDocRef = doc(db, "Users", userId);
+      const newCoins = user.coins - 50;
+      await updateDoc(userDocRef, { coins: newCoins });
+
+      setUser((prevUser) => prevUser ? {
+        ...prevUser,
+        coins: newCoins,
+      } : null);
+
+      alert("oh...okay, you lost 50 coins.");
+    } catch (error) {
+      console.error("Error earning coins:", error);
+      alert("Failed to lose coins. Please try again.");
+    }
+  };
+
   // Format time for display
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -224,8 +250,41 @@ export default function ShopScreen() {
     }
   };
 
+  const SpinningLoader = () => {
+    const spinValue = useRef(new Animated.Value(0)).current;
+  
+    useEffect(() => {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    }, []);
+  
+    const spin = spinValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg'],
+    });
+  
+    return (
+      <Animated.View style={{ transform: [{ rotate: spin }] }}>
+        <Loader2 size={48} color="$blue10" />
+      </Animated.View>
+    );
+  };
+
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <YStack flex={1} justifyContent="center" alignItems="center" backgroundColor="$pink6">
+        <SpinningLoader />
+        <Text fontSize="$6" fontWeight="bold" marginTop="$4" color="$blue10">
+          Shop Loading
+        </Text>
+      </YStack>
+    );
   }
 
   if (error) {
@@ -245,6 +304,16 @@ export default function ShopScreen() {
           <Text fontSize="$4" fontWeight="bold">
             🪙 {user.coins}
           </Text>
+          <Button
+            onPress={handleLoseCoins}
+            backgroundColor="$red8"
+            color="$white"
+            fontSize="$1"
+            paddingHorizontal="$2"
+            paddingVertical="$1"
+          >
+            -50 Coins (Test)
+          </Button>
           <Button
             onPress={handleEarnCoins}
             backgroundColor="$blue8"
