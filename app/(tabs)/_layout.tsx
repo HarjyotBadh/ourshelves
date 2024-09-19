@@ -15,15 +15,23 @@ export default function TabLayout() {
               backgroundColor: theme.background.val, // Use theme background color
           },
           headerTintColor: theme.color.val, // Use theme text color for header text
-      }}
-        >
+      }}>
+
       <Tabs.Screen
         name="profile_page"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <User color={color} />,
+          headerRight: () => (
+            <Link href="/profile-page-edit" asChild>
+                <Button mr="$2" bg="$yellow8" color="$yellow12">
+                  Edit Profile
+                </Button>
+            </Link>
+          ),
         }}
       />
+
       <Tabs.Screen
         name="shop"
         options={{
@@ -31,6 +39,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
         }}
       />
+
       <Tabs.Screen
           name="index"
           options={{
