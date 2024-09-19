@@ -72,8 +72,8 @@ export default function TabTwoScreen() {
         <Image
             // Eventually make this a set number of predefined icons
             source={{ width: 100, height: 100, uri: ProfilePage?.profilePic }}
-            width="50%"
-            height="20%"
+            width="53%"
+            height="22%"
         />
 
         <H4>About Me:</H4>
