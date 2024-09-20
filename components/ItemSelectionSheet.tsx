@@ -33,7 +33,6 @@ const ShelfRow = styled(XStack, {
 const ItemWrapper = styled(YStack, {
     alignItems: 'center',
     marginBottom: 10,
-    transitions: ['all 0.3s'],
 })
 
 const CategoryHeader = styled(XStack, {
@@ -88,9 +87,7 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({ isOpen, onClose
                                                     }}
                                                     showName={false}
                                                     showCost={false}
-                                                    style={{ width: 150, height: 150 }}
                                                 />
-                                                <Text fontSize={14} marginTop={5}>{item.description || 'No description available'}</Text>
                                             </ItemWrapper>
                                             <ShelfRow />
                                         </YStack>
