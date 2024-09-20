@@ -109,12 +109,16 @@ const RoomScreen = () => {
                     <HeaderButton unstyled />
                 </Header>
                 <Content>
-                    <Pressable onLongPress={handleLongPress} onPressOut={handlePressOut} delayLongPress={500}>
-                        <ScrollView scrollEventThrottle={16}>
-                            <YStack backgroundColor={BACKGROUND_COLOR} padding="$4" gap="$6">
-                                {shelves.map((shelfItems, index) => (
+                    <ScrollView scrollEventThrottle={16}>
+                        <YStack backgroundColor={BACKGROUND_COLOR} padding="$4" gap="$6">
+                            {shelves.map((shelfItems, index) => (
+                                <Pressable
+                                    key={index}
+                                    onLongPress={handleLongPress}
+                                    onPressOut={handlePressOut}
+                                    delayLongPress={500}
+                                >
                                     <Shelf
-                                        key={index}
                                         shelfNumber={index + 1}
                                         items={shelfItems}
                                         showPlusSigns={showPlusSigns}
@@ -124,10 +128,10 @@ const RoomScreen = () => {
                                         }}
                                         onItemRemove={handleItemRemove}
                                     />
-                                ))}
-                            </YStack>
-                        </ScrollView>
-                    </Pressable>
+                                </Pressable>
+                            ))}
+                        </YStack>
+                    </ScrollView>
                 </Content>
                 <ItemSelectionSheet
                     isOpen={isSheetOpen}
