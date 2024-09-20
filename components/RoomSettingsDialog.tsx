@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, Accordion, YStack, Button, Text, XStack, styled, Theme } from 'tamagui';
+import { Dialog, Accordion, YStack, Button, Text, XStack, styled } from 'tamagui';
 import { Settings, Users, Shield, ChevronDown, ChevronUp, X } from '@tamagui/lucide-icons';
 
 interface RoomSettingsDialogProps {
@@ -70,72 +70,70 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                     <YStack padding="$4" gap="$4">
                         <XStack justifyContent="space-between" alignItems="center">
                             <Dialog.Title>
-                                <Text fontSize="$6" fontWeight="bold">Room Settings</Text>
+                                <Text fontSize="$6" fontWeight="bold" color="$color">Room Settings</Text>
                             </Dialog.Title>
                             <Dialog.Close asChild>
                                 <Button size="$3" circular icon={X} />
                             </Dialog.Close>
                         </XStack>
 
-                        <Theme name="light">
-                            <Accordion type="multiple" overflow="hidden" width="100%">
-                                <StyledAccordionItem value="admins">
-                                    <StyledAccordionTrigger>
-                                        {({ open }) => (
-                                            <XStack alignItems="center">
-                                                <IconWrapper backgroundColor="$blue8">
-                                                    <Shield color="$blue11" />
-                                                </IconWrapper>
-                                                <Text flex={1} fontSize="$5" fontWeight="600">Admins</Text>
-                                                {open ? <ChevronUp /> : <ChevronDown />}
-                                            </XStack>
-                                        )}
-                                    </StyledAccordionTrigger>
-                                    <StyledAccordionContent>
-                                        <Text>Admin 1</Text>
-                                        <Text>Admin 2</Text>
-                                    </StyledAccordionContent>
-                                </StyledAccordionItem>
+                        <Accordion type="multiple" overflow="hidden" width="100%">
+                            <StyledAccordionItem value="admins">
+                                <StyledAccordionTrigger>
+                                    {({ open }) => (
+                                        <XStack alignItems="center">
+                                            <IconWrapper backgroundColor="$blue8">
+                                                <Shield color="$blue11" />
+                                            </IconWrapper>
+                                            <Text flex={1} fontSize="$5" fontWeight="600" color="$color">Admins</Text>
+                                            {open ? <ChevronUp color="$color" /> : <ChevronDown color="$color" />}
+                                        </XStack>
+                                    )}
+                                </StyledAccordionTrigger>
+                                <StyledAccordionContent>
+                                    <Text color="$color">Admin 1</Text>
+                                    <Text color="$color">Admin 2</Text>
+                                </StyledAccordionContent>
+                            </StyledAccordionItem>
 
-                                <StyledAccordionItem value="users">
-                                    <StyledAccordionTrigger>
-                                        {({ open }) => (
-                                            <XStack alignItems="center">
-                                                <IconWrapper backgroundColor="$green8">
-                                                    <Users color="$green11" />
-                                                </IconWrapper>
-                                                <Text flex={1} fontSize="$5" fontWeight="600">Users</Text>
-                                                {open ? <ChevronUp /> : <ChevronDown />}
-                                            </XStack>
-                                        )}
-                                    </StyledAccordionTrigger>
-                                    <StyledAccordionContent>
-                                        <Text>User 1</Text>
-                                        <Text>User 2</Text>
-                                        <Text>User 3</Text>
-                                    </StyledAccordionContent>
-                                </StyledAccordionItem>
+                            <StyledAccordionItem value="users">
+                                <StyledAccordionTrigger>
+                                    {({ open }) => (
+                                        <XStack alignItems="center">
+                                            <IconWrapper backgroundColor="$green8">
+                                                <Users color="$green11" />
+                                            </IconWrapper>
+                                            <Text flex={1} fontSize="$5" fontWeight="600" color="$color">Users</Text>
+                                            {open ? <ChevronUp color="$color" /> : <ChevronDown color="$color" />}
+                                        </XStack>
+                                    )}
+                                </StyledAccordionTrigger>
+                                <StyledAccordionContent>
+                                    <Text color="$color">User 1</Text>
+                                    <Text color="$color">User 2</Text>
+                                    <Text color="$color">User 3</Text>
+                                </StyledAccordionContent>
+                            </StyledAccordionItem>
 
-                                <StyledAccordionItem value="settings">
-                                    <StyledAccordionTrigger>
-                                        {({ open }) => (
-                                            <XStack alignItems="center">
-                                                <IconWrapper backgroundColor="$orange8">
-                                                    <Settings color="$orange11" />
-                                                </IconWrapper>
-                                                <Text flex={1} fontSize="$5" fontWeight="600">General Settings</Text>
-                                                {open ? <ChevronUp /> : <ChevronDown />}
-                                            </XStack>
-                                        )}
-                                    </StyledAccordionTrigger>
-                                    <StyledAccordionContent>
-                                        <Text>Setting 1: Value</Text>
-                                        <Text>Setting 2: Value</Text>
-                                        <Text>Setting 3: Value</Text>
-                                    </StyledAccordionContent>
-                                </StyledAccordionItem>
-                            </Accordion>
-                        </Theme>
+                            <StyledAccordionItem value="settings">
+                                <StyledAccordionTrigger>
+                                    {({ open }) => (
+                                        <XStack alignItems="center">
+                                            <IconWrapper backgroundColor="$orange8">
+                                                <Settings color="$orange11" />
+                                            </IconWrapper>
+                                            <Text flex={1} fontSize="$5" fontWeight="600" color="$color">General Settings</Text>
+                                            {open ? <ChevronUp color="$color" /> : <ChevronDown color="$color" />}
+                                        </XStack>
+                                    )}
+                                </StyledAccordionTrigger>
+                                <StyledAccordionContent>
+                                    <Text color="$color">Setting 1: Value</Text>
+                                    <Text color="$color">Setting 2: Value</Text>
+                                    <Text color="$color">Setting 3: Value</Text>
+                                </StyledAccordionContent>
+                            </StyledAccordionItem>
+                        </Accordion>
                     </YStack>
                 </Dialog.Content>
             </Dialog.Portal>
