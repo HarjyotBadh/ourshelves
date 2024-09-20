@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from "firebaseConfig";
 import { ExternalLink } from '@tamagui/lucide-icons'
 import { Link, Tabs } from 'expo-router'
-import { Anchor, TextArea, Button, useTheme, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
+import { Anchor, ScrollView, TextArea, Button, Square, Circle, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 import { ToastControl } from 'app/CurrentToast'
 import { ImageBackground } from 'react-native'
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // TODO - figure out how to change the header names and (tabs) back button
 
@@ -70,31 +71,25 @@ export default function TabTwoScreen() {
   }, []);
 
   return (
-    <YStack f={1} ai="center" gap="$4" px="$10" pt="$5">
-        <H2>User Profile</H2>
-        <Image
-            // Eventually make this a set number of predefined icons
-            source={{ width: 100, height: 100, uri: ProfilePage?.profilePic }}
-            width="57%"
-            height="21%"
-        />
-
-        {/* Button for Changing Profile Picture */}
-        <Link href="/profile-icons" asChild>
-            <Button mr="$2" bg="$yellow8" color="$yellow12">
-                Select Picture Icon
-            </Button>
-        </Link>
-        
-        {/* TODO - Fix to allow editing and saving of "About Me" Info*/}
-        <H4>About Me:</H4>
-        <TextArea height={170} width={300} borderWidth={2} />
-        
-
-        <XStack gap="$2" px="$2" pt="$5">
-        <H4>Number Rooms I'm In:</H4>
-        <SizableText theme="alt2" size="$8" fontWeight="800">1</SizableText>
-        </XStack>
-    </YStack>
+    <SafeAreaView>
+      <ScrollView
+      maxHeight={700}
+      width="100%"
+      backgroundColor="$background"
+      padding="$"
+      borderRadius="$4"
+    >
+      <XStack flexWrap="wrap" alignItems="center" justifyContent="center">
+        <Square margin="$4" size={120} backgroundColor="$red9" />
+        <Circle margin="$4" size={120} backgroundColor="$orange9" />
+        <Square margin="$4" size={120} backgroundColor="$yellow9" />
+        <Circle margin="$4" size={120} backgroundColor="$green9" />
+        <Square margin="$4" size={120} backgroundColor="$blue9" />
+        <Circle margin="$4" size={120} backgroundColor="$purple9" />
+        <Square margin="$4" size={120} backgroundColor="$pink9" />
+        <Circle margin="$4" size={120} backgroundColor="$red9" />
+      </XStack>
+    </ScrollView>
+  </SafeAreaView>
   )
 }
