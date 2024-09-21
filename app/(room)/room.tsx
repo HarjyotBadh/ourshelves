@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, Pressable } from 'react-native';
-import { YStack, View, styled, XStack, Text, Button, ScrollView } from 'tamagui';
+import {YStack, View, styled, XStack, Text, Button, ScrollView, Spinner} from 'tamagui';
 import { ArrowLeft, X } from '@tamagui/lucide-icons';
 import Feather from '@expo/vector-icons/Feather';
 import Shelf from '../../components/Shelf';
@@ -52,6 +52,13 @@ const HeaderButton = styled(Button, {
     alignItems: 'center',
 });
 
+const LoadingContainer = styled(YStack, {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: BACKGROUND_COLOR,
+});
+
 const RoomScreen = () => {
     const { roomId } = useLocalSearchParams<{ roomId: string }>();
     const [roomName, setRoomName] = useState<string>('');
@@ -61,9 +68,10 @@ const RoomScreen = () => {
     const [selectedSpot, setSelectedSpot] = useState<{ shelfId: string, position: number } | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [availableItems, setAvailableItems] = useState<ItemData[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
 
     const initializeShelves = async (roomId: string) => {
-        console.log("Creating shelves...");
         const batch = writeBatch(db);
         const newShelves: ShelfData[] = [];
         const shelfRefs: DocumentReference[] = [];
@@ -98,49 +106,56 @@ const RoomScreen = () => {
         const fetchRoomData = async () => {
             if (!roomId) return;
 
-            // Fetch room data
-            const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
-            if (roomDoc.exists()) {
-                const roomData = roomDoc.data();
-                setRoomName(roomData.name);
+            setIsLoading(true);
 
-                let shelvesData: ShelfData[];
-                if (roomData.shelfList && roomData.shelfList.length > 0) {
-                    // Fetch shelves using the references in shelfList
-                    const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
-                    shelvesData = shelfDocs.map(doc => ({ ...doc.data(), id: doc.id } as ShelfData));
+            try {
+                // Fetch room data
+                const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
+                if (roomDoc.exists()) {
+                    const roomData = roomDoc.data();
+                    setRoomName(roomData.name);
+
+                    let shelvesData: ShelfData[];
+                    if (roomData.shelfList && roomData.shelfList.length > 0) {
+                        // Fetch shelves using the references in shelfList
+                        const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
+                        shelvesData = shelfDocs.map(doc => ({ ...doc.data(), id: doc.id } as ShelfData));
+                    } else {
+                        // If shelfList doesn't exist or is empty, initialize shelves
+                        shelvesData = await initializeShelves(roomId);
+                    }
+
+                    console.log("# of shelves: " + shelvesData.length);
+
+                    // Fetch placed items for all shelves
+                    const placedItemRefs = shelvesData.flatMap(shelf => shelf.itemList);
+                    const placedItemDocs = await Promise.all(placedItemRefs.map(ref => getDoc(ref)));
+                    const placedItems = placedItemDocs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
+
+                    // Update shelves with fetched placed items
+                    const updatedShelvesData = shelvesData.map(shelf => ({
+                        ...shelf,
+                        placedItems: placedItems.filter(item => item.shelfId === shelf.id)
+                    }));
+
+                    setShelves(updatedShelvesData);
+
+                    // Fetch available items
+                    const itemsCollection = collection(db, 'Items');
+                    const itemsSnapshot = await getDocs(itemsCollection);
+                    const itemsList = itemsSnapshot.docs.map(doc => ({
+                        itemId: doc.id,
+                        ...doc.data()
+                    } as ItemData));
+                    setAvailableItems(itemsList);
                 } else {
-                    // If shelfList doesn't exist or is empty, initialize shelves
-                    shelvesData = await initializeShelves(roomId);
+                    console.error('Room not found');
                 }
-
-                console.log("# of shelves: " + shelvesData.length);
-
-                // Fetch placed items for all shelves
-                const placedItemRefs = shelvesData.flatMap(shelf => shelf.itemList);
-                const placedItemDocs = await Promise.all(placedItemRefs.map(ref => getDoc(ref)));
-                const placedItems = placedItemDocs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
-
-                // Update shelves with fetched placed items
-                const updatedShelvesData = shelvesData.map(shelf => ({
-                    ...shelf,
-                    placedItems: placedItems.filter(item => item.shelfId === shelf.id)
-                }));
-
-                setShelves(updatedShelvesData);
-            } else {
-                console.error('Room not found');
-                return;
+            } catch (error) {
+                console.error('Error fetching room data:', error);
+            } finally {
+                setIsLoading(false);
             }
-
-            // Fetch available items
-            const itemsCollection = collection(db, 'Items');
-            const itemsSnapshot = await getDocs(itemsCollection);
-            const itemsList = itemsSnapshot.docs.map(doc => ({
-                itemId: doc.id,
-                ...doc.data()
-            } as ItemData));
-            setAvailableItems(itemsList);
         };
 
         fetchRoomData();
@@ -220,6 +235,17 @@ const RoomScreen = () => {
     const handleGoBack = () => {
         router.push('(tabs)');
     };
+
+    if (isLoading) {
+        return (
+            <LoadingContainer>
+                <Spinner size="large" color="$blue10" />
+                <Text fontSize={18} color="$blue10" marginTop={20}>
+                    Room is loading...
+                </Text>
+            </LoadingContainer>
+        );
+    }
 
     return (
         <SafeAreaWrapper>
