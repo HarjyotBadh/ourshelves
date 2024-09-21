@@ -54,7 +54,7 @@ export default function RootLayout() {
                         router.replace("/register-display-name");
                         return;
                     } else {
-                        router.replace("/(room)/room");
+                        router.replace("/(tabs)");
                     }
                 } else {
                     console.log("User is signed out");

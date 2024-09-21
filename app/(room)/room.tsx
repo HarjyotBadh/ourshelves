@@ -4,12 +4,22 @@ import { YStack, View, styled, XStack, Text, Button, ScrollView } from 'tamagui'
 import { ArrowLeft, X } from '@tamagui/lucide-icons';
 import Feather from '@expo/vector-icons/Feather';
 import Shelf from '../../components/Shelf';
-import { router } from "expo-router";
+import {router, useLocalSearchParams} from "expo-router";
 import ItemSelectionSheet from '../../components/ItemSelectionSheet';
-import { ItemData } from '../../components/item';
 import RoomSettingsDialog from '../../components/RoomSettingsDialog';
-import { collection, getDocs } from "firebase/firestore";
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    writeBatch,
+    DocumentReference, updateDoc
+} from "firebase/firestore";
 import { db } from "firebaseConfig";
+import {PlacedItemData, ItemData } from "../../models/PlacedItemData";
+import {ShelfData} from "../../models/ShelfData";
 
 const BACKGROUND_COLOR = '$yellow2Light';
 const HEADER_BACKGROUND = '#8B4513';
@@ -43,26 +53,161 @@ const HeaderButton = styled(Button, {
 });
 
 const RoomScreen = () => {
-    const [shelves, setShelves] = useState<(ItemData | null)[][]>(Array(10).fill(null).map(() => [null, null, null]));
+    const { roomId } = useLocalSearchParams<{ roomId: string }>();
+    const [roomName, setRoomName] = useState<string>('');
+    const [shelves, setShelves] = useState<ShelfData[]>([]);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [selectedSpot, setSelectedSpot] = useState<{ shelfIndex: number, spotIndex: number } | null>(null);
+    const [selectedSpot, setSelectedSpot] = useState<{ shelfId: string, position: number } | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
-    const [items, setItems] = useState<ItemData[]>([]);
+    const [availableItems, setAvailableItems] = useState<ItemData[]>([]);
+
+    const initializeShelves = async (roomId: string) => {
+        console.log("Creating shelves...");
+        const batch = writeBatch(db);
+        const newShelves: ShelfData[] = [];
+        const shelfRefs: DocumentReference[] = [];
+
+        for (let i = 0; i < 10; i++) {
+            console.log("Creating shelf #", i + 1);
+            const newShelfRef = doc(collection(db, 'Shelves'));
+            const newShelfData: ShelfData = {
+                id: newShelfRef.id,
+                roomId,
+                position: i,
+                name: `Shelf ${i + 1}`,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                itemList: []
+            };
+            batch.set(newShelfRef, newShelfData);
+            newShelves.push(newShelfData);
+            shelfRefs.push(newShelfRef);
+        }
+
+        // Update the room document with the new shelf references
+        const roomRef = doc(db, 'Rooms', roomId);
+        batch.update(roomRef, { shelfList: shelfRefs });
+
+        await batch.commit();
+        console.log("All shelves created and room updated...");
+        return newShelves;
+    };
 
     useEffect(() => {
-        const fetchItems = async () => {
+        const fetchRoomData = async () => {
+            if (!roomId) return;
+
+            // Fetch room data
+            const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
+            if (roomDoc.exists()) {
+                const roomData = roomDoc.data();
+                setRoomName(roomData.name);
+
+                let shelvesData: ShelfData[];
+                if (roomData.shelfList && roomData.shelfList.length > 0) {
+                    // Fetch shelves using the references in shelfList
+                    const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
+                    shelvesData = shelfDocs.map(doc => ({ ...doc.data(), id: doc.id } as ShelfData));
+                } else {
+                    // If shelfList doesn't exist or is empty, initialize shelves
+                    shelvesData = await initializeShelves(roomId);
+                }
+
+                console.log("# of shelves: " + shelvesData.length);
+
+                // Fetch placed items for all shelves
+                const placedItemRefs = shelvesData.flatMap(shelf => shelf.itemList);
+                const placedItemDocs = await Promise.all(placedItemRefs.map(ref => getDoc(ref)));
+                const placedItems = placedItemDocs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
+
+                // Update shelves with fetched placed items
+                const updatedShelvesData = shelvesData.map(shelf => ({
+                    ...shelf,
+                    placedItems: placedItems.filter(item => item.shelfId === shelf.id)
+                }));
+
+                setShelves(updatedShelvesData);
+            } else {
+                console.error('Room not found');
+                return;
+            }
+
+            // Fetch available items
             const itemsCollection = collection(db, 'Items');
             const itemsSnapshot = await getDocs(itemsCollection);
             const itemsList = itemsSnapshot.docs.map(doc => ({
                 itemId: doc.id,
                 ...doc.data()
             } as ItemData));
-            setItems(itemsList);
+            setAvailableItems(itemsList);
         };
 
-        fetchItems();
-    }, []);
+        fetchRoomData();
+    }, [roomId]);
+
+    const handleItemSelect = async (item: ItemData) => {
+        if (selectedSpot) {
+            const { shelfId, position } = selectedSpot;
+            const shelfIndex = shelves.findIndex(shelf => shelf.id === shelfId);
+            if (shelfIndex === -1) return;
+
+            // Add new placed item
+            const newPlacedItem: Omit<PlacedItemData, 'id'> = {
+                shelfId,
+                itemId: item.itemId,
+                position,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+
+            console.log("adding item...");
+            const docRef = await addDoc(collection(db, 'PlacedItems'), newPlacedItem);
+            const addedItem: PlacedItemData = { ...newPlacedItem, id: docRef.id };
+
+            // Update shelf's itemList
+            const updatedShelves = [...shelves];
+            const shelf = updatedShelves[shelfIndex];
+            shelf.itemList.push(docRef);
+            shelf.placedItems = [...(shelf.placedItems || []), addedItem];
+
+            // Update Firestore
+            await updateDoc(doc(db, 'Shelves', shelfId), {
+                itemList: shelf.itemList,
+                updatedAt: new Date()
+            });
+
+            setShelves(updatedShelves);
+            setIsSheetOpen(false);
+            setSelectedSpot(null);
+        }
+    };
+
+    const handleItemRemove = async (shelfId: string, position: number) => {
+        const shelfIndex = shelves.findIndex(shelf => shelf.id === shelfId);
+        if (shelfIndex === -1) return;
+
+        const shelf = shelves[shelfIndex];
+        const itemToRemove = shelf.placedItems?.find(item => item.position === position);
+        if (itemToRemove) {
+            // Remove from Firestore
+            await deleteDoc(doc(db, 'PlacedItems', itemToRemove.id));
+
+            // Update shelf's itemList and placedItems
+            const updatedShelves = [...shelves];
+            const updatedShelf = updatedShelves[shelfIndex];
+            updatedShelf.itemList = updatedShelf.itemList.filter(ref => ref.id !== itemToRemove.id);
+            updatedShelf.placedItems = updatedShelf.placedItems?.filter(item => item.id !== itemToRemove.id);
+
+            // Update Firestore
+            await updateDoc(doc(db, 'Shelves', shelfId), {
+                itemList: updatedShelf.itemList,
+                updatedAt: new Date()
+            });
+
+            setShelves(updatedShelves);
+        }
+    };
 
     const handleLongPress = () => {
         setIsEditMode(true);
@@ -70,23 +215,6 @@ const RoomScreen = () => {
 
     const disableEditMode = () => {
         setIsEditMode(false);
-    };
-
-    const handleItemSelect = (item: ItemData) => {
-        if (selectedSpot) {
-            const { shelfIndex, spotIndex } = selectedSpot;
-            const newShelves = [...shelves];
-            newShelves[shelfIndex][spotIndex] = item;
-            setShelves(newShelves);
-            setIsSheetOpen(false);
-            setSelectedSpot(null);
-        }
-    };
-
-    const handleItemRemove = (shelfIndex: number, spotIndex: number) => {
-        const newShelves = [...shelves];
-        newShelves[shelfIndex][spotIndex] = null;
-        setShelves(newShelves);
     };
 
     const handleGoBack = () => {
@@ -101,7 +229,7 @@ const RoomScreen = () => {
                         <ArrowLeft color="white" size={24}/>
                     </HeaderButton>
                     <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
-                        Room Name
+                        {roomName}
                     </Text>
                     {isEditMode ? (
                         <HeaderButton unstyled onPress={disableEditMode}>
@@ -117,17 +245,20 @@ const RoomScreen = () => {
                     <Pressable onLongPress={handleLongPress} delayLongPress={500}>
                         <ScrollView scrollEventThrottle={16}>
                             <YStack backgroundColor={BACKGROUND_COLOR} padding="$4" gap="$6">
-                                {shelves.map((shelfItems, index) => (
+                                {shelves.map((shelf, index) => (
                                     <Shelf
-                                        key={index}
+                                        key={shelf.id}
                                         shelfNumber={index + 1}
-                                        items={shelfItems}
+                                        items={[0, 1, 2].map(position => {
+                                            const placedItem = shelf.placedItems?.find(item => item.position === position);
+                                            return placedItem ? availableItems.find(item => item.itemId === placedItem.itemId) || null : null;
+                                        })}
                                         showPlusSigns={isEditMode}
-                                        onSpotPress={(spotIndex) => {
-                                            setSelectedSpot({ shelfIndex: index, spotIndex });
+                                        onSpotPress={(position) => {
+                                            setSelectedSpot({ shelfId: shelf.id, position });
                                             setIsSheetOpen(true);
                                         }}
-                                        onItemRemove={handleItemRemove}
+                                        onItemRemove={(position) => handleItemRemove(shelf.id, position)}
                                     />
                                 ))}
                             </YStack>
@@ -138,7 +269,7 @@ const RoomScreen = () => {
                     isOpen={isSheetOpen}
                     onClose={() => setIsSheetOpen(false)}
                     onSelectItem={handleItemSelect}
-                    items={items}
+                    items={availableItems}
                 />
                 <RoomSettingsDialog
                     open={isSettingsOpen}
