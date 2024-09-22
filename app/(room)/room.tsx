@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, Pressable } from 'react-native';
-import {YStack, View, styled, XStack, Text, Button, ScrollView, Spinner} from 'tamagui';
+import {YStack, View, styled, XStack, Text, Button, ScrollView, Image, Progress, Spinner} from 'tamagui';
 import { ArrowLeft, X } from '@tamagui/lucide-icons';
 import Feather from '@expo/vector-icons/Feather';
 import Shelf from '../../components/Shelf';
@@ -57,6 +57,7 @@ const LoadingContainer = styled(YStack, {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: BACKGROUND_COLOR,
+    padding: 20,
 });
 
 const RoomScreen = () => {
@@ -69,6 +70,7 @@ const RoomScreen = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [availableItems, setAvailableItems] = useState<ItemData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadingProgress, setLoadingProgress] = useState(0);
 
 
     const initializeShelves = async (roomId: string) => {
@@ -102,11 +104,35 @@ const RoomScreen = () => {
         return newShelves;
     };
 
+    const preloadImages = async (items: ItemData[]) => {
+        const totalImages = items.length;
+        let loadedImages = 0;
+
+        const preloadPromises = items.map((item) => {
+            return new Promise((resolve) => {
+                Image.prefetch(item.imageUri)
+                    .then(() => {
+                        loadedImages++;
+                        setLoadingProgress((loadedImages / totalImages) * 100);
+                        resolve(null);
+                    })
+                    .catch(() => {
+                        loadedImages++;
+                        setLoadingProgress((loadedImages / totalImages) * 100);
+                        resolve(null);
+                    });
+            });
+        });
+
+        await Promise.all(preloadPromises);
+    };
+
     useEffect(() => {
         const fetchRoomData = async () => {
             if (!roomId) return;
 
             setIsLoading(true);
+            setLoadingProgress(0);
 
             try {
                 // Fetch room data
@@ -117,22 +143,18 @@ const RoomScreen = () => {
 
                     let shelvesData: ShelfData[];
                     if (roomData.shelfList && roomData.shelfList.length > 0) {
-                        // Fetch shelves using the references in shelfList
                         const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
                         shelvesData = shelfDocs.map(doc => ({ ...doc.data(), id: doc.id } as ShelfData));
                     } else {
-                        // If shelfList doesn't exist or is empty, initialize shelves
                         shelvesData = await initializeShelves(roomId);
                     }
 
                     console.log("# of shelves: " + shelvesData.length);
 
-                    // Fetch placed items for all shelves
                     const placedItemRefs = shelvesData.flatMap(shelf => shelf.itemList);
                     const placedItemDocs = await Promise.all(placedItemRefs.map(ref => getDoc(ref)));
                     const placedItems = placedItemDocs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
 
-                    // Update shelves with fetched placed items
                     const updatedShelvesData = shelvesData.map(shelf => ({
                         ...shelf,
                         placedItems: placedItems.filter(item => item.shelfId === shelf.id)
@@ -147,7 +169,14 @@ const RoomScreen = () => {
                         itemId: doc.id,
                         ...doc.data()
                     } as ItemData));
+
+                    // Preload images
+                    await preloadImages(itemsList);
+
                     setAvailableItems(itemsList);
+
+                    // Add a one-second delay
+                    await new Promise(resolve => setTimeout(resolve, 500));
                 } else {
                     console.error('Room not found');
                 }
@@ -240,9 +269,12 @@ const RoomScreen = () => {
         return (
             <LoadingContainer>
                 <Spinner size="large" color="$blue10" />
-                <Text fontSize={18} color="$blue10" marginTop={20}>
+                <Text fontSize={18} color="$blue10" marginTop={20} marginBottom={10}>
                     Room is loading...
                 </Text>
+                <Progress value={loadingProgress} width={200}>
+                    <Progress.Indicator animation="bouncy" backgroundColor="$blue10" />
+                </Progress>
             </LoadingContainer>
         );
     }
