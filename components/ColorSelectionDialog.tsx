@@ -7,7 +7,7 @@ interface ColorSelectionDialogProps {
     onColorSelect: (color: string) => void;
 }
 
-const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+const colors = ['$red10', '$blue10', '$green10', '$yellow10', '$purple10', '$orange10'];
 
 export const ColorSelectionDialog: React.FC<ColorSelectionDialogProps> = ({
                                                                               open,

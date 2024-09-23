@@ -1,5 +1,3 @@
-import { DocumentReference } from 'firebase/firestore';
-
 export interface PlacedItemData {
     id: string;
     shelfId: string;
@@ -7,6 +5,7 @@ export interface PlacedItemData {
     position: number;
     createdAt: Date;
     updatedAt: Date;
+    itemData: Record<string, any>;
 }
 
 export interface ItemData {
@@ -14,16 +13,4 @@ export interface ItemData {
     cost: number;
     imageUri: string;
     name: string;
-}
-
-export interface CreatePlacedItemData {
-    shelfId: string;
-    itemId: string;
-    position: number;
-    createdBy: DocumentReference;
-}
-
-export interface UpdatePlacedItemData {
-    position?: number;
-    updatedBy: DocumentReference;
 }

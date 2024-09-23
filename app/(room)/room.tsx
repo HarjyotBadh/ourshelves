@@ -20,6 +20,7 @@ import {
 import { db } from "firebaseConfig";
 import {PlacedItemData, ItemData } from "../../models/PlacedItemData";
 import {ShelfData} from "../../models/ShelfData";
+import items from "../../components/items";
 
 const BACKGROUND_COLOR = '$yellow2Light';
 const HEADER_BACKGROUND = '#8B4513';
@@ -196,16 +197,29 @@ const RoomScreen = () => {
             const shelfIndex = shelves.findIndex(shelf => shelf.id === shelfId);
             if (shelfIndex === -1) return;
 
+            // Get the initial item data from the item's component
+            const ItemComponent = items[item.itemId];
+            let initialItemData = {};
+            if (ItemComponent && ItemComponent.getInitialData) {
+                initialItemData = ItemComponent.getInitialData();
+            }
+
             // Add new placed item
             const newPlacedItem: Omit<PlacedItemData, 'id'> = {
                 shelfId,
                 itemId: item.itemId,
                 position,
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                itemData: {
+                    ...initialItemData,
+                    name: item.name,
+                    imageUri: item.imageUri
+                }
             };
 
-            console.log("adding item...");
+            // print the itemData
+            console.log("itemData: ", newPlacedItem.itemData);
             const docRef = await addDoc(collection(db, 'PlacedItems'), newPlacedItem);
             const addedItem: PlacedItemData = { ...newPlacedItem, id: docRef.id };
 
@@ -246,6 +260,34 @@ const RoomScreen = () => {
             // Update Firestore
             await updateDoc(doc(db, 'Shelves', shelfId), {
                 itemList: updatedShelf.itemList,
+                updatedAt: new Date()
+            });
+
+            setShelves(updatedShelves);
+        }
+    };
+
+    const handleItemDataUpdate = async (shelfId: string, position: number, newItemData: Record<string, any>) => {
+        const shelfIndex = shelves.findIndex(shelf => shelf.id === shelfId);
+        if (shelfIndex === -1) return;
+
+        const shelf = shelves[shelfIndex];
+        const placedItem = shelf.placedItems?.find(item => item.position === position);
+        if (placedItem) {
+            // Update local state
+            const updatedShelves = [...shelves];
+            const updatedPlacedItem = {
+                ...placedItem,
+                itemData: { ...placedItem.itemData, ...newItemData },
+                updatedAt: new Date()
+            };
+            updatedShelves[shelfIndex].placedItems = updatedShelves[shelfIndex].placedItems?.map(item =>
+                item.id === placedItem.id ? updatedPlacedItem : item
+            );
+
+            // Update Firestore
+            await updateDoc(doc(db, 'PlacedItems', placedItem.id), {
+                itemData: updatedPlacedItem.itemData,
                 updatedAt: new Date()
             });
 
@@ -309,7 +351,7 @@ const RoomScreen = () => {
                                         shelfNumber={index + 1}
                                         items={[0, 1, 2].map(position => {
                                             const placedItem = shelf.placedItems?.find(item => item.position === position);
-                                            return placedItem ? availableItems.find(item => item.itemId === placedItem.itemId) || null : null;
+                                            return placedItem || null;
                                         })}
                                         showPlusSigns={isEditMode}
                                         onSpotPress={(position) => {
@@ -317,6 +359,7 @@ const RoomScreen = () => {
                                             setIsSheetOpen(true);
                                         }}
                                         onItemRemove={(position) => handleItemRemove(shelf.id, position)}
+                                        onItemDataUpdate={(position, newItemData) => handleItemDataUpdate(shelf.id, position, newItemData)}
                                     />
                                 ))}
                             </YStack>

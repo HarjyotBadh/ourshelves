@@ -11,16 +11,3 @@ export interface ShelfData {
     itemList: DocumentReference[];
     placedItems?: PlacedItemData[];
 }
-
-export interface CreateShelfData {
-    roomId: string;
-    position: number;
-    name: string;
-    itemList: DocumentReference[];
-}
-
-export interface UpdateShelfData {
-    name?: string;
-    position?: number;
-    itemList?: DocumentReference[];
-}

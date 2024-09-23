@@ -1,17 +1,18 @@
 import React from 'react';
 import { XStack, YStack, Text } from 'tamagui';
 import ShelfItems from './ShelfItems';
-import { ItemData } from './item';
+import { PlacedItemData } from '../models/PlacedItemData';
 
 interface ShelfProps {
     shelfNumber: number;
-    items: (ItemData | null)[];
+    items: (PlacedItemData | null)[];
     showPlusSigns: boolean;
-    onSpotPress: (spotIndex: number) => void;
-    onItemRemove: (shelfIndex: number, spotIndex: number) => void;
+    onSpotPress: (position: number) => void;
+    onItemRemove: (position: number) => void;
+    onItemDataUpdate: (position: number, newItemData: Record<string, any>) => void;
 }
 
-const Shelf: React.FC<ShelfProps> = ({ shelfNumber, items, showPlusSigns, onSpotPress, onItemRemove }) => {
+const Shelf: React.FC<ShelfProps> = ({ shelfNumber, items, showPlusSigns, onSpotPress, onItemRemove, onItemDataUpdate }) => {
     return (
         <YStack>
             <XStack
@@ -26,7 +27,8 @@ const Shelf: React.FC<ShelfProps> = ({ shelfNumber, items, showPlusSigns, onSpot
                     items={items}
                     showPlusSigns={showPlusSigns}
                     onSpotPress={onSpotPress}
-                    onItemRemove={(spotIndex) => onItemRemove(shelfNumber - 1, spotIndex)}
+                    onItemRemove={onItemRemove}
+                    onItemDataUpdate={onItemDataUpdate}
                 />
             </XStack>
             <XStack
