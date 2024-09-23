@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet, Alert } from 'react-native';
+import { db } from '../firebaseConfig';
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth } from '../firebaseConfig';
 
-const HomeTile = ({ id, isAdmin }) => {
+const HomeTile = ({ id, name, isAdmin }) => {
+    const [containerVisible, setContainerVisible] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [bgColor, setBgColor] = useState('');
 
@@ -21,7 +25,7 @@ const HomeTile = ({ id, isAdmin }) => {
     }, []);
 
     const handlePress = () => {
-        console.log('Go to room with id:', id);
+        console.log('Go to room');
     };
 
     const handleLongPress = () => {
@@ -29,15 +33,71 @@ const HomeTile = ({ id, isAdmin }) => {
     };
 
     const handleOptionSelect = (option) => {
-        console.log(`Selected option: ${option}`);
+        if (option === 'addtags') {
+            console.log('Add tags');
+        } else if (option === 'leaveroom') {
+            console.log('Leave room');
+
+            Alert.alert(
+                'Leave Room',
+                'Are you sure you want to leave "' + name + '"?',
+                [
+                    {
+                        text: 'No',
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'Yes',
+                        onPress: leaveRoom,
+                    }
+                ]
+            )
+        } else if (option === 'deleteroom') {
+            console.log('Delete room');
+        }
+
+
         setModalVisible(false);
     };
 
+    const leaveRoom = async () => {
+        console.log('Leaving room');
+        // the id passed into the component is of the format 'Rooms/<id>'. using this, go into our firestore database and remove this id from the array in
+
+        try {
+            const userDocRef = doc(db, 'Users', auth.currentUser.uid);
+            console.log(userDocRef);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                console.log('Short document data: ', userDoc.data().rooms[0].path);
+                const rooms = userDoc.data().rooms;
+                for (let i = 0; i < rooms.length; i++) {
+                    if (rooms[i].path === id) {
+                        rooms.splice(i, i+1);
+                        await updateDoc(userDocRef, { rooms });
+                        console.log('Room removed from user document');
+                        
+                        Alert.alert(
+                            'Room Left',
+                            'Left room "' + name + '".',
+                        )
+
+                        setContainerVisible(false);
+                        break;
+                    }
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
     return (
+        (containerVisible) &&
         <View style={styles.container}>
             <Pressable onPress={handlePress} onLongPress={handleLongPress} style={styles.pressable}>
                 <View style={[styles.pressableSquare, { backgroundColor: bgColor }]} />
-                <Text style={styles.pressableText}>Room {id}</Text>
+                <Text style={styles.pressableText}>{name}</Text>
             </Pressable>
 
             <Modal
@@ -46,9 +106,10 @@ const HomeTile = ({ id, isAdmin }) => {
                 onRequestClose={() => setModalVisible(false)}
                 animationType="slide"
             >
+
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>{id}</Text>
+                        <Text style={styles.modalTitle}>{name}</Text>
 
                         {isAdmin && (
                             <TouchableOpacity
@@ -95,7 +156,7 @@ const styles = StyleSheet.create({
     pressableSquare: {
         width: 150,
         height: 150,
-        borderRadius: 15,
+        borderRadius: 16,
     },
     pressableText: {
         color: '#000',
