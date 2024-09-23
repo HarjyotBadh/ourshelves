@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { FlatList, Animated, Easing } from "react-native";
-import { Image, Text, View, Button, XStack, YStack, useTheme, styled, Spinner, Progress } from "tamagui";
+import { FlatList, ScrollView } from "react-native";
+import { Image, Text, View, Button, XStack, YStack, useTheme, styled, Spinner, Progress, Circle } from "tamagui";
+import { LinearGradient } from "tamagui/linear-gradient";
 import {
   getFirestore,
   collection,
@@ -14,9 +15,9 @@ import {
 import { httpsCallable } from "firebase/functions";
 import { differenceInSeconds } from "date-fns";
 import { db, functions } from "firebaseConfig";
-import { purchaseItem } from "project-functions/shopFunctions";
+import { purchaseItem, purchaseShelfColor, purchaseWallpaper } from "project-functions/shopFunctions";
 import Item, { ItemData } from "components/item";
-import { Loader2 } from "@tamagui/lucide-icons";
+import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
 
 const BACKGROUND_COLOR = '$pink6';
 
@@ -25,12 +26,32 @@ interface ShopMetadata {
   lastRefresh: Timestamp;
   nextRefresh: Timestamp;
   items: string[];
+  wallpapers: string[];
+  shelfColors: string[];
+}
+
+interface WallpaperData {
+  id: string;
+  name: string;
+  cost: number;
+  gradientColors: string[];
+  description?: string;
+}
+
+interface ShelfColorData {
+  id: string;
+  name: string;
+  cost: number;
+  color: string;
+  description?: string;
 }
 
 interface User {
   userId: string;
   coins: number;
   inventory: DocumentReference[];
+  wallpapers: DocumentReference[];
+  shelfColors: DocumentReference[];
   lastDailyGiftClaim: Timestamp | null;
 }
 
@@ -78,8 +99,52 @@ const LoadingContainer = styled(YStack, {
   flex: 1,
   justifyContent: 'center',
   alignItems: 'center',
-  backgroundColor: 'BACKGROUND_COLOR',
+  backgroundColor: BACKGROUND_COLOR,
   padding: 20,
+});
+
+
+const SectionHeader = styled(XStack, {
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingVertical: '$2',
+  paddingHorizontal: '$4',
+  backgroundColor: '$pink7',
+  borderRadius: '$2',
+  marginBottom: '$2',
+});
+
+const SectionTitle = styled(Text, {
+  fontSize: '$6',
+  fontWeight: 'bold',
+});
+
+interface CollapsibleSectionProps {
+  title: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, isExpanded, onToggle, children }) => {
+  return (
+    <View marginBottom="$4">
+      <SectionHeader onPress={onToggle}>
+        <SectionTitle>{title}</SectionTitle>
+        {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+      </SectionHeader>
+      {isExpanded && children}
+    </View>
+  );
+};
+
+const ShopContainer = styled(ScrollView, {
+  flex: 1,
+  backgroundColor: "$pink6",
+});
+
+const ContentContainer = styled(YStack, {
+  padding: "$4",
 });
 
 export default function ShopScreen() {
@@ -94,6 +159,14 @@ export default function ShopScreen() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [demoRefreshTime, setDemoRefreshTime] = useState<number | null>(null); //for sprint 1 testing
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [wallpapers, setWallpapers] = useState<WallpaperData[]>([]);
+  const [shelfColors, setShelfColors] = useState<ShelfColorData[]>([]);
+  const [expandedSections, setExpandedSections] = useState({
+    dailyGift: true,
+    shopItems: true,
+    wallpapers: true,
+    shelfColors: true,
+  });
 
   // TODO: Replace with actual user authentication
   const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
@@ -120,6 +193,13 @@ export default function ShopScreen() {
     setIsDemoMode(true);
   };
 
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   // Fetch all necessary data
   const fetchData = useCallback(async () => {
     try {
@@ -133,24 +213,30 @@ export default function ShopScreen() {
       const now = new Date();
       const nextRefreshDate = shopMetadata.nextRefresh.toDate();
 
-      // Fetch items
-      const itemsCollectionRef = collection(db, "Items");
-      const itemsSnapshot = await getDocs(itemsCollectionRef);
-      const allItems = itemsSnapshot.docs.map(
-        (doc) =>
-          ({
-            itemId: doc.id,
-            ...doc.data(),
-          } as ItemData)
-      );
 
-      // Filter items based on shopMetadata.items
-      const fetchedItems = allItems.filter((item) =>
-        shopMetadata.items.includes(item.itemId)
-      );
+      // Fetch items
+      const fetchedItems = await Promise.all(shopMetadata.items.map(async (itemId) => {
+        const itemDoc = await getDoc(doc(db, "Items", itemId));
+        return { itemId, ...itemDoc.data() } as ItemData;
+      }));
+
+      // Fetch wallpapers
+      const fetchedWallpapers = await Promise.all(shopMetadata.wallpapers.map(async (wallpaperId) => {
+        const wallpaperDoc = await getDoc(doc(db, "Wallpapers", wallpaperId));
+        return { id: wallpaperId, ...wallpaperDoc.data() } as WallpaperData;
+      }));
+
+      // Fetch shelf colors
+      const fetchedShelfColors = await Promise.all(shopMetadata.shelfColors.map(async (shelfColorId) => {
+        const shelfColorDoc = await getDoc(doc(db, "ShelfColors", shelfColorId));
+        return { id: shelfColorId, ...shelfColorDoc.data() } as ShelfColorData;
+      }));
+
       await preloadImages(fetchedItems, setLoadingProgress);
 
       setItems(fetchedItems);
+      setWallpapers(fetchedWallpapers);
+      setShelfColors(fetchedShelfColors);
 
 
       // Fetch user data
@@ -313,6 +399,42 @@ export default function ShopScreen() {
     }
   };
 
+  const handlePurchaseWallpaper = async (wallpaper: WallpaperData) => {
+    if (!user) return;
+    const result = await purchaseWallpaper(wallpaper);
+    if (result.success) {
+      setUser(prevUser => {
+        if (!prevUser) return null;
+        return {
+          ...prevUser,
+          coins: prevUser.coins - wallpaper.cost,
+          wallpapers: [...prevUser.wallpapers, doc(db, "Wallpapers", wallpaper.id)],
+        };
+      });
+      alert("Wallpaper purchased successfully!");
+    } else {
+      alert(result.message);
+    }
+  };
+
+  const handlePurchaseShelfColor = async (shelfColor: ShelfColorData) => {
+    if (!user) return;
+    const result = await purchaseShelfColor(shelfColor);
+    if (result.success) {
+      setUser(prevUser => {
+        if (!prevUser) return null;
+        return {
+          ...prevUser,
+          coins: prevUser.coins - shelfColor.cost,
+          shelfColors: [...prevUser.shelfColors, doc(db, "ShelfColors", shelfColor.id)],
+        };
+      });
+      alert("Shelf color purchased successfully!");
+    } else {
+      alert(result.message);
+    }
+  };
+
   // Handle earning coins (for testing purposes)
   const handleEarnCoins = async () => {
     if (!user) return;
@@ -389,6 +511,131 @@ export default function ShopScreen() {
     }
   };
 
+  const renderDailyGift = () => (
+    <View width="100%" alignItems="center" marginBottom="$4">
+      <Item
+        item={{
+          itemId: "daily-gift",
+          name: "Daily Gift",
+          imageUri:
+            "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/items%2Fdailygift.png?alt=media&token=46ad85b5-9fb5-4ef0-b32f-1894091e82f3",
+          cost: 0,
+        }}
+        showName={true}
+        showCost={false}
+      />
+      <View
+        height={20}
+        marginTop="$1"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Text fontSize="$2" color="$yellow10">
+          Free!
+        </Text>
+      </View>
+      {canClaimDailyGift ? (
+        <Button
+          onPress={handleDailyGiftClaim}
+          backgroundColor="$green8"
+          color="$white"
+          fontSize="$2"
+          marginTop="$1"
+        >
+          Claim
+        </Button>
+      ) : (
+        <Text fontSize="$2" textAlign="center" marginTop="$1">
+          {isDemoMode ? `Demo: ${formatTime(demoRefreshTime)}` : formatTime(dailyGiftTimer)}
+        </Text>
+      )}
+    </View>
+  );
+
+  const renderShopItems = () => (
+    <FlatList
+      data={items}
+      renderItem={({ item }: { item: ItemData }) => (
+        <View width="30%" marginBottom="$4">
+          <Item item={item} showName={true} showCost={true} />
+          <Button
+            onPress={() => handlePurchase(item)}
+            backgroundColor={
+              user && user.coins >= item.cost ? "$green8" : "$red8"
+            }
+            color="$white"
+            fontSize="$2"
+            marginTop="$1"
+          >
+            Buy
+          </Button>
+        </View>
+      )}
+      keyExtractor={(item) => item.itemId}
+      numColumns={3}
+      columnWrapperStyle={{ justifyContent: "space-between" }}
+      scrollEnabled={false} // Disable scrolling for nested FlatList
+    />
+  );
+
+  const renderWallpapers = () => (
+    <FlatList
+      data={wallpapers}
+      renderItem={({ item }: { item: WallpaperData }) => (
+        <View width="30%" marginBottom="$4" alignItems="center">
+          <LinearGradient
+            width={80}
+            height={80}
+            borderRadius={40}
+            colors={item.gradientColors}
+          />
+          <Text fontSize="$2" marginTop="$1">{item.name}</Text>
+          <Text fontSize="$2" color="$yellow10">{item.cost} 🪙</Text>
+          <Button
+            onPress={() => handlePurchaseWallpaper(item)}
+            backgroundColor={user && user.coins >= item.cost ? "$green8" : "$red8"}
+            color="$white"
+            fontSize="$2"
+            marginTop="$1"
+          >
+            Buy
+          </Button>
+        </View>
+      )}
+      keyExtractor={(item) => item.id}
+      numColumns={3}
+      columnWrapperStyle={{ justifyContent: "space-between" }}
+      scrollEnabled={false}
+    />
+  );
+
+  const renderShelfColors = () => (
+    <FlatList
+      data={shelfColors}
+      renderItem={({ item }: { item: ShelfColorData }) => (
+        <View width="30%" marginBottom="$4" alignItems="center">
+          <Circle size={80} backgroundColor={item.color} />
+          <Text fontSize="$2" marginTop="$1">{item.name}</Text>
+          <Text fontSize="$2" color="$yellow10">{item.cost} 🪙</Text>
+          <Button
+            onPress={() => handlePurchaseShelfColor(item)}
+            backgroundColor={user && user.coins >= item.cost ? "$green8" : "$red8"}
+            color="$white"
+            fontSize="$2"
+            marginTop="$1"
+          >
+            Buy
+          </Button>
+        </View>
+      )}
+      keyExtractor={(item) => item.id}
+      numColumns={3}
+      columnWrapperStyle={{ justifyContent: "space-between" }}
+      scrollEnabled={false}
+    />
+  );
+
+
 
   if (loading) {
     return (
@@ -409,156 +656,123 @@ export default function ShopScreen() {
   }
 
   return (
-    <YStack flex={1} padding="$4" backgroundColor="$pink6">
-      <Text
-        fontSize="$8"
-        fontWeight="bold"
-        textAlign="center"
-        marginBottom="$2"
-      >
-        OurShelves
-      </Text>
-      <Text
-        fontSize="$6"
-        fontWeight="bold"
-        textAlign="center"
-        marginBottom="$4"
-      >
-        Shop
-      </Text>
-      {user && (
-        <XStack
-          justifyContent="space-between"
-          alignItems="center"
+    <ShopContainer>
+      <ContentContainer>
+        <Text
+          fontSize="$8"
+          fontWeight="bold"
+          textAlign="center"
+          marginBottom="$2"
+        >
+          OurShelves
+        </Text>
+        <Text
+          fontSize="$6"
+          fontWeight="bold"
+          textAlign="center"
           marginBottom="$4"
         >
-          <Text fontSize="$4" fontWeight="bold">
-            🪙 {user.coins}
-          </Text>
-          <Button
-            onPress={handleLoseCoins}
-            backgroundColor="$red8"
-            color="$white"
-            fontSize="$1"
-            paddingHorizontal="$2"
-            paddingVertical="$1"
+          Shop
+        </Text>
+        {user && (
+          <XStack
+            justifyContent="space-between"
+            alignItems="center"
+            marginBottom="$4"
           >
-            -50 Coins (Test)
+            <Text fontSize="$4" fontWeight="bold">
+              🪙 {user.coins}
+            </Text>
+            <Button
+              onPress={handleLoseCoins}
+              backgroundColor="$red8"
+              color="$white"
+              fontSize="$1"
+              paddingHorizontal="$2"
+              paddingVertical="$1"
+            >
+              -50 Coins (Test)
+            </Button>
+            <Button
+              onPress={handleEarnCoins}
+              backgroundColor="$blue8"
+              color="$white"
+              fontSize="$1"
+              paddingHorizontal="$2"
+              paddingVertical="$1"
+            >
+              +50 Coins (Test)
+            </Button>
+          </XStack>
+        )}
+
+<CollapsibleSection
+          title="Daily Gift"
+          isExpanded={expandedSections.dailyGift}
+          onToggle={() => toggleSection('dailyGift')}
+        >
+          {renderDailyGift()}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="Shop Items"
+          isExpanded={expandedSections.shopItems}
+          onToggle={() => toggleSection('shopItems')}
+        >
+          {renderShopItems()}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="Wallpapers"
+          isExpanded={expandedSections.wallpapers}
+          onToggle={() => toggleSection('wallpapers')}
+        >
+          {renderWallpapers()}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="Shelf Colors"
+          isExpanded={expandedSections.shelfColors}
+          onToggle={() => toggleSection('shelfColors')}
+        >
+          {renderShelfColors()}
+        </CollapsibleSection>
+
+        <Text fontSize="$4" textAlign="center" marginTop="$4">
+          Shop Refreshes In:
+        </Text>
+        <Text
+          fontSize="$5"
+          fontWeight="bold"
+          textAlign="center"
+          marginBottom="$4"
+        >
+          {isDemoMode ? `Demo: ${formatTime(demoRefreshTime)}` : formatTime(refreshTime)}
+        </Text>
+        <XStack justifyContent="space-between" marginTop="$4">
+          <Button
+            onPress={handleManualRefresh}
+            backgroundColor="$orange8"
+            color="$white"
+            fontSize="$3"
+            flex={1}
+            marginRight="$2"
+          >
+            Refresh Shop
           </Button>
           <Button
-            onPress={handleEarnCoins}
-            backgroundColor="$blue8"
+            onPress={handleDemoRefresh}
+            backgroundColor="$purple8"
             color="$white"
-            fontSize="$1"
-            paddingHorizontal="$2"
-            paddingVertical="$1"
+            fontSize="$3"
+            flex={1}
+            marginLeft="$2"
+            disabled={demoRefreshTime !== null}
           >
-            +50 Coins (Test)
+            Demo Refresh (10s)
           </Button>
         </XStack>
-      )}
-      <FlatList
-        data={[{ isDailyGift: true }, ...items]}
-        renderItem={({ item }: { item: ItemData | { isDailyGift: true } }) => {
-          if ("isDailyGift" in item) {
-            return (
-              <View width="30%" marginBottom="$4">
-                <Item
-                  item={{
-                    itemId: "daily-gift",
-                    name: "Daily Gift",
-                    imageUri:
-                      "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/items%2Fdailygift.png?alt=media&token=46ad85b5-9fb5-4ef0-b32f-1894091e82f3",
-                    cost: 0,
-                  }}
-                  showName={true}
-                  showCost={false}
-                />
-                <View
-                  height={20}
-                  marginTop="$1"
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  <Text fontSize="$2" color="$yellow10">
-                    Free!
-                  </Text>
-                </View>
-                {canClaimDailyGift ? (
-                  <Button
-                    onPress={handleDailyGiftClaim}
-                    backgroundColor="$green8"
-                    color="$white"
-                    fontSize="$2"
-                    marginTop="$1"
-                  >
-                    Claim
-                  </Button>
-                ) : (
-                  <Text fontSize="$2" textAlign="center" marginTop="$1">
-                    {isDemoMode ? `Demo: ${formatTime(demoRefreshTime)}` : formatTime(dailyGiftTimer)}
-                  </Text>
-                )}
-              </View>
-            );
-          }
-          return (
-            <View width="30%" marginBottom="$4">
-              <Item item={item} showName={true} showCost={true} />
-              <Button
-                onPress={() => handlePurchase(item)}
-                backgroundColor={
-                  user && user.coins >= item.cost ? "$green8" : "$red8"
-                }
-                color="$white"
-                fontSize="$2"
-                marginTop="$1"
-              >
-                Buy
-              </Button>
-            </View>
-          );
-        }}
-        keyExtractor={(item, index) =>
-          "isDailyGift" in item ? "daily-gift" : item.itemId
-        }
-        numColumns={3}
-        columnWrapperStyle={{ justifyContent: "space-between" }}
-      />
-      <Text fontSize="$4" textAlign="center" marginTop="$4">
-        Shop Refreshes In:
-      </Text>
-      <Text
-        fontSize="$5"
-        fontWeight="bold"
-        textAlign="center"
-        marginBottom="$4"
-      >
-        {isDemoMode ? `Demo: ${formatTime(demoRefreshTime)}` : formatTime(refreshTime)}
-      </Text>
-      <XStack justifyContent="space-between" marginTop="$4">
-        <Button
-          onPress={handleManualRefresh}
-          backgroundColor="$orange8"
-          color="$white"
-          fontSize="$3"
-          flex={1}
-          marginRight="$2"
-        >
-          Refresh Shop
-        </Button>
-        <Button
-          onPress={handleDemoRefresh}
-          backgroundColor="$purple8"
-          color="$white"
-          fontSize="$3"
-          flex={1}
-          marginLeft="$2"
-          disabled={demoRefreshTime !== null}
-        >
-          Demo Refresh (10s)
-        </Button>
-      </XStack>
-    </YStack>
+      </ContentContainer>
+    </ShopContainer>
   );
 }
