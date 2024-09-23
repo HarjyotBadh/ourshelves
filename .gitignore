@@ -79,4 +79,4 @@ yarn-error.*
 
 expo-env.d.ts
 # @end expo-cli
-set_ip.bat
+!/set_ip.bat

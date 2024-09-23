@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
+import {router} from "expo-router";
 
 const HomeTile = ({ id, isAdmin }) => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -22,6 +23,14 @@ const HomeTile = ({ id, isAdmin }) => {
 
     const handlePress = () => {
         console.log('Go to room with id:', id);
+
+        router.push({
+            pathname: "/(room)/room",
+            params: {
+                roomId: "zQOz0TCXM8qJSMXigI6k"
+            },
+        });
+
     };
 
     const handleLongPress = () => {
