@@ -1,6 +1,7 @@
 {
   "functions": [
     {
+      "timeZone": "America/New_York",
       "source": "functions",
       "codebase": "default",
       "ignore": [
