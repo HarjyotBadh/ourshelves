@@ -23,7 +23,14 @@ const HomeTile = ({ id, isAdmin }) => {
 
     const handlePress = () => {
         console.log('Go to room with id:', id);
-        router.push('/(room)/room');
+
+        router.push({
+            pathname: "/(room)/room",
+            params: {
+                roomId: "zQOz0TCXM8qJSMXigI6k"
+            },
+        });
+
     };
 
     const handleLongPress = () => {
