@@ -1,6 +1,7 @@
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { db } from 'firebaseConfig';
+import { db, auth } from 'firebaseConfig';
+import { Alert } from 'react-native';
 
 interface Room {
     id: string;
@@ -18,22 +19,61 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
             const roomsData = await Promise.all(
                 roomRefs.map(async (roomRef) => {
                     const roomDoc = await getDoc(roomRef);
-                    return roomDoc.exists() ? roomDoc.data() : null;
+                    console.log(roomDoc.id);
+
+                    if (roomDoc.exists()) {
+                        return {
+                            id: roomDoc.id,
+                            ...(roomDoc.data() as object)
+                        };
+                    }
+                    else {
+                        return null;
+                    }
                 })
             );
 
             const rooms: Room[] = roomsData
                 .map(room => ({
-                    id: "what",
+                    id: room.id,
                     name: room.name,
                     isAdmin: room.isAdmin
                 }));
 
             return { rooms };
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error fetching rooms: ", error);
     }
 
     return { rooms: [] };
 };
+
+export const leaveRoom = async ( roomId: string ): Promise<{ success: boolean; message: string }> => {
+    console.log("leaveRoom in homeFunctions");
+    const userId = auth.currentUser.uid;
+
+    try {
+        const userDocRef = doc(db, 'Users', userId);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+            const rooms = userDoc.data().rooms;
+            for (let i = 0; i < rooms.length; i++) {
+                console.log(rooms[i].path.slice(6));
+                if (rooms[i].path.slice(6) === roomId) {
+                    rooms.splice(i, i+1);
+                    await updateDoc(userDocRef, { rooms });
+
+                    return { success: true, message: 'Room removed from user document' };
+                }
+            }
+        }
+    } catch (e) {
+        console.log(e);
+        return { success: false, message: e.message };
+    }
+
+    return { success: false, message: '' };
+  }

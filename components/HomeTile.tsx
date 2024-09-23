@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet, Alert } from 'react-native';
-import { db } from '../firebaseConfig';
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth } from '../firebaseConfig';
+import { useState, useEffect } from 'react';
+import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 
-const HomeTile = ({ id, name, isAdmin }) => {
-    const [containerVisible, setContainerVisible] = useState(true);
+const HomeTile = ({ id, name, isAdmin, enterRoom, roomOptions }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [bgColor, setBgColor] = useState('');
 
@@ -24,78 +20,13 @@ const HomeTile = ({ id, name, isAdmin }) => {
         setBgColor(randomColor);
     }, []);
 
-    const handlePress = () => {
-        console.log('Go to room');
-    };
-
     const handleLongPress = () => {
         setModalVisible(true);
     };
 
-    const handleOptionSelect = (option) => {
-        if (option === 'addtags') {
-            console.log('Add tags');
-        } else if (option === 'leaveroom') {
-            console.log('Leave room');
-
-            Alert.alert(
-                'Leave Room',
-                'Are you sure you want to leave "' + name + '"?',
-                [
-                    {
-                        text: 'No',
-                        style: 'cancel',
-                    },
-                    {
-                        text: 'Yes',
-                        onPress: leaveRoom,
-                    }
-                ]
-            )
-        } else if (option === 'deleteroom') {
-            console.log('Delete room');
-        }
-
-
-        setModalVisible(false);
-    };
-
-    const leaveRoom = async () => {
-        console.log('Leaving room');
-        // the id passed into the component is of the format 'Rooms/<id>'. using this, go into our firestore database and remove this id from the array in
-
-        try {
-            const userDocRef = doc(db, 'Users', auth.currentUser.uid);
-            console.log(userDocRef);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                console.log('Short document data: ', userDoc.data().rooms[0].path);
-                const rooms = userDoc.data().rooms;
-                for (let i = 0; i < rooms.length; i++) {
-                    if (rooms[i].path === id) {
-                        rooms.splice(i, i+1);
-                        await updateDoc(userDocRef, { rooms });
-                        console.log('Room removed from user document');
-                        
-                        Alert.alert(
-                            'Room Left',
-                            'Left room "' + name + '".',
-                        )
-
-                        setContainerVisible(false);
-                        break;
-                    }
-                }
-            }
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
     return (
-        (containerVisible) &&
         <View style={styles.container}>
-            <Pressable onPress={handlePress} onLongPress={handleLongPress} style={styles.pressable}>
+            <Pressable onPress={enterRoom} onLongPress={handleLongPress} style={styles.pressable}>
                 <View style={[styles.pressableSquare, { backgroundColor: bgColor }]} />
                 <Text style={styles.pressableText}>{name}</Text>
             </Pressable>
@@ -114,7 +45,7 @@ const HomeTile = ({ id, name, isAdmin }) => {
                         {isAdmin && (
                             <TouchableOpacity
                                 style={styles.optionButton}
-                                onPress={() => handleOptionSelect('addtags')}
+                                onPress={() => roomOptions('addtags', name, id)}
                             >
                                 <Text style={styles.optionText}>Add Tags</Text>
                             </TouchableOpacity>
@@ -122,7 +53,7 @@ const HomeTile = ({ id, name, isAdmin }) => {
 
                         <TouchableOpacity
                             style={styles.optionButton}
-                            onPress={() => handleOptionSelect('leaveroom')}
+                            onPress={() => roomOptions('leaveroom', name, id)}
                         >
                             <Text style={[styles.optionText, styles.optionTextSerious]}>Leave Room</Text>
                         </TouchableOpacity>
@@ -130,7 +61,7 @@ const HomeTile = ({ id, name, isAdmin }) => {
                         {isAdmin && (
                             <TouchableOpacity
                                 style={styles.optionButton}
-                                onPress={() => handleOptionSelect('deleteroom')}
+                                onPress={() => roomOptions('deleteroom', name, id)}
                             >
                                 <Text style={[styles.optionText, styles.optionTextSerious]}>Delete Room</Text>
                             </TouchableOpacity>
