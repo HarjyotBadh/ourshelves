@@ -4,7 +4,7 @@ import { ExternalLink } from '@tamagui/lucide-icons'
 import { Link, Tabs } from 'expo-router'
 import { Anchor, ScrollView, TextArea, Button, Square, Circle, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 import { ToastControl } from 'app/CurrentToast'
-import { ImageBackground } from 'react-native'
+import { ImageBackground, Pressable } from 'react-native'
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -24,6 +24,7 @@ export default function TabTwoScreen() {
   const [refreshTime, setRefreshTime] = useState(0);
   const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder ProfilePage doc id
 
+  var counter = 0
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,7 +81,14 @@ export default function TabTwoScreen() {
       borderRadius="$4"
     >
       <XStack flexWrap="wrap" alignItems="center" justifyContent="center">
-        <Square margin="$4" size={120} backgroundColor="$red9" />
+        {/* TODO 
+        - Ask how to implement this so we go back a page 
+        - Ask how to implemement this so we can display x items
+        - Ask how to make a function in react native so I can just call it
+        */}
+        <Pressable onPress={() => alert("this works!")}>
+          <Square margin="$4" size={120} backgroundColor="$red9" />
+        </Pressable>
         <Circle margin="$4" size={120} backgroundColor="$orange9" />
         <Square margin="$4" size={120} backgroundColor="$yellow9" />
         <Circle margin="$4" size={120} backgroundColor="$green9" />
