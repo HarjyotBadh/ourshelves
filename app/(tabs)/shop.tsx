@@ -92,6 +92,8 @@ export default function ShopScreen() {
   const [canClaimDailyGift, setCanClaimDailyGift] = useState(false);
   const [dailyGiftTimer, setDailyGiftTimer] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [demoRefreshTime, setDemoRefreshTime] = useState<number | null>(null); //for sprint 1 testing
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // TODO: Replace with actual user authentication
   const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
@@ -110,6 +112,12 @@ export default function ShopScreen() {
     if (!user.lastDailyGiftClaim) return true;
     const lastClaimDate = user.lastDailyGiftClaim.toDate();
     return lastClaimDate < lastRefresh;
+  };
+
+  //for sprint 1 testing
+  const handleDemoRefresh = () => {
+    setDemoRefreshTime(10);
+    setIsDemoMode(true);
   };
 
   // Fetch all necessary data
@@ -202,9 +210,24 @@ export default function ShopScreen() {
         return prevTime - 1;
       });
     }, 1000);
-
+    
     return () => clearInterval(timer);
   }, [fetchData]);
+
+  //for sprint 1 testing
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (demoRefreshTime !== null && demoRefreshTime > 0) {
+      timer = setTimeout(() => {
+        setDemoRefreshTime(demoRefreshTime - 1);
+      }, 1000);
+    } else if (demoRefreshTime === 0) {
+      handleManualRefresh();
+      setDemoRefreshTime(null);
+      setIsDemoMode(false);
+    }
+    return () => clearTimeout(timer);
+  }, [demoRefreshTime]);
 
   // Handle daily gift claim
   const handleDailyGiftClaim = async () => {
@@ -341,7 +364,8 @@ export default function ShopScreen() {
   };
 
   // Format time for display
-  const formatTime = (seconds: number): string => {
+  const formatTime = (seconds: number | null): string => {
+    if (seconds === null) return "00:00:00";
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
@@ -472,7 +496,7 @@ export default function ShopScreen() {
                   </Button>
                 ) : (
                   <Text fontSize="$2" textAlign="center" marginTop="$1">
-                    {formatTime(dailyGiftTimer)}
+                    {isDemoMode ? `Demo: ${formatTime(demoRefreshTime)}` : formatTime(dailyGiftTimer)}
                   </Text>
                 )}
               </View>
@@ -510,17 +534,31 @@ export default function ShopScreen() {
         textAlign="center"
         marginBottom="$4"
       >
-        {formatTime(refreshTime)}
+        {isDemoMode ? `Demo: ${formatTime(demoRefreshTime)}` : formatTime(refreshTime)}
       </Text>
-      <Button
-        onPress={handleManualRefresh}
-        backgroundColor="$orange8"
-        color="$white"
-        fontSize="$3"
-        marginTop="$4"
-      >
-        Refresh Shop
-      </Button>
+      <XStack justifyContent="space-between" marginTop="$4">
+        <Button
+          onPress={handleManualRefresh}
+          backgroundColor="$orange8"
+          color="$white"
+          fontSize="$3"
+          flex={1}
+          marginRight="$2"
+        >
+          Refresh Shop
+        </Button>
+        <Button
+          onPress={handleDemoRefresh}
+          backgroundColor="$purple8"
+          color="$white"
+          fontSize="$3"
+          flex={1}
+          marginLeft="$2"
+          disabled={demoRefreshTime !== null}
+        >
+          Demo Refresh (10s)
+        </Button>
+      </XStack>
     </YStack>
   );
 }
