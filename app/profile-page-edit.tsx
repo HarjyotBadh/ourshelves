@@ -4,7 +4,7 @@ import { ExternalLink } from '@tamagui/lucide-icons'
 import { Link, Tabs } from 'expo-router'
 import { Anchor, TextArea, Button, useTheme, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 import { ToastControl } from 'app/CurrentToast'
-import { ImageBackground } from 'react-native'
+import { ImageBackground, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 
 // TODO - figure out how to change the header names and (tabs) back button
@@ -21,18 +21,18 @@ export default function TabTwoScreen() {
   const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshTime, setRefreshTime] = useState(0);
+  const [aboutMeText, setAboutMe] = useState('');
+  const [docId, setDocId] = useState('');
   const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder ProfilePage doc id
 
+  // Array holding all the profile pics
+  let profilePics = [];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Fetch items from Firestore
-        const itemsCollectionRef = collection(db, 'Items');
-        const itemsSnapshot = await getDocs(itemsCollectionRef);
 
         // Fetch user data
         if (profileId) {
@@ -69,32 +69,45 @@ export default function TabTwoScreen() {
     return () => clearInterval(timer);
   }, []);
 
+  // Updating the User's About Me Section
+  const aboutMeUpdate = () => {
+    console.log("Submitted Text: ", aboutMeText);
+    alert("About Me Updated");
+  }
+
+
+
   return (
-    <YStack f={1} ai="center" gap="$4" px="$10" pt="$5">
-        <H2>User Profile</H2>
-        <Image
-            // Eventually make this a set number of predefined icons
-            source={{ width: 100, height: 100, uri: ProfilePage?.profilePic }}
-            width="57%"
-            height="21%"
-        />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <YStack f={1} ai="center" gap="$4" px="$10" pt="$5">
+          <H2>User Profile</H2>
+          <Image
+              // Eventually make this a set number of predefined icons
+              source={{ width: 100, height: 100, uri: ProfilePage?.profilePic }}
+              width="57%"
+              height="21%"
+          />
 
-        {/* Button for Changing Profile Picture */}
-        <Link href="/profile-icons" asChild>
-            <Button mr="$2" bg="$yellow8" color="$yellow12">
-                Select Picture Icon
-            </Button>
-        </Link>
-        
-        {/* TODO - Fix to allow editing and saving of "About Me" Info*/}
-        <H4>About Me:</H4>
-        <TextArea height={170} width={300} borderWidth={2} />
-        
+          {/* Button for Changing Profile Picture */}
+          <Link href="/profile-icons" asChild>
+              <Button mr="$2" bg="$yellow8" color="$yellow12">
+                  Select Picture Icon
+              </Button>
+          </Link>
+          
+          {/* TODO - Fix to allow editing and saving of "About Me" Info*/}
+          <TextArea height={170} width={300} value={aboutMeText} 
+            onChangeText={setAboutMe}
+            borderWidth={2} placeholder={ProfilePage?.aboutMe}/>
+          <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
+            Update About Me        
+          </Button>
 
-        <XStack gap="$2" px="$2" pt="$5">
-        <H4>Number Rooms I'm In:</H4>
-        <SizableText theme="alt2" size="$8" fontWeight="800">1</SizableText>
-        </XStack>
-    </YStack>
+          <XStack gap="$2" px="$2" pt="$5">
+          <H4>Number Rooms I'm In:</H4>
+          <SizableText theme="alt2" size="$8" fontWeight="800">1</SizableText>
+          </XStack>
+      </YStack>
+    </TouchableWithoutFeedback>
   )
 }

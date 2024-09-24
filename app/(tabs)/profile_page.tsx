@@ -57,15 +57,6 @@ export default function TabTwoScreen() {
     fetchData();
   }, [profileId]);
 
-  // TODO Not exactly sure what this does, will have to ask bailey 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setRefreshTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <YStack f={1} ai="center" gap="$4" px="$10" pt="$5">
         <H2>User Profile</H2>

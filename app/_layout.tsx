@@ -98,6 +98,18 @@ function RootLayoutNav() {
                                     headerShown: false,
                                 }}
                             />
+                            <Stack.Screen
+                                name="profile-icons"
+                                options={{
+                                    headerShown: true,
+                                }}
+                            />
+                            <Stack.Screen
+                                name="profile-page-edit"
+                                options={{
+                                    headerShown: true,
+                                }}
+                            />
                         </Stack>
                     </ThemeProvider>
                 </Provider>

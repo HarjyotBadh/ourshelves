@@ -5,10 +5,12 @@ import { Link, Tabs } from 'expo-router'
 import { Anchor, ScrollView, TextArea, Button, Square, Circle, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 import { ToastControl } from 'app/CurrentToast'
 import { ImageBackground, Pressable } from 'react-native'
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import firestore from 'firebase/firestore';
 
 // TODO - figure out how to change the header names and (tabs) back button
+
 
 
 // Data for profile page to be queried from db
@@ -18,11 +20,11 @@ interface ProfilePage {
 }
 
 export default function TabTwoScreen() {
-  const [loading, setLoading] = useState(true);
   const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [refreshTime, setRefreshTime] = useState(0);
   const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder ProfilePage doc id
+  const [pictures, setPictures] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   var counter = 0
 
@@ -32,9 +34,16 @@ export default function TabTwoScreen() {
         setLoading(true);
         setError(null);
 
-        // Fetch items from Firestore
-        const itemsCollectionRef = collection(db, 'Items');
-        const itemsSnapshot = await getDocs(itemsCollectionRef);
+
+        const picsCollectionRef = collection(db, 'profile-icons')
+        const picSnapshot = await getDocs(picsCollectionRef)
+        const fetchedPictures = picSnapshot.docs.map(doc => ({ 
+          stringId: doc.id, 
+          ...doc.data() 
+        }));
+        setPictures(fetchedPictures)
+
+        console.log(fetchedPictures.values())
 
         // Fetch user data
         if (profileId) {
@@ -63,13 +72,7 @@ export default function TabTwoScreen() {
     fetchData();
   }, [profileId]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setRefreshTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  
 
   return (
     <SafeAreaView>
