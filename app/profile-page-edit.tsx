@@ -6,6 +6,7 @@ import { Anchor, TextArea, Button, useTheme, H2, H4, Paragraph, XStack, YStack, 
 import { ToastControl } from 'app/CurrentToast'
 import { ImageBackground, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { updateProfile } from 'functions/profileFunctions';
 
 // TODO - figure out how to change the header names and (tabs) back button
 
@@ -70,9 +71,11 @@ export default function TabTwoScreen() {
   }, []);
 
   // Updating the User's About Me Section
-  const aboutMeUpdate = () => {
+  const aboutMeUpdate = async() => {
     console.log("Submitted Text: ", aboutMeText);
     alert("About Me Updated");
+    const result = await updateProfile(aboutMeText)
+    console.log("result:" + result)
   }
 
 

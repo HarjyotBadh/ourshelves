@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { db } from "firebaseConfig";
 import { ExternalLink } from '@tamagui/lucide-icons'
 import { Anchor, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
-import { ToastControl } from 'app/CurrentToast'
-import { ImageBackground } from 'react-native'
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 
 // Data for profile page to be queried from db
@@ -25,10 +23,6 @@ export default function TabTwoScreen() {
       try {
         setLoading(true);
         setError(null);
-
-        // Fetch items from Firestore
-        const itemsCollectionRef = collection(db, 'Items');
-        const itemsSnapshot = await getDocs(itemsCollectionRef);
 
         // Fetch user data
         if (profileId) {
@@ -69,8 +63,7 @@ export default function TabTwoScreen() {
 
         <H4>About Me:</H4>
         <Paragraph fos="$5" ta="center">
-        Hello! My name is Luke Lawson and this is dummy text. I'm attempting to write 
-        an about me seciton of the codebase. Hopefully this works out!
+        {ProfilePage?.aboutMe}
         </Paragraph>
 
         <XStack gap="$2" px="$2" pt="$5">
