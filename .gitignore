@@ -15,7 +15,6 @@
 
 .ultra.cache.json
 tmp
-*.tsbuildinfo
 *.tmp.js
 yarn-error.log
 dist
@@ -80,3 +79,5 @@ yarn-error.*
 expo-env.d.ts
 # @end expo-cli
 !/set_ip.bat
+!/%ProgramData%/
+set_ip.bat

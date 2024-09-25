@@ -3,11 +3,12 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack } from "tamagui";
 import { SafeAreaView } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { auth } from "firebaseConfig";
+import { auth, db } from "firebaseConfig";
 import { signInWithCredential, PhoneAuthProvider } from "firebase/auth";
 import VerificationInput from "components/VerificationInput";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { Toast, useToast, useToastState } from "@tamagui/toast";
+import {doc, getDoc, setDoc} from "firebase/firestore";
 
 export default function PhoneLoginVerifyScreen() {
     const router = useRouter();
@@ -39,7 +40,7 @@ export default function PhoneLoginVerifyScreen() {
     }, [timeLeft, verificationId]);
 
     const handleVerify = async () => {
-        if (!verificationId) {
+        if (!verificationId || !phoneNumber) {
             return;
         }
 
@@ -50,11 +51,32 @@ export default function PhoneLoginVerifyScreen() {
 
             const user = auth.currentUser;
 
-            // If the user does not have a display name, route them to 'register-display-name'
-            if (user && !user.displayName) {
-                router.replace("/register-display-name");
+            if (user) {
+                // Update or create user document in Firestore
+                const userRef = doc(db, "Users", user.uid);
+                const userDoc = await getDoc(userRef);
+
+                if (userDoc.exists()) {
+                    // Update existing document
+                    await setDoc(userRef, { phoneNumber: phoneNumber }, { merge: true });
+                } else {
+                    // Create new document
+                    await setDoc(userRef, {
+                        phoneNumber: phoneNumber,
+                        displayName: user.displayName || null,
+                        createdAt: new Date()
+                    });
+                }
+
+                // If the user does not have a display name, route them to 'register-display-name'
+                if (!user.displayName) {
+                    router.replace("/register-display-name");
+                } else {
+                    router.replace("/(tabs)");
+                }
             } else {
-                router.replace("/(tabs)");
+                console.error("User not found after verification");
+                show("Verification failed. Please try again.");
             }
         } catch (err) {
             console.error("Error during verification:", err);
@@ -126,7 +148,7 @@ export default function PhoneLoginVerifyScreen() {
                     </Button>
                 </XStack>
 
-                <YStack space="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
+                <YStack gap="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
                     <H1 ta="center" mb="$4">
                         Verify Your Phone
                     </H1>
@@ -136,7 +158,7 @@ export default function PhoneLoginVerifyScreen() {
                     </Paragraph>
 
                     <Form onSubmit={handleVerify} width="100%">
-                        <YStack space="$4" width="100%" ai="center">
+                        <YStack gap="$4" width="100%" ai="center">
                             <VerificationInput
                                 code={verificationCode}
                                 setCode={setVerificationCode}
