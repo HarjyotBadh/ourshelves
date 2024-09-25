@@ -26,7 +26,7 @@ const HomeTile = ({ id, name, isAdmin, enterRoom, roomOptions }) => {
 
     return (
         <View style={styles.container}>
-            <Pressable onPress={enterRoom} onLongPress={handleLongPress} style={styles.pressable}>
+            <Pressable onPress={() => enterRoom(id)} onLongPress={handleLongPress} style={styles.pressable}>
                 <View style={[styles.pressableSquare, { backgroundColor: bgColor }]} />
                 <Text style={styles.pressableText}>{name}</Text>
             </Pressable>

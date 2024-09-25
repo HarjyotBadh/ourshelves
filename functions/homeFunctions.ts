@@ -1,4 +1,4 @@
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db, auth } from 'firebaseConfig';
 import { Alert } from 'react-native';
@@ -6,7 +6,6 @@ import { Alert } from 'react-native';
 interface Room {
     id: string;
     name: string;
-    isAdmin: boolean;
 }
 
 export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }> => {
@@ -50,7 +49,29 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
     return { rooms: [] };
 };
 
-export const leaveRoom = async ( roomId: string ): Promise<{ success: boolean; message: string }> => {
+export const getRoomById = async (roomId: string): Promise<{ success: boolean, room: Room }> => {
+    try {
+        const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
+
+        if (roomDoc.exists()) {
+            return {
+                success: true,
+                room: {
+                    id: roomDoc.id,
+                    ...(roomDoc.data() as object),
+                    name: roomDoc.data().name
+                }
+            };
+        }
+    }
+    catch (error) {
+        console.error("Error fetching room: ", error);
+    }
+
+    return { success: false, room: {id: '', name: ''} };
+}
+
+export const leaveRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
     console.log("leaveRoom in homeFunctions");
     const userId = auth.currentUser.uid;
 
@@ -63,7 +84,7 @@ export const leaveRoom = async ( roomId: string ): Promise<{ success: boolean; m
             for (let i = 0; i < rooms.length; i++) {
                 console.log(rooms[i].path.slice(6));
                 if (rooms[i].path.slice(6) === roomId) {
-                    rooms.splice(i, i+1);
+                    rooms.splice(i, i + 1);
                     await updateDoc(userDocRef, { rooms });
 
                     return { success: true, message: 'Room removed from user document' };
@@ -76,4 +97,34 @@ export const leaveRoom = async ( roomId: string ): Promise<{ success: boolean; m
     }
 
     return { success: false, message: '' };
-  }
+}
+
+export const createRoom = async (roomName: string, roomDescription: string): Promise<{ success: boolean; message: string }> => {
+    console.log("createRoom in homeFunctions - " + roomName + " - " + roomDescription);
+    const userId = auth.currentUser.uid;
+    console.log(userId);
+    
+    try {
+        const userDoc = await getDoc(doc(db, 'Users', userId));
+
+        if (userDoc.exists()) {
+            const roomRef = await addDoc(collection(db, 'Rooms'), {
+                name: roomName,
+            });
+
+            const userRooms = userDoc.data().rooms || [];
+            userRooms.push(roomRef);
+
+            await updateDoc(doc(db, 'Users', userId), {
+                rooms: userRooms
+            });
+
+            return { success: true, message: `${roomRef.id}` };
+        }
+    } catch (e) {
+        console.log(e);
+        return { success: false, message: e.message };
+    }
+
+    return { success: false, message: 'nothing happened!' };
+}

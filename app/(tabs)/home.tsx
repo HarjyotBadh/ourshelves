@@ -5,7 +5,7 @@ import CreateHomeTile from '../../components/CreateHomeTile';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db, auth } from "firebaseConfig";
-import { getRooms, leaveRoom } from 'functions/homeFunctions';
+import { getRooms, getRoomById, leaveRoom, createRoom } from 'functions/homeFunctions';
 import { CodeSquare } from '@tamagui/lucide-icons';
 
 
@@ -51,12 +51,46 @@ const HomeScreen = () => {
     }
   };
 
+  const homeCreateRoom = async (roomName: string, roomDescription: string) => {
+    console.log('== Create room');
+
+    const result = await createRoom(roomName, roomDescription);
+    console.log(result.message);
+
+    if (result.success) {
+      const getRoomResult = await getRoomById(result.message);
+      console.log(getRoomResult);
+
+      if (getRoomResult.success) {
+        setRooms((prevRooms) => [
+          ...prevRooms,
+          {
+            id: getRoomResult.room.id,
+            name: getRoomResult.room.name,
+            isAdmin: true,
+          },
+        ]);
+
+        Alert.alert(
+          'Room Created',
+          `Room "${getRoomResult.room.name}" created.`,
+        );
+      }
+      else {
+        Alert.alert(
+          'Error',
+          `An error occurred while creating the room. Yell this to Jack: \n\n${result.message}`,
+        );
+      }
+    }
+  }
   
 
 
 
-  const enterRoom = () => {
-    console.log('Go to room');
+  
+  const enterRoom = (roomId: string) => {
+    console.log('Go to room ' + roomId);
   };
 
   const roomOptions = (option: string, roomName: string, roomId: string) => {
@@ -84,12 +118,6 @@ const HomeScreen = () => {
     }
   };
 
-  const optionCreateRoom = () => {
-    console.log('Create room');
-
-
-  };
-
 
 
 
@@ -110,7 +138,9 @@ const HomeScreen = () => {
           roomOptions={roomOptions}
         />
       ))}
-      <CreateHomeTile />
+      <CreateHomeTile
+        handleCreateRoom={homeCreateRoom}
+      />
     </ScrollView>
   );
 };
