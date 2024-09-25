@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { db } from "firebaseConfig";
-import { ExternalLink } from '@tamagui/lucide-icons'
 import { Anchor, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import {  doc, getDoc } from 'firebase/firestore';
 
 // Data for profile page to be queried from db
 interface ProfilePage {
   aboutMe: string;
   profilePic: string;
+  rooms: string;
 }
 
 export default function TabTwoScreen() {
   const [loading, setLoading] = useState(true);
   const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [refreshTime, setRefreshTime] = useState(0);
-  const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder ProfilePage doc id
+  const profileId = " dMxt0UarTkFUIHIa8gJC "; // Placeholder ProfilePage doc id
 
 
   useEffect(() => {
@@ -26,13 +25,14 @@ export default function TabTwoScreen() {
 
         // Fetch user data
         if (profileId) {
-          const profilePageDocRef = doc(db, 'ProfilePage', profileId);
+          const profilePageDocRef = doc(db, 'Users', profileId);
           const profilePageDoc = await getDoc(profilePageDocRef);
           if (profilePageDoc.exists()) {
             const profilePageData = profilePageDoc.data();
             setProfilePage({
               aboutMe: profilePageData.AboutMe,
-              profilePic: profilePageData.ProfilePic
+              profilePic: profilePageData.ProfilePic,
+              rooms: profilePageData.Rooms
             });
           } else {
             throw new Error('User not found');
@@ -68,7 +68,9 @@ export default function TabTwoScreen() {
 
         <XStack gap="$2" px="$2" pt="$5">
         <H4>Number Rooms I'm In:</H4>
-        <SizableText theme="alt2" size="$8" fontWeight="800">1</SizableText>
+        <SizableText theme="alt2" size="$8" fontWeight="800">
+          {ProfilePage?.rooms.length}
+        </SizableText>
         </XStack>
     </YStack>
   )

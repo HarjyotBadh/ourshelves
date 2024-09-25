@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db } from "firebaseConfig";
-import { ExternalLink } from '@tamagui/lucide-icons'
 import { Link, Tabs } from 'expo-router'
-import { Anchor, TextArea, Button, useTheme, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
-import { ToastControl } from 'app/CurrentToast'
-import { ImageBackground, Keyboard, TouchableWithoutFeedback } from 'react-native'
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { TextArea, Button, H2, H4, XStack, YStack, SizableText, Image, Text } from 'tamagui'
+import { Keyboard, TouchableWithoutFeedback } from 'react-native'
+import { doc, getDoc,} from 'firebase/firestore';
 import { updateProfileAbtMe } from 'functions/profileFunctions';
 
 // TODO - figure out how to change the header names and (tabs) back button
@@ -15,6 +13,7 @@ import { updateProfileAbtMe } from 'functions/profileFunctions';
 interface ProfilePage {
   aboutMe: string;
   profilePic: string;
+  rooms: string;
 }
 
 export default function TabTwoScreen() {
@@ -23,12 +22,10 @@ export default function TabTwoScreen() {
   const [error, setError] = useState<string | null>(null);
   const [aboutMeText, setAboutMe] = useState(''); // TODO, eventually make this populate the moment you open the page
   const [placeholder, setPlaceholder] = useState(''); // Initialize state for placeholder
-  const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder ProfilePage doc id
+  const profileId = " dMxt0UarTkFUIHIa8gJC "; // Placeholder ProfilePage doc id
 
 
-  // Array holding all the profile pics
-  let profilePics = [];
-
+  // Greabbing the data about profile page from database
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -37,13 +34,14 @@ export default function TabTwoScreen() {
 
         // Fetch user data
         if (profileId) {
-          const profilePageDocRef = doc(db, 'ProfilePage', profileId);
+          const profilePageDocRef = doc(db, 'Users', profileId);
           const profilePageDoc = await getDoc(profilePageDocRef);
           if (profilePageDoc.exists()) {
             const profilePageData = profilePageDoc.data();
             setProfilePage({
               aboutMe: profilePageData.AboutMe,
-              profilePic: profilePageData.ProfilePic
+              profilePic: profilePageData.ProfilePic,
+              rooms: profilePageData.Rooms
             });
           } else {
             throw new Error('User not found');
@@ -61,9 +59,12 @@ export default function TabTwoScreen() {
     fetchData();
   }, [profileId, ProfilePage]);
 
+
+  // Setting the placeholder text for "About Me" editing
   useEffect(() => {
     setPlaceholder("Type your new \"About Me\" section here!")
   }, [ProfilePage]);
+
 
   // Updating the User's About Me Section
   const aboutMeUpdate = async() => {
@@ -81,6 +82,7 @@ export default function TabTwoScreen() {
       alert("ERROR - Update cannot exceeded 100 characters or contain a newline")
     }
   }
+
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -110,7 +112,9 @@ export default function TabTwoScreen() {
 
           <XStack gap="$2" px="$2" pt="$5">
           <H4>Number Rooms I'm In:</H4>
-          <SizableText theme="alt2" size="$8" fontWeight="800">1</SizableText>
+          <SizableText theme="alt2" size="$8" fontWeight="800">
+            {ProfilePage?.rooms.length}
+          </SizableText>
           </XStack>
       </YStack>
     </TouchableWithoutFeedback>

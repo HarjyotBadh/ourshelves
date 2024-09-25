@@ -1,11 +1,6 @@
 import { getFirestore, doc, runTransaction, arrayUnion, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-// Data for profile page to be queried from db
-interface ProfilePage {
-    aboutMe: string;
-    profilePic: string;
-  }
 
 // function to update user's "About Me" section of their profile page 
 export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ success: boolean; message: string }> => {
@@ -13,8 +8,8 @@ export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ succ
   const db = getFirestore();
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
-  const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder
-  const profileRef = doc(db, "ProfilePage", profileId);
+  const profileId = " dMxt0UarTkFUIHIa8gJC "; // Placeholder
+  const profileRef = doc(db, "Users", profileId);
 
   try {
     const result = await runTransaction(db, async (transaction) => {
@@ -46,7 +41,7 @@ export const updateProfileIcon = async (updatedIcon: string): Promise<{ success:
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
   const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder
-  const profileRef = doc(db, "ProfilePage", profileId);
+  const profileRef = doc(db, 'Users', profileId);
 
   try {
     const result = await runTransaction(db, async (transaction) => {
