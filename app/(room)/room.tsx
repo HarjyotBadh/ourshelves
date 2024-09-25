@@ -85,7 +85,6 @@ const RoomScreen = () => {
         const shelfRefs: DocumentReference[] = [];
 
         for (let i = 0; i < 10; i++) {
-            console.log("Creating shelf #", i + 1);
             const newShelfRef = doc(collection(db, 'Shelves'));
             const newShelfData: ShelfData = {
                 id: newShelfRef.id,
@@ -106,7 +105,6 @@ const RoomScreen = () => {
         batch.update(roomRef, { shelfList: shelfRefs });
 
         await batch.commit();
-        console.log("All shelves created and room updated...");
         return newShelves;
     };
 
@@ -140,8 +138,6 @@ const RoomScreen = () => {
                 const userDoc = await getDoc(doc(db, 'Users', user.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    console.log("User data: ", user.uid);
-                    console.log("User inventory: ", userData.inventory);
                     setUserInventory(userData.inventory || []);
                 }
             }
@@ -194,8 +190,6 @@ const RoomScreen = () => {
                     } else {
                         shelvesData = await initializeShelves(roomId);
                     }
-
-                    console.log("# of shelves: " + shelvesData.length);
 
                     const placedItemRefs = shelvesData.flatMap(shelf => shelf.itemList);
                     const placedItemDocs = await Promise.all(placedItemRefs.map(ref => getDoc(ref)));
@@ -263,7 +257,6 @@ const RoomScreen = () => {
             };
 
             // print the itemData
-            console.log("itemData: ", newPlacedItem.itemData);
             const docRef = await addDoc(collection(db, 'PlacedItems'), newPlacedItem);
             const addedItem: PlacedItemData = { ...newPlacedItem, id: docRef.id };
 
