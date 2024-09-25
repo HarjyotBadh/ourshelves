@@ -16,8 +16,6 @@ import {
 import { SafeAreaView, Platform } from "react-native";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import validator from "validator";
-import db from "../../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
 
 export default function LoginScreen() {
     const router = useRouter();
