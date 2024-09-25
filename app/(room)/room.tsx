@@ -4,7 +4,7 @@ import {YStack, View, styled, XStack, Text, Button, ScrollView, Image, Progress,
 import { ArrowLeft, X } from '@tamagui/lucide-icons';
 import Feather from '@expo/vector-icons/Feather';
 import Shelf from '../../components/Shelf';
-import {router, useLocalSearchParams} from "expo-router";
+import {useRouter, useLocalSearchParams} from "expo-router";
 import ItemSelectionSheet from '../../components/ItemSelectionSheet';
 import RoomSettingsDialog from '../../components/RoomSettingsDialog';
 import {
@@ -15,9 +15,12 @@ import {
     getDoc,
     getDocs,
     writeBatch,
-    DocumentReference, updateDoc
+    DocumentReference,
+    updateDoc,
+    where,
+    query
 } from "firebase/firestore";
-import { db } from "firebaseConfig";
+import { auth, db } from "firebaseConfig";
 import {PlacedItemData, ItemData } from "../../models/PlacedItemData";
 import {ShelfData} from "../../models/ShelfData";
 import items from "../../components/items";
@@ -62,6 +65,7 @@ const LoadingContainer = styled(YStack, {
 });
 
 const RoomScreen = () => {
+    const router = useRouter();
     const { roomId } = useLocalSearchParams<{ roomId: string }>();
     const [roomName, setRoomName] = useState<string>('');
     const [shelves, setShelves] = useState<ShelfData[]>([]);
@@ -72,7 +76,8 @@ const RoomScreen = () => {
     const [availableItems, setAvailableItems] = useState<ItemData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
-
+    const [users, setUsers] = useState<{ id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[]>([]);
+    const [userInventory, setUserInventory] = useState<DocumentReference[]>([]);
 
     const initializeShelves = async (roomId: string) => {
         const batch = writeBatch(db);
@@ -129,6 +134,23 @@ const RoomScreen = () => {
     };
 
     useEffect(() => {
+        const fetchUserInventory = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const userDoc = await getDoc(doc(db, 'Users', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    console.log("User data: ", user.uid);
+                    console.log("User inventory: ", userData.inventory);
+                    setUserInventory(userData.inventory || []);
+                }
+            }
+        };
+
+        fetchUserInventory();
+    }, []);
+
+    useEffect(() => {
         const fetchRoomData = async () => {
             if (!roomId) return;
 
@@ -142,6 +164,29 @@ const RoomScreen = () => {
                     const roomData = roomDoc.data();
                     setRoomName(roomData.name);
 
+                    // Fetch user and admin display names and profile pictures
+                    const userIds = roomData.userList || [];
+                    const adminIds = roomData.adminList || [];
+
+                    // Create a Set of unique IDs
+                    const uniqueIds = new Set([...userIds, ...adminIds]);
+
+                    const usersQuery = query(collection(db, 'Users'), where('__name__', 'in', Array.from(uniqueIds)));
+                    const userSnapshots = await getDocs(usersQuery);
+
+                    const combinedUsers = userSnapshots.docs.map(doc => {
+                        const userData = doc.data();
+                        return {
+                            id: doc.id,
+                            displayName: userData.displayName || 'Unknown User',
+                            profilePicture: userData.profilePicture,
+                            isAdmin: adminIds.includes(doc.id)
+                        };
+                    });
+
+                    setUsers(combinedUsers);
+
+                    // Fetch shelves and placed items
                     let shelvesData: ShelfData[];
                     if (roomData.shelfList && roomData.shelfList.length > 0) {
                         const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
@@ -163,10 +208,9 @@ const RoomScreen = () => {
 
                     setShelves(updatedShelvesData);
 
-                    // Fetch available items
-                    const itemsCollection = collection(db, 'Items');
-                    const itemsSnapshot = await getDocs(itemsCollection);
-                    const itemsList = itemsSnapshot.docs.map(doc => ({
+                    // Fetch available items using references
+                    const itemDocs = await Promise.all(userInventory.map(ref => getDoc(ref)));
+                    const itemsList = itemDocs.map(doc => ({
                         itemId: doc.id,
                         ...doc.data()
                     } as ItemData));
@@ -304,7 +348,11 @@ const RoomScreen = () => {
     };
 
     const handleGoBack = () => {
-        router.push('(tabs)');
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            router.push('/(tabs)');
+        }
     };
 
     if (isLoading) {
@@ -375,6 +423,7 @@ const RoomScreen = () => {
                 <RoomSettingsDialog
                     open={isSettingsOpen}
                     onOpenChange={setIsSettingsOpen}
+                    users={users}
                 />
             </Container>
         </SafeAreaWrapper>
