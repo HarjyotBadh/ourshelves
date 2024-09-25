@@ -16,9 +16,9 @@ interface ProfilePage {
   rooms: string;
 }
 
-export default function TabTwoScreen() {
+export default function ProfilePageEdit({ProfilePage, setProfilePage}) {
   const [loading, setLoading] = useState(true);
-  const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
+  //const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aboutMeText, setAboutMe] = useState(''); // TODO, eventually make this populate the moment you open the page
   const [placeholder, setPlaceholder] = useState(''); // Initialize state for placeholder

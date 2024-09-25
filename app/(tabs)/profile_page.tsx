@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db } from "firebaseConfig";
-import { Anchor, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
+import { useRouter } from "expo-router";
+import { styled, Button, Text, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 import {  doc, getDoc } from 'firebase/firestore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -10,12 +12,28 @@ interface ProfilePage {
   rooms: string;
 }
 
+const Header = styled(XStack, {
+  height: 60,
+  width: "150%",
+  backgroundColor: "$accentColor",
+  alignItems: 'center',
+  paddingHorizontal: '$5',
+});
+
+const HeaderButton = styled(Button, {
+  width: 50,
+  height: 50,
+  justifyContent: 'center',
+  alignItems: 'center',
+});
+
 export default function TabTwoScreen() {
   const [loading, setLoading] = useState(true);
   const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const profileId = " dMxt0UarTkFUIHIa8gJC "; // Placeholder ProfilePage doc id
-
+  const router = useRouter();
+  const { roomId } = useLocalSearchParams<{ roomId: string }>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,18 +67,37 @@ export default function TabTwoScreen() {
     };
 
     fetchData();
-  }, [profileId, ProfilePage]);
+  }, []);
+
+  // Navigating to the "Edit Profile" Page
+  const handlePress = () => {
+    router.push({
+        pathname: "profile-page-edit",
+        params: {
+            roomId: "zQOz0TCXM8qJSMXigI6k"
+        },
+    });
+
+};
 
   return (
-    <YStack f={1} ai="center" gap="$4" px="$10" pt="$5">
+    <SafeAreaView>
+    <YStack ai="center" gap="$4" px="$10" pt="$5">
+        <Header>
+          <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
+              {"Room name"}
+          </Text>  
+          <HeaderButton onPress={handlePress}>
+          </HeaderButton>      
+        </Header>
         <H2>User Profile</H2>
         <Image
+            // TODO make this an avatar
             // Eventually make this a set number of predefined icons
             source={{ width: 100, height: 100, uri: ProfilePage?.profilePic }}
-            width="53%"
-            height="22%"
+            width="51%"
+            height="32%"
         />
-
         <H4>About Me:</H4>
         <Paragraph fos="$5" ta="center">
         {ProfilePage?.aboutMe}
@@ -73,5 +110,6 @@ export default function TabTwoScreen() {
         </SizableText>
         </XStack>
     </YStack>
+    </SafeAreaView>
   )
 }

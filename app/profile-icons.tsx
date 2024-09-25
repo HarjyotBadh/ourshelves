@@ -41,6 +41,7 @@ export default function TabTwoScreen() {
           } else {
             throw new Error('User not found');
           }
+          console.log(ProfileIcons?.profileIcons[0])
         } else {
           throw new Error('User not authenticated');
         }
@@ -51,7 +52,7 @@ export default function TabTwoScreen() {
       }
     };
     fetchData();
-  }, [ProfileIcons]);
+  }, []);
     
   // For when an icon is selected
   const iconSelect = () => {
