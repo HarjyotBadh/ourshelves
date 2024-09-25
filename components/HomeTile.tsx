@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
-import {router} from "expo-router";
 
-const HomeTile = ({ id, isAdmin }) => {
+const HomeTile = ({ id, name, isAdmin, enterRoom, roomOptions }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [bgColor, setBgColor] = useState('');
 
@@ -21,32 +20,15 @@ const HomeTile = ({ id, isAdmin }) => {
         setBgColor(randomColor);
     }, []);
 
-    const handlePress = () => {
-        console.log('Go to room with id:', id);
-
-        router.push({
-            pathname: "/(room)/room",
-            params: {
-                roomId: "zQOz0TCXM8qJSMXigI6k"
-            },
-        });
-
-    };
-
     const handleLongPress = () => {
         setModalVisible(true);
     };
 
-    const handleOptionSelect = (option) => {
-        console.log(`Selected option: ${option}`);
-        setModalVisible(false);
-    };
-
     return (
         <View style={styles.container}>
-            <Pressable onPress={handlePress} onLongPress={handleLongPress} style={styles.pressable}>
+            <Pressable onPress={() => enterRoom(id)} onLongPress={handleLongPress} style={styles.pressable}>
                 <View style={[styles.pressableSquare, { backgroundColor: bgColor }]} />
-                <Text style={styles.pressableText}>Room {id}</Text>
+                <Text style={styles.pressableText}>{name}</Text>
             </Pressable>
 
             <Modal
@@ -55,14 +37,15 @@ const HomeTile = ({ id, isAdmin }) => {
                 onRequestClose={() => setModalVisible(false)}
                 animationType="slide"
             >
+
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>{id}</Text>
+                        <Text style={styles.modalTitle}>{name}</Text>
 
                         {isAdmin && (
                             <TouchableOpacity
                                 style={styles.optionButton}
-                                onPress={() => handleOptionSelect('addtags')}
+                                onPress={() => roomOptions('addtags', name, id)}
                             >
                                 <Text style={styles.optionText}>Add Tags</Text>
                             </TouchableOpacity>
@@ -70,7 +53,7 @@ const HomeTile = ({ id, isAdmin }) => {
 
                         <TouchableOpacity
                             style={styles.optionButton}
-                            onPress={() => handleOptionSelect('leaveroom')}
+                            onPress={() => roomOptions('leaveroom', name, id)}
                         >
                             <Text style={[styles.optionText, styles.optionTextSerious]}>Leave Room</Text>
                         </TouchableOpacity>
@@ -78,7 +61,7 @@ const HomeTile = ({ id, isAdmin }) => {
                         {isAdmin && (
                             <TouchableOpacity
                                 style={styles.optionButton}
-                                onPress={() => handleOptionSelect('deleteroom')}
+                                onPress={() => roomOptions('deleteroom', name, id)}
                             >
                                 <Text style={[styles.optionText, styles.optionTextSerious]}>Delete Room</Text>
                             </TouchableOpacity>
@@ -104,7 +87,7 @@ const styles = StyleSheet.create({
     pressableSquare: {
         width: 150,
         height: 150,
-        borderRadius: 15,
+        borderRadius: 16,
     },
     pressableText: {
         color: '#000',

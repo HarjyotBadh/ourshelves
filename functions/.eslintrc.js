@@ -1,44 +1,35 @@
 module.exports = {
-  root: true,
-  env: {
-    es6: true,
-    node: true,
+  "root": true,
+  "env": {
+    "es6": true,
+    "node": true
   },
-  extends: [
+  "extends": [
     "eslint:recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:import/typescript",
     "google",
-    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: ["tsconfig.json"],
-    sourceType: "module",
-    tsconfigRootDir: __dirname,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["tsconfig.json", "tsconfig.dev.json"],
+    "sourceType": "module"
   },
-  ignorePatterns: [
-    "/lib/**/*", // Ignore built files.
-    ".eslintrc.js", // Ignore the eslint config file itself
+  "ignorePatterns": [
+    "/lib/**/*",
+    "node_modules/**/*",
+    "../node_modules/**/*"
   ],
-  plugins: [
+  "plugins": [
     "@typescript-eslint",
-    "import",
+    "import"
   ],
-  rules: {
+  "rules": {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
-    "linebreak-style": 0,
-    "object-curly-spacing": ["error", "always"],
-    "max-len": ["error", { "code": 120 }],
-  },
-  overrides: [
-    {
-      files: ["*.js"],
-      rules: {
-        "@typescript-eslint/no-var-requires": "off",
-      },
-    },
-  ],
+    "indent": ["error", 2],
+    "max-len": ["error", { "code": 100 }]
+  }
 };

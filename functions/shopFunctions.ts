@@ -1,4 +1,4 @@
-import { getFirestore, doc, runTransaction, arrayUnion, Timestamp, DocumentReference } from 'firebase/firestore';
+import { getFirestore, doc, runTransaction, arrayUnion, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 interface Item {
@@ -8,9 +8,13 @@ interface Item {
   name: string;
 }
 
+interface PurchasedItem extends Item {
+  purchaseDate: Timestamp;
+}
+
 interface User {
   coins: number;
-  inventory: DocumentReference[]; // Changed to store DocumentReferences
+  inventory: PurchasedItem[];
 }
 
 export const purchaseItem = async (item: Item): Promise<{ success: boolean; message: string }> => {
@@ -35,11 +39,14 @@ export const purchaseItem = async (item: Item): Promise<{ success: boolean; mess
         return { success: false, message: `Not enough coins to purchase ${item.name}!` };
       }
 
-      const itemReference = doc(db, "Items", item.itemId); // Create a DocumentReference to the item
+      const purchasedItem: PurchasedItem = {
+        ...item,
+        purchaseDate: Timestamp.now(),
+      };
 
       transaction.update(userRef, {
         coins: userData.coins - item.cost,
-        inventory: arrayUnion(itemReference),
+        inventory: arrayUnion(purchasedItem),
       });
 
       return { success: true, message: `Successfully purchased ${item.name}!` };

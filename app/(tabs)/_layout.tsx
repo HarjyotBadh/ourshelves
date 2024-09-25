@@ -25,18 +25,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-          name="index"
-          options={{
-              title: "Home",
-              tabBarIcon: ({ color }) => <Home color={color} />,
-          }}
-      />
-      <Tabs.Screen
         name="shop"
         options={{
           title: 'Shop',
           tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
         }}
+      />
+      <Tabs.Screen
+          name="index"
+          options={{
+              title: "Home",
+              tabBarIcon: ({ color }) => <Home color={color} />,
+          }}
       />
     </Tabs>
   )
