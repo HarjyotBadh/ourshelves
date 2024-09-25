@@ -6,7 +6,7 @@ import { Anchor, TextArea, Button, useTheme, H2, H4, Paragraph, XStack, YStack, 
 import { ToastControl } from 'app/CurrentToast'
 import { ImageBackground, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updateProfile } from 'functions/profileFunctions';
+import { updateProfileAbtMe } from 'functions/profileFunctions';
 
 // TODO - figure out how to change the header names and (tabs) back button
 
@@ -21,10 +21,10 @@ export default function TabTwoScreen() {
   const [loading, setLoading] = useState(true);
   const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [refreshTime, setRefreshTime] = useState(0);
-  const [aboutMeText, setAboutMe] = useState('');
-  const [docId, setDocId] = useState('');
+  const [aboutMeText, setAboutMe] = useState(''); // TODO, eventually make this populate the moment you open the page
+  const [placeholder, setPlaceholder] = useState(''); // Initialize state for placeholder
   const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder ProfilePage doc id
+
 
   // Array holding all the profile pics
   let profilePics = [];
@@ -58,27 +58,29 @@ export default function TabTwoScreen() {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [profileId]);
+  }, [profileId, ProfilePage]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setRefreshTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+    setPlaceholder("Type your new \"About Me\" section here!")
+  }, [ProfilePage]);
 
   // Updating the User's About Me Section
   const aboutMeUpdate = async() => {
     console.log("Submitted Text: ", aboutMeText);
-    alert("About Me Updated");
-    const result = await updateProfile(aboutMeText)
-    console.log("result:" + result)
+
+    // Ensuring the About Me section has a limit and there's no newline characters
+    if (aboutMeText.length < 100 && !(/\n/.test(aboutMeText))) { 
+      const result = await updateProfileAbtMe(aboutMeText)
+      console.log(aboutMeText.length)
+      if (!result) {
+        console.log("ERROR - Update to profile failed") 
+      }
+      alert("About Me Updated");
+    } else {
+      alert("ERROR - Update cannot exceeded 100 characters or contain a newline")
+    }
   }
-
-
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -101,7 +103,7 @@ export default function TabTwoScreen() {
           {/* TODO - Fix to allow editing and saving of "About Me" Info*/}
           <TextArea height={170} width={300} value={aboutMeText} 
             onChangeText={setAboutMe}
-            borderWidth={2} placeholder={ProfilePage?.aboutMe}/>
+            borderWidth={2} placeholder={placeholder}/>
           <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
             Update About Me        
           </Button>

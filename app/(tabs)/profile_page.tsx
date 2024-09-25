@@ -49,7 +49,7 @@ export default function TabTwoScreen() {
     };
 
     fetchData();
-  }, [profileId]);
+  }, [profileId, ProfilePage]);
 
   return (
     <YStack f={1} ai="center" gap="$4" px="$10" pt="$5">
