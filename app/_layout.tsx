@@ -110,6 +110,12 @@ function RootLayoutNav() {
                                     headerShown: true,
                                 }}
                             />
+                            <Stack.Screen
+                                name="(room)"
+                                options={{
+                                    headerShown: false,
+                                }}
+                            />
                         </Stack>
                     </ThemeProvider>
                 </Provider>

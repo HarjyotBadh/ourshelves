@@ -26,13 +26,6 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="shop"
-        options={{
-          title: 'Shop',
-          tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
-        }}
-      />
 
       <Tabs.Screen
           name="index"
@@ -40,6 +33,13 @@ export default function TabLayout() {
               title: "Home",
               tabBarIcon: ({ color }) => <Home color={color} />,
           }}
+      />
+      <Tabs.Screen
+        name="shop"
+        options={{
+          title: 'Shop',
+          tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
+        }}
       />
     </Tabs>
   )
