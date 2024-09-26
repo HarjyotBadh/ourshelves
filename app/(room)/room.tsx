@@ -13,12 +13,10 @@ import {
     deleteDoc,
     doc,
     getDoc,
-    getDocs,
     writeBatch,
     DocumentReference,
     updateDoc,
-    where,
-    query
+    DocumentData
 } from "firebase/firestore";
 import { auth, db } from "firebaseConfig";
 import {PlacedItemData, ItemData } from "../../models/PlacedItemData";
@@ -63,6 +61,18 @@ const LoadingContainer = styled(YStack, {
     backgroundColor: BACKGROUND_COLOR,
     padding: 20,
 });
+
+interface UserData {
+    displayName: string;
+    profilePicture?: string;
+}
+
+interface RoomData extends DocumentData {
+    name: string;
+    users: DocumentReference[];
+    admins: DocumentReference[];
+    shelfList?: DocumentReference[];
+}
 
 const RoomScreen = () => {
     const router = useRouter();
@@ -157,29 +167,51 @@ const RoomScreen = () => {
                 // Fetch room data
                 const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
                 if (roomDoc.exists()) {
-                    const roomData = roomDoc.data();
+                    const roomData = roomDoc.data() as RoomData;
                     setRoomName(roomData.name);
 
-                    // Fetch user and admin display names and profile pictures
-                    const userIds = roomData.userList || [];
-                    const adminIds = roomData.adminList || [];
+                    // Fetch user and admin data using references
+                    const userRefs = roomData.users || [];
+                    const adminRefs = roomData.admins || [];
 
-                    // Create a Set of unique IDs
-                    const uniqueIds = new Set([...userIds, ...adminIds]);
+                    // Create a Map to store unique users
+                    const userMap = new Map();
 
-                    const usersQuery = query(collection(db, 'Users'), where('__name__', 'in', Array.from(uniqueIds)));
-                    const userSnapshots = await getDocs(usersQuery);
+                    // Process user references
+                    for (const ref of userRefs) {
+                        const userDoc = await getDoc(ref);
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data() as UserData;
+                            userMap.set(userDoc.id, {
+                                id: userDoc.id,
+                                displayName: userData.displayName || 'Unknown User',
+                                profilePicture: userData.profilePicture,
+                                isAdmin: false
+                            });
+                        }
+                    }
 
-                    const combinedUsers = userSnapshots.docs.map(doc => {
-                        const userData = doc.data();
-                        return {
-                            id: doc.id,
-                            displayName: userData.displayName || 'Unknown User',
-                            profilePicture: userData.profilePicture,
-                            isAdmin: adminIds.includes(doc.id)
-                        };
-                    });
+                    // Process admin references
+                    for (const ref of adminRefs) {
+                        const userDoc = await getDoc(ref);
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data() as UserData;
+                            const existingUser = userMap.get(userDoc.id);
+                            if (existingUser) {
+                                existingUser.isAdmin = true;
+                            } else {
+                                userMap.set(userDoc.id, {
+                                    id: userDoc.id,
+                                    displayName: userData.displayName || 'Unknown User',
+                                    profilePicture: userData.profilePicture,
+                                    isAdmin: true
+                                });
+                            }
+                        }
+                    }
 
+                    // Convert Map to array and update state
+                    const combinedUsers = Array.from(userMap.values());
                     setUsers(combinedUsers);
 
                     // Fetch shelves and placed items
