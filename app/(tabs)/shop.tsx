@@ -1,14 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { FlatList, ScrollView } from "react-native";
-import { Image, Text, View, Button, XStack, YStack, useTheme, styled, Spinner, Progress, Circle } from "tamagui";
-import { LinearGradient } from "tamagui/linear-gradient";
+import { ScrollView } from "react-native";
+import { Image, Text, View, XStack, YStack, useTheme, styled, Spinner, Progress } from "tamagui";
 import {
-  getFirestore,
-  collection,
-  getDocs,
   doc,
   getDoc,
-  updateDoc,
   Timestamp,
   DocumentReference,
 } from "firebase/firestore";
@@ -23,7 +18,7 @@ import {
   handleLoseCoins,
   handleDailyGiftClaim
 } from "project-functions/shopFunctions";
-import Item, { ItemData } from "components/item";
+import { ItemData } from "components/item";
 import DailyGift from "components/DailyGift";
 import ShopHeader from "components/ShopHeader";
 import ShopItemsList from "components/ShopItemsList";
@@ -76,13 +71,6 @@ async function fetchItemData(
     return { itemId: itemDoc.id, ...itemDoc.data() } as ItemData;
   }
   return null;
-}
-
-async function fetchInventoryItems(
-  inventory: DocumentReference[]
-): Promise<ItemData[]> {
-  const inventoryItems = await Promise.all(inventory.map(fetchItemData));
-  return inventoryItems.filter((item): item is ItemData => item !== null);
 }
 
 const preloadImages = async (items: ItemData[], setLoadingProgress: (progress: number) => void) => {
