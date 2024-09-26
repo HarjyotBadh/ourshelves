@@ -8,7 +8,7 @@ export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ succ
   const db = getFirestore();
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
-  const profileId = " dMxt0UarTkFUIHIa8gJC "; // Placeholder
+  const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder
   const profileRef = doc(db, "Users", profileId);
 
   try {
@@ -20,7 +20,7 @@ export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ succ
       }
 
       transaction.update(profileRef, {
-        AboutMe: updatedAboutMe,
+        aboutMe: updatedAboutMe,
       });
 
       return { success: true, message: 'Successfully updated about me' };

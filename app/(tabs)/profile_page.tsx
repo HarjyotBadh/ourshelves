@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const [aboutMeText, setAboutMe] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
-  const profileId = " dMxt0UarTkFUIHIa8gJC "; // Placeholder ProfilePage doc id
+  const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder ProfilePage doc id
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,15 +37,16 @@ export default function ProfilePage() {
           if (profilePageDoc.exists()) {
             const profilePageData = profilePageDoc.data();
             setProfilePage({
-              aboutMe: profilePageData.AboutMe,
-              profilePic: profilePageData.ProfilePic,
-              rooms: profilePageData.Rooms
+              aboutMe: profilePageData.aboutMe,
+              profilePic: profilePageData.profilePic,
+              rooms: profilePageData.rooms
             });
             
             // Ensuring the about me text isn't empty
-            setAboutMe(profilePageData.AboutMe);
-            if (aboutMeText.length == 0 || aboutMeText == "") {
-              setAboutMe("N/A")
+            if (profilePageData.aboutMe.length == 0 || profilePageData.aboutMe == "") {
+              setAboutMe("N/A");
+            } else {
+              setAboutMe(profilePageData.aboutMe);
             }
 
           } else {
@@ -73,12 +74,14 @@ export default function ProfilePage() {
     // Ensuring the About Me section has a limit and there's no newline characters
     if (aboutMeText.length < 100 && !(/\n/.test(aboutMeText))) { 
 
+      var result;
+
       // Ensuring the about me text isn't empty
       if (aboutMeText.length == 0 || aboutMeText == "") {
-        setAboutMe("N/A")
+        result =  await updateProfileAbtMe("N/A")
+      } else {
+        result =  await updateProfileAbtMe(aboutMeText)
       }
-
-      const result = await updateProfileAbtMe(aboutMeText)
       if (!result) {
         console.log("ERROR - Update to profile failed") 
       }
