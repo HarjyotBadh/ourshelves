@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { ScrollView, TextInput } from 'react-native';
+import { ScrollView, TextInput, Pressable } from 'react-native';
 import { Text, YStack } from 'tamagui';
+import { collection, query, where } from "firebase/firestore";
+
 
 export default function NameList() {
   // Array of names
@@ -36,14 +38,18 @@ export default function NameList() {
       <ScrollView contentContainerStyle={{ paddingVertical: 10 }}>
         {filteredNames.length > 0 ? (
           filteredNames.map((name, index) => (
+            <Pressable
+            key={index}
+            onPress={() => alert("hello!")}
+            >
             <Text
-              key={index}
-              fontSize="$9" // Tamagui font size
+              fontSize="$10" // Tamagui font size
               color="$color"
               marginBottom="$2" // Tamagui spacing
             >
               {name}
             </Text>
+          </Pressable>
           ))
         ) : (
           <Text fontSize="$4" color="$color">
