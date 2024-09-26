@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { db } from "firebaseConfig";
-import { Link, Tabs } from 'expo-router'
 import { Avatar, Text, XStack, YStack, SizableText, Image } from 'tamagui'
 import { ToastControl } from 'app/CurrentToast'
 import { TouchableOpacity, ScrollView } from 'react-native'
 import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { updateProfileIcon } from 'functions/profileFunctions';
 
 // TODO - figure out how to change the header names and (tabs) back button
 
@@ -46,8 +46,13 @@ export default function IconGallery() {
   }, []);
     
   // For when an icon is selected
-  const iconSelect = () => {
-    alert("It Works!")
+  const iconSelect = async(iconUri) => {
+    const result = await updateProfileIcon(iconUri)
+    if (!result) {
+      console.log("ERROR - Update to profile failed") 
+    } else {
+      alert("Profile Icon Updated")
+    }
   };
 
   // Loading page 
@@ -59,7 +64,7 @@ export default function IconGallery() {
     <ScrollView>
       <YStack ai="center" gap="$4" px="$4" py="$4">
         {icons.map((iconUri, index) => (
-          <TouchableOpacity key={index} onPress={() => iconSelect()}>
+          <TouchableOpacity key={index} onPress={() => iconSelect(iconUri)}>
             <Avatar circular size="$15">
               <Avatar.Image
                 accessibilityLabel="ProfilePic"

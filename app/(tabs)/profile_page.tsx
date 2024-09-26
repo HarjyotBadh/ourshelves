@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [profilePage, setProfilePage] = useState<ProfilePage | null>(null);
   const [aboutMeText, setAboutMe] = useState('');
+  const [profileIcon, setIcon] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
   const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder ProfilePage doc id
@@ -51,6 +52,8 @@ export default function ProfilePage() {
               setAboutMe(profilePageData.aboutMe);
             }
 
+            setIcon(profilePageData.profilePic)
+            console.log(profileIcon)
           } else {
             throw new Error('User not found');
           }
@@ -86,8 +89,9 @@ export default function ProfilePage() {
       }
       if (!result) {
         console.log("ERROR - Update to profile failed") 
+      } else {
+        alert("About Me Updated");
       }
-      alert("About Me Updated");
     } else {
       alert("ERROR - Update cannot exceeded 100 characters or contain a newline")
     }
@@ -103,7 +107,7 @@ export default function ProfilePage() {
         <Avatar circular size="$12">
           <Avatar.Image
             accessibilityLabel="ProfilePic"
-            src={profilePage?.profilePic}/>
+            src={profileIcon}/>
           <Avatar.Fallback backgroundColor="$blue10" />
         </Avatar>
 
@@ -140,7 +144,7 @@ export default function ProfilePage() {
             <Avatar circular size="$12">
             <Avatar.Image
               accessibilityLabel="ProfilePic"
-              src={profilePage?.profilePic}/>
+              src={profileIcon}/>
             <Avatar.Fallback backgroundColor="$blue10" />
           </Avatar>
 

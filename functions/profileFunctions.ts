@@ -40,7 +40,7 @@ export const updateProfileIcon = async (updatedIcon: string): Promise<{ success:
   const db = getFirestore();
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
-  const profileId = "dMxt0UarTkFUIHIa8gJC"; // Placeholder
+  const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder
   const profileRef = doc(db, 'Users', profileId);
 
   try {
@@ -52,7 +52,7 @@ export const updateProfileIcon = async (updatedIcon: string): Promise<{ success:
       }
 
       transaction.update(profileRef, {
-        ProfilePic: updatedIcon,
+        profilePic: updatedIcon,
       });
 
       return { success: true, message: 'Successfully user icon' };
