@@ -6,6 +6,7 @@ import { Alert } from 'react-native';
 interface Room {
     id: string;
     name: string;
+    isAdmin: boolean;
 }
 
 export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }> => {
@@ -18,12 +19,16 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
             const roomsData = await Promise.all(
                 roomRefs.map(async (roomRef) => {
                     const roomDoc = await getDoc(roomRef);
-                    console.log(roomDoc.id);
 
                     if (roomDoc.exists()) {
+                        console.log(roomDoc.id);
+                        const roomData = roomDoc.data() as { admins: { path: string }[] };
+                        const isAdmin = roomData.admins.some((adminRef) => adminRef.path.includes(currentUserId));
+                        console.log("here");
                         return {
                             id: roomDoc.id,
-                            ...(roomDoc.data() as object)
+                            name: (roomDoc.data() as Room).name,
+                            isAdmin: isAdmin,
                         };
                     }
                     else {
@@ -59,7 +64,8 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean, r
                 room: {
                     id: roomDoc.id,
                     ...(roomDoc.data() as object),
-                    name: roomDoc.data().name
+                    name: roomDoc.data().name,
+                    isAdmin: roomDoc.data().admins.includes(auth.currentUser.uid),
                 }
             };
         }
@@ -68,7 +74,7 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean, r
         console.error("Error fetching room: ", error);
     }
 
-    return { success: false, room: {id: '', name: ''} };
+    return { success: false, room: {id: '', name: '', isAdmin: false} };
 }
 
 export const leaveRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
@@ -84,6 +90,20 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
             for (let i = 0; i < rooms.length; i++) {
                 console.log(rooms[i].path.slice(6));
                 if (rooms[i].path.slice(6) === roomId) {
+                    
+                    const roomRef = doc(db, 'Rooms', roomId);
+                    const roomDoc = await getDoc(roomRef);
+                    if (roomDoc.exists()) {
+                        console.log(roomDoc.data().admins.length);
+                        if (roomDoc.data().users.length === 1) {
+                            return { success: false, message: 'Cannot leave a room with only one user in it (you).' };
+                        }
+
+                    }
+
+                    return { success: false, message: 'Room NOT removed from user document' };
+
+
                     rooms.splice(i, i + 1);
                     await updateDoc(userDocRef, { rooms });
 
@@ -108,8 +128,12 @@ export const createRoom = async (roomName: string, roomDescription: string): Pro
         const userDoc = await getDoc(doc(db, 'Users', userId));
 
         if (userDoc.exists()) {
+            const userRef = doc(db, 'Users', userId);
             const roomRef = await addDoc(collection(db, 'Rooms'), {
                 name: roomName,
+                description: roomDescription,
+                users: [userRef],
+                admins: [userRef],
             });
 
             const userRooms = userDoc.data().rooms || [];

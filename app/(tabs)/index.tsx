@@ -48,7 +48,7 @@ const HomeScreen = () => {
     else {
       Alert.alert(
         'Error',
-        `An error occurred while leaving the room. Yell this to Jack: \n\n${result.message}`,
+        `${result.message}`,
       )
     }
   };
