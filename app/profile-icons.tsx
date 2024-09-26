@@ -6,6 +6,7 @@ import { TouchableOpacity, ScrollView } from 'react-native'
 import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileIcon } from 'functions/profileFunctions';
+import { useRouter } from 'expo-router';
 
 // TODO - figure out how to change the header names and (tabs) back button
 
@@ -15,8 +16,9 @@ export default function IconGallery() {
   const [error, setError] = useState<string | null>(null);
   const profileId = "profileIcons"; // Placeholder ProfilePage doc id
   const [icons, setIconArray] = useState([]);
+  const router = useRouter();
 
-  // Greabbing the data about profile page from database
+  // Grabbing the data about profile page from database
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -46,12 +48,14 @@ export default function IconGallery() {
   }, []);
     
   // For when an icon is selected
+  // TODO - when the screen navigates back to profile_page, animates weird. eventually fix
   const iconSelect = async(iconUri) => {
     const result = await updateProfileIcon(iconUri)
     if (!result) {
       console.log("ERROR - Update to profile failed") 
     } else {
       alert("Profile Icon Updated")
+      router.push(`/profile_page?iconId=${iconUri}`);
     }
   };
 

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { db } from "firebaseConfig";
-import { Link, useRouter } from "expo-router";
+import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { Avatar, TextArea, styled, Button, Text, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 import {  doc, getDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileAbtMe } from 'functions/profileFunctions';
 import { Wrench } from '@tamagui/lucide-icons'
-
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -25,8 +24,10 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
   const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder ProfilePage doc id
+  const { iconId } = useLocalSearchParams(); // Getting Local Query Data
 
   useEffect(() => {
+    
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -51,9 +52,7 @@ export default function ProfilePage() {
             } else {
               setAboutMe(profilePageData.aboutMe);
             }
-
             setIcon(profilePageData.profilePic)
-            console.log(profileIcon)
           } else {
             throw new Error('User not found');
           }
@@ -67,7 +66,7 @@ export default function ProfilePage() {
       }
     };
     fetchData();
-  }, []);
+  }, [iconId]);
 
   // The Loading Page
   if (loading) {
