@@ -56,6 +56,14 @@ const HomeScreen = () => {
   const homeCreateRoom = async (roomName: string, roomDescription: string) => {
     console.log('== Create room');
 
+    if (roomName === '') {
+      Alert.alert(
+        'Error',
+        'Room name cannot be empty.',
+      );
+      return;
+    }
+
     const result = await createRoom(roomName, roomDescription);
     console.log(result.message);
 

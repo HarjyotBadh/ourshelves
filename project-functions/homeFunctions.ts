@@ -74,7 +74,7 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean, r
         console.error("Error fetching room: ", error);
     }
 
-    return { success: false, room: {id: '', name: '', isAdmin: false} };
+    return { success: false, room: { id: '', name: '', isAdmin: false } };
 }
 
 export const leaveRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
@@ -90,7 +90,7 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
             for (let i = 0; i < rooms.length; i++) {
                 console.log(rooms[i].path.slice(6));
                 if (rooms[i].path.slice(6) === roomId) {
-                    
+
                     const roomRef = doc(db, 'Rooms', roomId);
                     const roomDoc = await getDoc(roomRef);
                     if (roomDoc.exists()) {
@@ -99,15 +99,27 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
                             return { success: false, message: 'Cannot leave a room with only one user in it (you).' };
                         }
 
+                        rooms.splice(i, i + 1);
+                        await updateDoc(userDocRef, { rooms });
+
+                        const users = roomDoc.data().users;
+                        const newUsers = users.filter((user: any) => user.path !== userDocRef.path);
+
+                        const admins = roomDoc.data().admins;
+                        const newAdmins = admins.filter((admin: any) => admin.path !== userDocRef.path);
+
+                        await updateDoc(roomRef, { users: newUsers, admins: newAdmins });
+
+                        return { success: true, message: 'Room removed from user document' };
+
                     }
 
-                    return { success: false, message: 'Room NOT removed from user document' };
+                    // rooms.splice(i, i + 1);
+                    // await updateDoc(userDocRef, { rooms });
 
+                    // const users = roomDoc.data().users;
 
-                    rooms.splice(i, i + 1);
-                    await updateDoc(userDocRef, { rooms });
-
-                    return { success: true, message: 'Room removed from user document' };
+                    // return { success: true, message: 'Room removed from user document' };
                 }
             }
         }
@@ -123,7 +135,7 @@ export const createRoom = async (roomName: string, roomDescription: string): Pro
     console.log("createRoom in homeFunctions - " + roomName + " - " + roomDescription);
     const userId = auth.currentUser.uid;
     console.log(userId);
-    
+
     try {
         const userDoc = await getDoc(doc(db, 'Users', userId));
 
