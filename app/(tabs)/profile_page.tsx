@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { db } from "firebaseConfig";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
-import { Avatar, TextArea, styled, Button, Text, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
+import { Avatar, styled, TextArea, Progress, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Image } from 'tamagui'
 import {  doc, getDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileAbtMe } from 'functions/profileFunctions';
@@ -15,6 +15,14 @@ interface ProfilePage {
   rooms: string;
   displayName: string
 }
+
+const LoadingContainer = styled(YStack, {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'BACKGROUND_COLOR',
+  padding: 20,
+});
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -70,7 +78,14 @@ export default function ProfilePage() {
 
   // The Loading Page
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <LoadingContainer>
+        <Spinner size="large" color="$blue10" />
+        <Text fontSize={18} color="$blue10" marginTop={20} marginBottom={10}>
+          Profile is loading...
+        </Text>
+      </LoadingContainer>
+    );
   }
 
   // Updating the User's About Me Section

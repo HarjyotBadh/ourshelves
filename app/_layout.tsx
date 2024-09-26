@@ -105,12 +105,6 @@ function RootLayoutNav() {
                                 }}
                             />
                             <Stack.Screen
-                                name="profile-page-edit"
-                                options={{
-                                    headerShown: true,
-                                }}
-                            />
-                            <Stack.Screen
                                 name="(room)"
                                 options={{
                                     headerShown: false,
