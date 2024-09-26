@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { db } from "firebaseConfig";
-import { useRouter } from "expo-router";
-import { styled, Button, Text, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
+import { Link, useRouter } from "expo-router";
+import { Avatar, TextArea, styled, Button, Text, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 import {  doc, getDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { updateProfileAbtMe } from 'functions/profileFunctions';
+import { Wrench } from '@tamagui/lucide-icons'
+
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -12,28 +16,13 @@ interface ProfilePage {
   rooms: string;
 }
 
-const Header = styled(XStack, {
-  height: 60,
-  width: "150%",
-  backgroundColor: "$accentColor",
-  alignItems: 'center',
-  paddingHorizontal: '$5',
-});
-
-const HeaderButton = styled(Button, {
-  width: 50,
-  height: 50,
-  justifyContent: 'center',
-  alignItems: 'center',
-});
-
-export default function TabTwoScreen() {
+export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
-  const [ProfilePage, setProfilePage] = useState<ProfilePage | null>(null);
+  const [profilePage, setProfilePage] = useState<ProfilePage | null>(null);
+  const [aboutMeText, setAboutMe] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
   const profileId = " dMxt0UarTkFUIHIa8gJC "; // Placeholder ProfilePage doc id
-  const router = useRouter();
-  const { roomId } = useLocalSearchParams<{ roomId: string }>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,64 +41,136 @@ export default function TabTwoScreen() {
               profilePic: profilePageData.ProfilePic,
               rooms: profilePageData.Rooms
             });
+            
+            // Ensuring the about me text isn't empty
+            setAboutMe(profilePageData.AboutMe);
+            if (aboutMeText.length == 0 || aboutMeText == "") {
+              setAboutMe("N/A")
+            }
+
           } else {
             throw new Error('User not found');
           }
         } else {
           throw new Error('User not authenticated');
         }
-
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // Navigating to the "Edit Profile" Page
-  const handlePress = () => {
-    router.push({
-        pathname: "profile-page-edit",
-        params: {
-            roomId: "zQOz0TCXM8qJSMXigI6k"
-        },
-    });
+  // The Loading Page
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
 
-};
+  // Updating the User's About Me Section
+  const aboutMeUpdate = async() => {
+    // Ensuring the About Me section has a limit and there's no newline characters
+    if (aboutMeText.length < 100 && !(/\n/.test(aboutMeText))) { 
+
+      // Ensuring the about me text isn't empty
+      if (aboutMeText.length == 0 || aboutMeText == "") {
+        setAboutMe("N/A")
+      }
+
+      const result = await updateProfileAbtMe(aboutMeText)
+      if (!result) {
+        console.log("ERROR - Update to profile failed") 
+      }
+      alert("About Me Updated");
+    } else {
+      alert("ERROR - Update cannot exceeded 100 characters or contain a newline")
+    }
+  }
 
   return (
     <SafeAreaView>
-    <YStack ai="center" gap="$4" px="$10" pt="$5">
-        <Header>
-          <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
-              {"Room name"}
-          </Text>  
-          <HeaderButton onPress={handlePress}>
-          </HeaderButton>      
-        </Header>
+    {!isEditMode ? 
+    (
+    <YStack ai="center" gap="$4" px="$10" pt="$1">
         <H2>User Profile</H2>
-        <Image
-            // TODO make this an avatar
-            // Eventually make this a set number of predefined icons
-            source={{ width: 100, height: 100, uri: ProfilePage?.profilePic }}
-            width="51%"
-            height="32%"
-        />
+        
+        <Avatar circular size="$12">
+          <Avatar.Image
+            accessibilityLabel="ProfilePic"
+            src={profilePage?.profilePic}/>
+          <Avatar.Fallback backgroundColor="$blue10" />
+        </Avatar>
+
         <H4>About Me:</H4>
-        <Paragraph fos="$5" ta="center">
-        {ProfilePage?.aboutMe}
-        </Paragraph>
+        <TextArea height={170} width={300} value={aboutMeText} 
+            editable={false}
+            borderWidth={2}/>
 
         <XStack gap="$2" px="$2" pt="$5">
-        <H4>Number Rooms I'm In:</H4>
+        <H4>Number Of Rooms I'm In:</H4>
         <SizableText theme="alt2" size="$8" fontWeight="800">
-          {ProfilePage?.rooms.length}
+          {profilePage?.rooms.length}
         </SizableText>
         </XStack>
-    </YStack>
+
+        <Button
+          size="$7" // Adjust size as needed
+          circular
+          onPress={() => {
+            setIsEditMode(true);
+          }}
+          color="$white"
+          borderRadius="50%" // Ensure the button is circular
+          justifyContent="center"
+          alignItems="center"
+          display="flex" // Use flex to ensure alignment works
+          icon={<Wrench size="$4" />}>
+        </Button>
+    </YStack> ) : 
+    (  
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <YStack ai="center" gap="$4" px="$10" pt="$1">
+          <H2>User Profile</H2>
+            <Avatar circular size="$12">
+            <Avatar.Image
+              accessibilityLabel="ProfilePic"
+              src={profilePage?.profilePic}/>
+            <Avatar.Fallback backgroundColor="$blue10" />
+          </Avatar>
+
+          {/* Button for Changing Profile Picture */}
+          <Link href="/profile-icons" asChild>
+              <Button mr="$2" bg="$yellow8" color="$yellow12">
+                  Select Picture Icon
+              </Button>
+          </Link>
+          
+          <TextArea height={170} width={300} value={aboutMeText} 
+            onChangeText={setAboutMe}
+            borderWidth={2}/>
+          <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
+            Update About Me        
+          </Button>
+
+          <Button
+            size="$7" // Adjust size as needed
+            circular
+            onPress={() => {
+              setIsEditMode(false);
+            }}
+            bg="$yellow8"
+            color="$white"
+            borderRadius="50%" // Ensure the button is circular
+            justifyContent="center"
+            alignItems="center"
+            display="flex" // Use flex to ensure alignment works
+            icon={<Wrench size="$4" />}>
+          </Button>
+
+      </YStack>
+    </TouchableWithoutFeedback>
+    )}
     </SafeAreaView>
   )
 }

@@ -21,15 +21,8 @@ export default function TabLayout() {
         name="profile_page"
         options={{
           title: 'Profile',
-          headerShown: false,
+          headerShown: true,
           tabBarIcon: ({ color }) => <User color={color} />,
-          headerRight: () => (
-            <Link href="/profile-page-edit" asChild>
-                <Button mr="$2" bg="$yellow8" color="$yellow12">
-                  Edit Profile
-                </Button>
-            </Link>
-          ),
         }}
       />
 

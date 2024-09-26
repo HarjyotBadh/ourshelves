@@ -59,6 +59,10 @@ export default function TabTwoScreen() {
 
   };
 
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
   return (
     
     <SafeAreaView>
