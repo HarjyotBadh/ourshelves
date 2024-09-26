@@ -14,6 +14,7 @@ interface ProfilePage {
   aboutMe: string;
   profilePic: string;
   rooms: string;
+  displayName: string
 }
 
 export default function ProfilePage() {
@@ -39,7 +40,8 @@ export default function ProfilePage() {
             setProfilePage({
               aboutMe: profilePageData.aboutMe,
               profilePic: profilePageData.profilePic,
-              rooms: profilePageData.rooms
+              rooms: profilePageData.rooms,
+              displayName: profilePageData.displayName
             });
             
             // Ensuring the about me text isn't empty
@@ -96,7 +98,7 @@ export default function ProfilePage() {
     {!isEditMode ? 
     (
     <YStack ai="center" gap="$4" px="$10" pt="$1">
-        <H2>User Profile</H2>
+        <H2>{profilePage?.displayName}</H2>
         
         <Avatar circular size="$12">
           <Avatar.Image
@@ -134,7 +136,7 @@ export default function ProfilePage() {
     (  
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <YStack ai="center" gap="$4" px="$10" pt="$1">
-          <H2>User Profile</H2>
+          <H2>{profilePage?.displayName}</H2>
             <Avatar circular size="$12">
             <Avatar.Image
               accessibilityLabel="ProfilePic"
