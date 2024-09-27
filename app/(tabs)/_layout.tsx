@@ -26,7 +26,6 @@ export default function TabLayout() {
         }}
       />
 
-
       <Tabs.Screen
           name="index"
           options={{
@@ -48,6 +47,7 @@ export default function TabLayout() {
               ),
           }}
       />
+      
       <Tabs.Screen
         name="shop"
         options={{
