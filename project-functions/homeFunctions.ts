@@ -7,6 +7,7 @@ interface Room {
     id: string;
     name: string;
     isAdmin: boolean;
+    tags: string[];
 }
 
 export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }> => {
@@ -24,11 +25,22 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
                         console.log(roomDoc.id);
                         const roomData = roomDoc.data() as { admins: { path: string }[] };
                         const isAdmin = roomData.admins.some((adminRef) => adminRef.path.includes(currentUserId));
-                        console.log("here");
+                        
+                        const tagRefs = (roomDoc.data() as { tags: any[] }).tags;
+                        const tags = await Promise.all(
+                            tagRefs.map(async (tagRef) => {
+                                const tagDoc = await getDoc(tagRef);
+                                return (tagDoc.data() as { name: string }).name;
+                            })
+                        ); 
+                    
+                        console.log(tags);
+                        
                         return {
                             id: roomDoc.id,
                             name: (roomDoc.data() as Room).name,
                             isAdmin: isAdmin,
+                            tags: tags,
                         };
                     }
                     else {
@@ -41,7 +53,8 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
                 .map(room => ({
                     id: room.id,
                     name: room.name,
-                    isAdmin: room.isAdmin
+                    isAdmin: room.isAdmin,
+                    tags: room.tags,
                 }));
 
             return { rooms };
@@ -53,6 +66,21 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
 
     return { rooms: [] };
 };
+
+export const getTagById = async (tagId: string): Promise<{ success: boolean, tag: string }> => {
+    try {
+        const tagDoc = await getDoc(doc(db, 'Tags', tagId));
+
+        if (tagDoc.exists()) {
+            return { success: true, tag: tagDoc.data().name };
+        }
+    }
+    catch (error) {
+        console.error("Error fetching tag: ", error);
+    }
+
+    return { success: false, tag: '' };
+}
 
 export const getRoomById = async (roomId: string): Promise<{ success: boolean, room: Room }> => {
     try {
@@ -66,6 +94,7 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean, r
                     ...(roomDoc.data() as object),
                     name: roomDoc.data().name,
                     isAdmin: roomDoc.data().admins.includes(auth.currentUser.uid),
+                    tags: roomDoc.data().tags,
                 }
             };
         }
@@ -74,7 +103,7 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean, r
         console.error("Error fetching room: ", error);
     }
 
-    return { success: false, room: { id: '', name: '', isAdmin: false } };
+    return { success: false, room: { id: '', name: '', isAdmin: false, tags: [] } };
 }
 
 export const leaveRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
@@ -88,7 +117,6 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
         if (userDoc.exists()) {
             const rooms = userDoc.data().rooms;
             for (let i = 0; i < rooms.length; i++) {
-                console.log(rooms[i].path.slice(6));
                 if (rooms[i].path.slice(6) === roomId) {
 
                     const roomRef = doc(db, 'Rooms', roomId);
@@ -113,13 +141,6 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
                         return { success: true, message: 'Room removed from user document' };
 
                     }
-
-                    // rooms.splice(i, i + 1);
-                    // await updateDoc(userDocRef, { rooms });
-
-                    // const users = roomDoc.data().users;
-
-                    // return { success: true, message: 'Room removed from user document' };
                 }
             }
         }
@@ -146,6 +167,7 @@ export const createRoom = async (roomName: string, roomDescription: string): Pro
                 description: roomDescription,
                 users: [userRef],
                 admins: [userRef],
+                tags: [],
             });
 
             const userRooms = userDoc.data().rooms || [];

@@ -15,6 +15,7 @@ const HomeScreen = () => {
     id: string;
     name: string;
     isAdmin: boolean;
+    tags: string[];
   }
 
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -29,6 +30,7 @@ const HomeScreen = () => {
       id: room.id,
       name: room.name,
       isAdmin: room.isAdmin,
+      tags: room.tags,
     }));
     setRooms(roomsData);
   }
@@ -78,6 +80,7 @@ const HomeScreen = () => {
             id: getRoomResult.room.id,
             name: getRoomResult.room.name,
             isAdmin: true,
+            tags: getRoomResult.room.tags,
           },
         ]);
 
@@ -111,6 +114,7 @@ const HomeScreen = () => {
   };
 
   const roomOptions = (option: string, roomName: string, roomId: string) => {
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     if (option === 'addtags') {
       console.log('Add tags');
     } else if (option === 'leaveroom') {
@@ -151,8 +155,9 @@ const HomeScreen = () => {
           id={room.id}
           name={room.name}
           isAdmin={room.isAdmin}
+          tags={room.tags}
           enterRoom={enterRoom}
-          roomOptions={roomOptions}
+          homeLeaveRoom={homeLeaveRoom}
         />
       ))}
       <CreateHomeTile
