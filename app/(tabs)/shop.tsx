@@ -63,38 +63,6 @@ interface User {
   lastDailyGiftClaim: Timestamp | null;
 }
 
-async function fetchItemData(
-  itemRef: DocumentReference
-): Promise<ItemData | null> {
-  const itemDoc = await getDoc(itemRef);
-  if (itemDoc.exists()) {
-    return { itemId: itemDoc.id, ...itemDoc.data() } as ItemData;
-  }
-  return null;
-}
-
-const preloadImages = async (items: ItemData[], setLoadingProgress: (progress: number) => void) => {
-  const totalImages = items.length;
-  let loadedImages = 0;
-
-  const preloadPromises = items.map((item) => {
-    return new Promise((resolve) => {
-      Image.prefetch(item.imageUri)
-        .then(() => {
-          loadedImages++;
-          setLoadingProgress((loadedImages / totalImages) * 100);
-          resolve(null);
-        })
-        .catch(() => {
-          loadedImages++;
-          setLoadingProgress((loadedImages / totalImages) * 100);
-          resolve(null);
-        });
-    });
-  });
-
-  await Promise.all(preloadPromises);
-};
 
 const LoadingContainer = styled(YStack, {
   flex: 1,
@@ -152,12 +120,12 @@ export default function ShopScreen() {
   // State variables
   const [items, setItems] = useState<ItemData[]>([]);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTime, setRefreshTime] = useState(0);
-  const [canClaimDailyGift, setCanClaimDailyGift] = useState(false);
-  const [dailyGiftTimer, setDailyGiftTimer] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loadedItems, setLoadedItems] = useState(0);
   const [demoRefreshTime, setDemoRefreshTime] = useState<number | null>(null); //for sprint 1 testing
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [wallpapers, setWallpapers] = useState<WallpaperData[]>([]);
@@ -170,6 +138,8 @@ export default function ShopScreen() {
   });
   const [shopMetadata, setShopMetadata] = useState<ShopMetadata | null>(null);
 
+  const dataFetchedRef = useRef(false);
+
   // TODO: Replace with actual user authentication
   const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
 
@@ -180,6 +150,41 @@ export default function ShopScreen() {
     return shopMetadataDoc.exists()
       ? (shopMetadataDoc.data() as ShopMetadata)
       : null;
+  };
+
+  const preloadImages = async (items: ItemData[]) => {
+    console.log("Starting to preload images...");
+    setTotalItems(items.length);
+    setLoadedItems(0);
+
+    const preloadPromises = items.map((item, index) => {
+      return new Promise((resolve) => {
+        Image.prefetch(item.imageUri)
+          .then(() => {
+            setLoadedItems(prevLoaded => {
+              const newLoaded = prevLoaded + 1;
+              const progress = (newLoaded / items.length) * 100;
+              console.log(`Loaded image ${newLoaded}/${items.length}, Progress: ${progress.toFixed(2)}%`);
+              setLoadingProgress(progress);
+              return newLoaded;
+            });
+            resolve(null);
+          })
+          .catch(() => {
+            setLoadedItems(prevLoaded => {
+              const newLoaded = prevLoaded + 1;
+              const progress = (newLoaded / items.length) * 100;
+              console.log(`Failed to load image ${newLoaded}/${items.length}, Progress: ${progress.toFixed(2)}%`);
+              setLoadingProgress(progress);
+              return newLoaded;
+            });
+            resolve(null);
+          });
+      });
+    });
+
+    await Promise.all(preloadPromises);
+    console.log("Finished preloading images.");
   };
 
   //for sprint 1 testing
@@ -197,9 +202,10 @@ export default function ShopScreen() {
 
   // Fetch all necessary data
   const fetchData = useCallback(async () => {
+    console.log("Fetching data...");
+    setIsLoading(true);
+    setLoadingProgress(0);
     try {
-      setLoading(true);
-      setLoadingProgress(0);
       setError(null);
 
       const gottenShopMetadata = await fetchShopMetadata();
@@ -228,7 +234,7 @@ export default function ShopScreen() {
         return { id: shelfColorId, ...shelfColorDoc.data() } as ShelfColorData;
       }));
 
-      await preloadImages(fetchedItems, setLoadingProgress);
+      await preloadImages(fetchedItems);
 
       setItems(fetchedItems);
       setWallpapers(fetchedWallpapers);
@@ -260,33 +266,15 @@ export default function ShopScreen() {
         err instanceof Error ? err.message : "An unknown error occurred"
       );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [userId]);
 
   // Initial data fetch and refresh timer setup
   useEffect(() => {
+    if (dataFetchedRef.current) return;
+    dataFetchedRef.current = true;
     fetchData();
-
-    const timer = setInterval(() => {
-      setRefreshTime((prevTime) => {
-        if (prevTime <= 0) {
-          fetchData();
-          return 0;
-        }
-        return prevTime - 1;
-      });
-
-      setDailyGiftTimer((prevTime) => {
-        if (prevTime <= 0) {
-          setCanClaimDailyGift(true);
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
-    
-    return () => clearInterval(timer);
   }, [fetchData]);
 
   //for sprint 1 testing
@@ -306,7 +294,7 @@ export default function ShopScreen() {
 
   // Handle manual shop refresh
   const handleManualRefresh = async () => {
-    setLoading(true);
+    setIsLoading(true);
     try {
       const refreshShop = httpsCallable(functions, "refreshShopManually");
       await refreshShop();
@@ -315,7 +303,7 @@ export default function ShopScreen() {
       console.error("Error refreshing shop:", error);
       setError("Failed to refresh shop. Please try again.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -379,13 +367,12 @@ export default function ShopScreen() {
     const result = await handleDailyGiftClaim(user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
     } else {
       alert(result.message);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <LoadingContainer>
         <Spinner size="large" color="$blue10" />
@@ -395,6 +382,9 @@ export default function ShopScreen() {
         <Progress value={loadingProgress} width={200}>
           <Progress.Indicator animation="bouncy" backgroundColor="$blue10" />
         </Progress>
+        <Text fontSize={14} color="$blue10" marginTop={10}>
+          {loadedItems} / {totalItems} items loaded
+        </Text>
       </LoadingContainer>
     );
   }
