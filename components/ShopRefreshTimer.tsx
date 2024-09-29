@@ -1,8 +1,8 @@
-import React from 'react';
-import { Text, XStack, Button } from 'tamagui';
+import React, { useState, useEffect } from 'react';
+import { Text, XStack, Button, YStack } from 'tamagui';
 
 interface ShopRefreshTimerProps {
-  refreshTime: number;
+  nextRefreshTime: Date;
   isDemoMode: boolean;
   demoRefreshTime: number | null;
   onManualRefresh: () => void;
@@ -10,14 +10,28 @@ interface ShopRefreshTimerProps {
 }
 
 const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
-  refreshTime,
+  nextRefreshTime,
   isDemoMode,
   demoRefreshTime,
   onManualRefresh,
   onDemoRefresh
 }) => {
-  const formatTime = (seconds: number | null): string => {
-    if (seconds === null) return "00:00:00";
+  const [timeRemaining, setTimeRemaining] = useState(0);
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date();
+      const diff = nextRefreshTime.getTime() - now.getTime();
+      setTimeRemaining(Math.max(0, Math.floor(diff / 1000)));
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(timer);
+  }, [nextRefreshTime]);
+
+  const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
@@ -27,9 +41,9 @@ const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
   };
 
   return (
-    <>
+    <YStack>
       <Text fontSize="$4" textAlign="center" marginTop="$4">
-        Shop Refreshes In:
+        Next Refresh In:
       </Text>
       <Text
         fontSize="$5"
@@ -37,7 +51,7 @@ const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
         textAlign="center"
         marginBottom="$4"
       >
-        {isDemoMode ? `Demo: ${formatTime(demoRefreshTime)}` : formatTime(refreshTime)}
+        {isDemoMode ? `Demo: ${formatTime(demoRefreshTime || 0)}` : formatTime(timeRemaining)}
       </Text>
       <XStack justifyContent="space-between" marginTop="$4">
         <Button
@@ -62,7 +76,7 @@ const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
           Demo Refresh (10s)
         </Button>
       </XStack>
-    </>
+    </YStack>
   );
 };
 

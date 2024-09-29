@@ -1,22 +1,27 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ScrollView } from "react-native";
-import { Image, Text, View, XStack, YStack, useTheme, styled, Spinner, Progress } from "tamagui";
 import {
-  doc,
-  getDoc,
-  Timestamp,
-  DocumentReference,
-} from "firebase/firestore";
+  Image,
+  Text,
+  View,
+  XStack,
+  YStack,
+  useTheme,
+  styled,
+  Spinner,
+  Progress,
+} from "tamagui";
+import { doc, getDoc, Timestamp, DocumentReference } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { differenceInSeconds } from "date-fns";
 import { db, functions } from "firebaseConfig";
-import { 
-  purchaseItem, 
-  purchaseShelfColor, 
-  purchaseWallpaper, 
-  handleEarnCoins, 
+import {
+  purchaseItem,
+  purchaseShelfColor,
+  purchaseWallpaper,
+  handleEarnCoins,
   handleLoseCoins,
-  handleDailyGiftClaim
+  handleDailyGiftClaim,
 } from "project-functions/shopFunctions";
 import { ItemData } from "components/item";
 import DailyGift from "components/DailyGift";
@@ -26,66 +31,34 @@ import WallpapersList from "components/WallpapersList";
 import ShelfColorsList from "components/ShelfColorsList";
 import ShopRefreshTimer from "components/ShopRefreshTimer";
 import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
+import { ShopMetadata } from "models/ShopMetadata";
+import { WallpaperData } from "models/WallpaperData";
+import { ShelfColorData } from "models/ShelfColorData";
+import { User } from "models/UserData";
 
-const BACKGROUND_COLOR = '$pink6';
-
-// Interfaces
-interface ShopMetadata {
-  lastRefresh: Timestamp;
-  nextRefresh: Timestamp;
-  items: string[];
-  wallpapers: string[];
-  shelfColors: string[];
-}
-
-interface WallpaperData {
-  id: string;
-  name: string;
-  cost: number;
-  gradientColors: string[];
-  description?: string;
-}
-
-interface ShelfColorData {
-  id: string;
-  name: string;
-  cost: number;
-  color: string;
-  description?: string;
-}
-
-interface User {
-  userId: string;
-  coins: number;
-  inventory: DocumentReference[];
-  wallpapers: DocumentReference[];
-  shelfColors: DocumentReference[];
-  lastDailyGiftClaim: Timestamp | null;
-}
-
+const BACKGROUND_COLOR = "$pink6";
 
 const LoadingContainer = styled(YStack, {
   flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
+  justifyContent: "center",
+  alignItems: "center",
   backgroundColor: BACKGROUND_COLOR,
   padding: 20,
 });
 
-
 const SectionHeader = styled(XStack, {
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingVertical: '$2',
-  paddingHorizontal: '$4',
-  backgroundColor: '$pink7',
-  borderRadius: '$2',
-  marginBottom: '$2',
+  alignItems: "center",
+  justifyContent: "space-between",
+  paddingVertical: "$2",
+  paddingHorizontal: "$4",
+  backgroundColor: "$pink7",
+  borderRadius: "$2",
+  marginBottom: "$2",
 });
 
 const SectionTitle = styled(Text, {
-  fontSize: '$6',
-  fontWeight: 'bold',
+  fontSize: "$6",
+  fontWeight: "bold",
 });
 
 interface CollapsibleSectionProps {
@@ -95,7 +68,12 @@ interface CollapsibleSectionProps {
   children: React.ReactNode;
 }
 
-const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, isExpanded, onToggle, children }) => {
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
+  title,
+  isExpanded,
+  onToggle,
+  children,
+}) => {
   return (
     <View marginBottom="$4">
       <SectionHeader onPress={onToggle}>
@@ -137,6 +115,8 @@ export default function ShopScreen() {
     shelfColors: true,
   });
   const [shopMetadata, setShopMetadata] = useState<ShopMetadata | null>(null);
+  const [nextRefreshTime, setNextRefreshTime] = useState<Date>(new Date());
+  const [isDemoRefreshComplete, setIsDemoRefreshComplete] = useState(false);
 
   const dataFetchedRef = useRef(false);
 
@@ -161,20 +141,28 @@ export default function ShopScreen() {
       return new Promise((resolve) => {
         Image.prefetch(item.imageUri)
           .then(() => {
-            setLoadedItems(prevLoaded => {
+            setLoadedItems((prevLoaded) => {
               const newLoaded = prevLoaded + 1;
               const progress = (newLoaded / items.length) * 100;
-              console.log(`Loaded image ${newLoaded}/${items.length}, Progress: ${progress.toFixed(2)}%`);
+              console.log(
+                `Loaded image ${newLoaded}/${
+                  items.length
+                }, Progress: ${progress.toFixed(2)}%`
+              );
               setLoadingProgress(progress);
               return newLoaded;
             });
             resolve(null);
           })
           .catch(() => {
-            setLoadedItems(prevLoaded => {
+            setLoadedItems((prevLoaded) => {
               const newLoaded = prevLoaded + 1;
               const progress = (newLoaded / items.length) * 100;
-              console.log(`Failed to load image ${newLoaded}/${items.length}, Progress: ${progress.toFixed(2)}%`);
+              console.log(
+                `Failed to load image ${newLoaded}/${
+                  items.length
+                }, Progress: ${progress.toFixed(2)}%`
+              );
               setLoadingProgress(progress);
               return newLoaded;
             });
@@ -191,12 +179,23 @@ export default function ShopScreen() {
   const handleDemoRefresh = () => {
     setDemoRefreshTime(10);
     setIsDemoMode(true);
+    setIsDemoRefreshComplete(false);
+
+    // Update shopMetadata for demo mode
+    if (shopMetadata) {
+      const now = new Date();
+      const demoNextRefresh = new Date(now.getTime() + 10000); // 10 seconds from now
+      setShopMetadata({
+        ...shopMetadata,
+        nextRefresh: Timestamp.fromDate(demoNextRefresh),
+      });
+    }
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
@@ -214,32 +213,42 @@ export default function ShopScreen() {
 
       const now = new Date();
       const nextRefreshDate = gottenShopMetadata.nextRefresh.toDate();
-
+      setNextRefreshTime(nextRefreshDate);
 
       // Fetch items
-      const fetchedItems = await Promise.all(gottenShopMetadata.items.map(async (itemId) => {
-        const itemDoc = await getDoc(doc(db, "Items", itemId));
-        return { itemId, ...itemDoc.data() } as ItemData;
-      }));
+      const fetchedItems = await Promise.all(
+        gottenShopMetadata.items.map(async (itemId) => {
+          const itemDoc = await getDoc(doc(db, "Items", itemId));
+          return { itemId, ...itemDoc.data() } as ItemData;
+        })
+      );
 
       // Fetch wallpapers
-      const fetchedWallpapers = await Promise.all(gottenShopMetadata.wallpapers.map(async (wallpaperId) => {
-        const wallpaperDoc = await getDoc(doc(db, "Wallpapers", wallpaperId));
-        return { id: wallpaperId, ...wallpaperDoc.data() } as WallpaperData;
-      }));
+      const fetchedWallpapers = await Promise.all(
+        gottenShopMetadata.wallpapers.map(async (wallpaperId) => {
+          const wallpaperDoc = await getDoc(doc(db, "Wallpapers", wallpaperId));
+          return { id: wallpaperId, ...wallpaperDoc.data() } as WallpaperData;
+        })
+      );
 
       // Fetch shelf colors
-      const fetchedShelfColors = await Promise.all(gottenShopMetadata.shelfColors.map(async (shelfColorId) => {
-        const shelfColorDoc = await getDoc(doc(db, "ShelfColors", shelfColorId));
-        return { id: shelfColorId, ...shelfColorDoc.data() } as ShelfColorData;
-      }));
+      const fetchedShelfColors = await Promise.all(
+        gottenShopMetadata.shelfColors.map(async (shelfColorId) => {
+          const shelfColorDoc = await getDoc(
+            doc(db, "ShelfColors", shelfColorId)
+          );
+          return {
+            id: shelfColorId,
+            ...shelfColorDoc.data(),
+          } as ShelfColorData;
+        })
+      );
 
       await preloadImages(fetchedItems);
 
       setItems(fetchedItems);
       setWallpapers(fetchedWallpapers);
       setShelfColors(fetchedShelfColors);
-
 
       // Fetch user data
       if (userId) {
@@ -260,13 +269,15 @@ export default function ShopScreen() {
       setRefreshTime(secondsUntilRefresh > 0 ? secondsUntilRefresh : 0);
 
       // Add a short delay to ensure smooth transition
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
     } finally {
       setIsLoading(false);
+      setLoadedItems(0);
+      setLoadingProgress(0);
     }
   }, [userId]);
 
@@ -278,6 +289,30 @@ export default function ShopScreen() {
   }, [fetchData]);
 
   //for sprint 1 testing
+  const performShopRefresh = async (isDemo: boolean) => {
+    setIsLoading(true);
+    try {
+      if (isDemo) {
+        // Simulate shop refresh for demo mode
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+        // You might want to generate new random items here for demo purposes
+      } else {
+        // Perform actual shop refresh
+        const refreshShop = httpsCallable(functions, "refreshShopManually");
+        await refreshShop();
+      }
+      await fetchData(); // Fetch new data after refresh
+      setIsDemoRefreshComplete(true);
+    } catch (error) {
+      console.error("Error refreshing shop:", error);
+      setError("Failed to refresh shop. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setIsDemoMode(false);
+      setDemoRefreshTime(null);
+    }
+  };
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (demoRefreshTime !== null && demoRefreshTime > 0) {
@@ -285,27 +320,13 @@ export default function ShopScreen() {
         setDemoRefreshTime(demoRefreshTime - 1);
       }, 1000);
     } else if (demoRefreshTime === 0) {
-      handleManualRefresh();
-      setDemoRefreshTime(null);
-      setIsDemoMode(false);
+      setIsDemoRefreshComplete(true);
+      performShopRefresh(true); // Perform demo refresh when timer hits zero
     }
     return () => clearTimeout(timer);
   }, [demoRefreshTime]);
 
-  // Handle manual shop refresh
-  const handleManualRefresh = async () => {
-    setIsLoading(true);
-    try {
-      const refreshShop = httpsCallable(functions, "refreshShopManually");
-      await refreshShop();
-      await fetchData();
-    } catch (error) {
-      console.error("Error refreshing shop:", error);
-      setError("Failed to refresh shop. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleManualRefresh = () => performShopRefresh(false);
 
   const handlePurchase = async (item: ItemData) => {
     if (!user) return;
@@ -362,7 +383,10 @@ export default function ShopScreen() {
     }
   };
 
-  const handleDailyGiftClaimClick = async (newCoins: number, newLastClaimTime: Timestamp) => {
+  const handleDailyGiftClaimClick = async (
+    newCoins: number,
+    newLastClaimTime: Timestamp
+  ) => {
     if (!user) return;
     const result = await handleDailyGiftClaim(user);
     if (result.success && result.updatedUser) {
@@ -405,20 +429,22 @@ export default function ShopScreen() {
         <CollapsibleSection
           title="Daily Gift"
           isExpanded={expandedSections.dailyGift}
-          onToggle={() => toggleSection('dailyGift')}
+          onToggle={() => toggleSection("dailyGift")}
         >
           {user && shopMetadata && (
             <DailyGift
               user={user}
               shopMetadata={shopMetadata}
               onClaimDailyGift={handleDailyGiftClaimClick}
+              isDemoMode={isDemoMode}
+              isDemoRefreshComplete={isDemoRefreshComplete}
             />
           )}
         </CollapsibleSection>
         <CollapsibleSection
           title="Shop Items"
           isExpanded={expandedSections.shopItems}
-          onToggle={() => toggleSection('shopItems')}
+          onToggle={() => toggleSection("shopItems")}
         >
           <ShopItemsList
             items={items}
@@ -430,7 +456,7 @@ export default function ShopScreen() {
         <CollapsibleSection
           title="Wallpapers"
           isExpanded={expandedSections.wallpapers}
-          onToggle={() => toggleSection('wallpapers')}
+          onToggle={() => toggleSection("wallpapers")}
         >
           <WallpapersList
             wallpapers={wallpapers}
@@ -442,7 +468,7 @@ export default function ShopScreen() {
         <CollapsibleSection
           title="Shelf Colors"
           isExpanded={expandedSections.shelfColors}
-          onToggle={() => toggleSection('shelfColors')}
+          onToggle={() => toggleSection("shelfColors")}
         >
           <ShelfColorsList
             shelfColors={shelfColors}
@@ -452,7 +478,9 @@ export default function ShopScreen() {
         </CollapsibleSection>
 
         <ShopRefreshTimer
-          refreshTime={refreshTime}
+          nextRefreshTime={
+            shopMetadata ? shopMetadata.nextRefresh.toDate() : new Date()
+          }
           isDemoMode={isDemoMode}
           demoRefreshTime={demoRefreshTime}
           onManualRefresh={handleManualRefresh}

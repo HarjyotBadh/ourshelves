@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Button, Text } from 'tamagui';
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
-import { differenceInSeconds } from 'date-fns';
-import Item from './item';
-
-const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
+import React, { useState, useEffect } from "react";
+import { View, Button, Text } from "tamagui";
+import { Timestamp } from "firebase/firestore";
+import Item from "./item";
 
 interface User {
   userId: string;
@@ -22,76 +18,48 @@ interface DailyGiftProps {
   user: User | null;
   shopMetadata: ShopMetadata | null;
   onClaimDailyGift: (newCoins: number, newLastClaimTime: Timestamp) => void;
+  isDemoMode: boolean;
+  isDemoRefreshComplete: boolean;
 }
 
-const DailyGift: React.FC<DailyGiftProps> = ({ user, shopMetadata, onClaimDailyGift }) => {
-  const [canClaimDailyGift, setCanClaimDailyGift] = useState(false);
-  const [dailyGiftTimer, setDailyGiftTimer] = useState(0);
+const DailyGift: React.FC<DailyGiftProps> = ({
+  user,
+  shopMetadata,
+  onClaimDailyGift,
+  isDemoMode,
+  isDemoRefreshComplete,
+}) => {
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   useEffect(() => {
-    if (user && shopMetadata) {
-      updateDailyGiftStatus();
-    }
-  }, [user, shopMetadata]);
+    if (!shopMetadata) return;
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDailyGiftTimer((prevTime) => {
-        if (prevTime <= 0) {
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
+    const updateTimer = () => {
+      const now = new Date();
+      const nextRefresh = shopMetadata.nextRefresh.toDate();
+      const diff = nextRefresh.getTime() - now.getTime();
+      setTimeRemaining(Math.max(0, Math.floor(diff / 1000)));
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [shopMetadata]);
 
-  const updateDailyGiftStatus = () => {
-    if (!user || !shopMetadata) return;
-
-    const now = new Date();
-    const lastRefreshDate = shopMetadata.lastRefresh.toDate();
-    const nextRefreshDate = shopMetadata.nextRefresh.toDate();
-    const canClaim = checkCanClaimDailyGift(user, lastRefreshDate);
-    setCanClaimDailyGift(canClaim);
-
-    if (!canClaim) {
-      const secondsUntilNextClaim = differenceInSeconds(nextRefreshDate, now);
-      setDailyGiftTimer(secondsUntilNextClaim > 0 ? secondsUntilNextClaim : 0);
-    } else {
-      setDailyGiftTimer(0);
-    }
-  };
-
-  const checkCanClaimDailyGift = (user: User, lastRefresh: Date): boolean => {
-    if (!user.lastDailyGiftClaim) return true;
-    const lastClaimDate = user.lastDailyGiftClaim.toDate();
-    return lastClaimDate < lastRefresh;
-  };
+  const canClaimDailyGift =
+    user &&
+    shopMetadata &&
+    (isDemoRefreshComplete || timeRemaining === 0) &&
+    (!user.lastDailyGiftClaim ||
+      user.lastDailyGiftClaim.toDate() < shopMetadata.lastRefresh.toDate());
 
   const handleDailyGiftClaim = async () => {
     if (!user || !canClaimDailyGift || !shopMetadata) return;
 
-    try {
-      //const userDocRef = doc(db, "Users", user.userId);
-      const userDocRef = doc(db, "Users", userId);
-      const now = Timestamp.now();
-      const newCoins = user.coins + 100;
-      await updateDoc(userDocRef, {
-        coins: newCoins,
-        lastDailyGiftClaim: now,
-      });
-
-      onClaimDailyGift(newCoins, now);
-      setCanClaimDailyGift(false);
-      const secondsUntilNextClaim = differenceInSeconds(shopMetadata.nextRefresh.toDate(), now.toDate());
-      setDailyGiftTimer(secondsUntilNextClaim > 0 ? secondsUntilNextClaim : 0);
-      alert("Daily gift claimed! You received 100 coins.");
-    } catch (error) {
-      console.error("Error claiming daily gift:", error);
-      alert("Failed to claim daily gift. Please try again later.");
-    }
+    const now = Timestamp.now();
+    const newCoins = user.coins + 100;
+    onClaimDailyGift(newCoins, now);
   };
 
   const formatTime = (seconds: number): string => {
@@ -142,7 +110,9 @@ const DailyGift: React.FC<DailyGiftProps> = ({ user, shopMetadata, onClaimDailyG
         </Button>
       ) : (
         <Text fontSize="$2" textAlign="center" marginTop="$1">
-          {formatTime(dailyGiftTimer)}
+          {isDemoMode
+            ? "Demo refresh in progress..."
+            : formatTime(timeRemaining)}
         </Text>
       )}
     </View>
