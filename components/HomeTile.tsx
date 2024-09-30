@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
+import { PlusCircle, X, Check, ChevronDown, ChevronUp } from '@tamagui/lucide-icons';
+import { getTags } from 'project-functions/homeFunctions';
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet, Alert } from 'react-native';
+import { Adapt, Button, Dialog, DialogDescription, Fieldset, FontSizeTokens, getFontSize, Input, Label, Select, SelectProps, Sheet, TextArea, Unspaced, XStack, YStack } from 'tamagui';
+import { LinearGradient } from 'tamagui/linear-gradient';
 
-const HomeTile = ({ id, isAdmin }) => {
-    const [modalVisible, setModalVisible] = useState(false);
+
+const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag }) => {
+    const [isOptionsDialogOpen, setOptionsDialogOpen] = useState(false);
+    const [isTagsDialogOpen, setTagsDialogOpen] = useState(false);
+    const [items, setItems] = useState(tagsList);
+    const [selectedTag, setSelectedTag] = useState('');
     const [bgColor, setBgColor] = useState('');
 
     const colors = [
@@ -14,72 +23,311 @@ const HomeTile = ({ id, isAdmin }) => {
         '#ffddbd',
         '#f0c2ff',
     ];
-
     useEffect(() => {
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         setBgColor(randomColor);
-    }, []);
 
-    const handlePress = () => {
-        console.log('Go to room with id:', id);
+        setItems(tagsList);
+    }, [tagsList]);
+
+    const openOptionsDialog = () => setOptionsDialogOpen(true);
+    const closeOptionsDialog = () => setOptionsDialogOpen(false);
+    const openTagsDialog = () => setTagsDialogOpen(true);
+    const closeTagsDialog = () => setTagsDialogOpen(false);
+
+    const addTag = () => {
+        closeTagsDialog();
+
+        if (selectedTag === '') {
+            Alert.alert(
+                'Error',
+                'Please select a tag.',
+            );
+            return;
+        }
+
+        const tagId = tagIdsList[tagsList.indexOf(selectedTag)];
+        homeAddTag(id, tagId, selectedTag);
+
+        setSelectedTag('');
     };
 
-    const handleLongPress = () => {
-        setModalVisible(true);
-    };
+    const roomOptions = (option, roomName, roomId) => {
+        closeOptionsDialog();
 
-    const handleOptionSelect = (option) => {
-        console.log(`Selected option: ${option}`);
-        setModalVisible(false);
+        if (option === 'addtags') {
+            console.log('Add tags');
+            openTagsDialog();
+
+        } else if (option === 'leaveroom') {
+            console.log('Leave room option');
+
+            Alert.alert(
+                'Leave Room',
+                `Are you sure you want to leave "${roomName}" room?`,
+                [
+                    {
+                        text: 'No',
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'Yes',
+                        onPress: () => homeLeaveRoom(roomId, roomName),
+                    }
+                ]
+            );
+        } else if (option === 'deleteroom') {
+            console.log('Delete room');
+        }
     };
 
     return (
         <View style={styles.container}>
-            <Pressable onPress={handlePress} onLongPress={handleLongPress} style={styles.pressable}>
+            <Pressable onPress={enterRoom} onLongPress={openOptionsDialog} style={styles.pressable}>
                 <View style={[styles.pressableSquare, { backgroundColor: bgColor }]} />
-                <Text style={styles.pressableText}>Room {id}</Text>
+                <Text style={styles.pressableText}>{name}</Text>
             </Pressable>
 
-            <Modal
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-                animationType="slide"
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>{id}</Text>
+            <Dialog modal open={isOptionsDialogOpen}>
+                <Adapt when="sm" platform="touch">
+                    <Sheet animation="medium" zIndex={200000} modal>
+                        <Sheet.Frame padding="$4" gap="$4">
+                            <Adapt.Contents />
+                        </Sheet.Frame>
+                        <Sheet.Overlay
+                            animation="lazy"
+                            enterStyle={{ opacity: 0 }}
+                            exitStyle={{ opacity: 0 }}
+                        />
+                    </Sheet>
+                </Adapt>
+
+                <Dialog.Portal>
+                    <Dialog.Overlay
+                        key="overlay"
+                        animation="slow"
+                        opacity={0.5}
+                        enterStyle={{ opacity: 0 }}
+                        exitStyle={{ opacity: 0 }}
+                    />
+
+                    <Dialog.Content
+                        bordered
+                        elevate
+                        key="content"
+                        animateOnly={['transform', 'opacity']}
+                        animation={[
+                            'quicker',
+                            {
+                                opacity: {
+                                    overshootClamping: true,
+                                },
+                            },
+                        ]}
+                        enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+                        exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+                        gap="$4"
+                    >
+                        <Dialog.Title>Options</Dialog.Title>
 
                         {isAdmin && (
-                            <TouchableOpacity
-                                style={styles.optionButton}
-                                onPress={() => handleOptionSelect('addtags')}
-                            >
-                                <Text style={styles.optionText}>Add Tags</Text>
-                            </TouchableOpacity>
+                            <Button theme="active" onPress={() => roomOptions('addtags', name, id)}>
+                                Add Tags
+                            </Button>
                         )}
-
-                        <TouchableOpacity
-                            style={styles.optionButton}
-                            onPress={() => handleOptionSelect('leaveroom')}
-                        >
-                            <Text style={[styles.optionText, styles.optionTextSerious]}>Leave Room</Text>
-                        </TouchableOpacity>
-
+                        <Button theme="active" onPress={() => roomOptions('leaveroom', name, id)}>
+                            Leave Room
+                        </Button>
                         {isAdmin && (
-                            <TouchableOpacity
-                                style={styles.optionButton}
-                                onPress={() => handleOptionSelect('deleteroom')}
-                            >
-                                <Text style={[styles.optionText, styles.optionTextSerious]}>Delete Room</Text>
-                            </TouchableOpacity>
+                            <Button theme="active" onPress={() => roomOptions('deleteroom', name, id)}>
+                                Delete Room
+                            </Button>
                         )}
-                    </View>
-                </View>
-            </Modal>
+
+                        <XStack alignSelf="flex-end" gap="$4">
+                            <Dialog.Close displayWhenAdapted asChild>
+                                <Button theme="active" aria-label="Close" onPress={closeOptionsDialog}>
+                                    Cancel
+                                </Button>
+                            </Dialog.Close>
+                        </XStack>
+
+                        <Unspaced>
+                            <Dialog.Close asChild>
+                                <Button
+                                    position="absolute"
+                                    top="$3"
+                                    right="$3"
+                                    size="$2"
+                                    circular
+                                    icon={X}
+                                />
+                            </Dialog.Close>
+                        </Unspaced>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
+
+            <Dialog modal open={isTagsDialogOpen}>
+                <Adapt when="sm" platform="touch">
+                    <Sheet animation="medium" zIndex={200000} modal>
+                        <Sheet.Frame padding="$4" gap="$4">
+                            <Adapt.Contents />
+                        </Sheet.Frame>
+                        <Sheet.Overlay
+                            animation="lazy"
+                            enterStyle={{ opacity: 0 }}
+                            exitStyle={{ opacity: 0 }}
+                        />
+                    </Sheet>
+                </Adapt>
+
+                <Dialog.Portal>
+                    <Dialog.Overlay
+                        key="overlay"
+                        animation="slow"
+                        opacity={0.5}
+                        enterStyle={{ opacity: 0 }}
+                        exitStyle={{ opacity: 0 }}
+                    />
+
+                    <Dialog.Content
+                        bordered
+                        elevate
+                        key="content"
+                        animateOnly={['transform', 'opacity']}
+                        animation={[
+                            'quicker',
+                            {
+                                opacity: {
+                                    overshootClamping: true,
+                                },
+                            },
+                        ]}
+                        enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+                        exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+                        gap="$4"
+                    >
+                        <Dialog.Title>Add Tags</Dialog.Title>
+
+                        <Dialog.Description>
+                            Current tags: {tags.join(', ')}
+                        </Dialog.Description>
+
+                        <XStack ai="center" gap="$4">
+                            <Label htmlFor="select-demo-2" f={1} miw={80}>
+                                Tag
+                            </Label>
+
+                            <Select
+                                disablePreventBodyScroll
+                                native
+                                onValueChange={(value) => setSelectedTag(value)}
+                            >
+                                <Select.Trigger width={220} iconAfter={ChevronDown}>
+                                    <Select.Value placeholder="Select a tag" />
+                                </Select.Trigger>
+
+                                <Adapt when="sm" platform="touch">
+                                    <Sheet
+                                        native={true}
+                                        modal
+                                        dismissOnSnapToBottom
+                                        animationConfig={{
+                                            type: 'spring',
+                                            damping: 20,
+                                            mass: 1.2,
+                                            stiffness: 250,
+                                        }}
+                                    >
+                                        <Sheet.Frame>
+                                            <Sheet.ScrollView>
+                                                <Adapt.Contents />
+                                            </Sheet.ScrollView>
+                                        </Sheet.Frame>
+                                        <Sheet.Overlay
+                                            animation="lazy"
+                                            enterStyle={{ opacity: 0 }}
+                                            exitStyle={{ opacity: 0 }}
+                                        />
+                                    </Sheet>
+                                </Adapt>
+
+                                <Select.Content zIndex={200000}>
+                                    <Select.ScrollUpButton
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        position="relative"
+                                        width="100%"
+                                        height="$3"
+                                    >
+                                        <YStack zIndex={10}>
+                                            <ChevronUp size={20} />
+                                        </YStack>
+                                    </Select.ScrollUpButton>
+
+                                    <Select.Viewport minWidth={200}>
+                                        <Select.Group>
+                                            {React.useMemo(
+                                                () =>
+                                                    items.map((item, i) => {
+                                                        return (
+                                                            <Select.Item
+                                                                index={i}
+                                                                key={item}
+                                                                value={item}
+                                                            >
+                                                                <Select.ItemText>{item}</Select.ItemText>
+                                                                <Select.ItemIndicator marginLeft="auto">
+                                                                    <Check size={16} />
+                                                                </Select.ItemIndicator>
+                                                            </Select.Item>
+                                                        );
+                                                    }),
+                                                [items]
+                                            )}
+                                        </Select.Group>
+                                    </Select.Viewport>
+
+                                    <Select.ScrollDownButton
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        position="relative"
+                                        width="100%"
+                                        height="$3"
+                                    >
+                                        <YStack zIndex={10}>
+                                            <ChevronDown size={20} />
+                                        </YStack>
+                                    </Select.ScrollDownButton>
+                                </Select.Content>
+                            </Select>
+                        </XStack>
+
+                        <XStack alignSelf="flex-end" gap="$4">
+                            <Button theme="active" onPress={closeTagsDialog}>Cancel</Button>
+                            <Button theme="active" onPress={addTag}>Add Tag</Button>
+                        </XStack>
+
+                        <Unspaced>
+                            <Dialog.Close asChild>
+                                <Button
+                                    position="absolute"
+                                    top="$3"
+                                    right="$3"
+                                    size="$2"
+                                    circular
+                                    icon={X}
+                                />
+                            </Dialog.Close>
+                        </Unspaced>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
         </View>
     );
 };
+
 
 HomeTile.defaultProps = {
     isAdmin: false,
@@ -95,7 +343,7 @@ const styles = StyleSheet.create({
     pressableSquare: {
         width: 150,
         height: 150,
-        borderRadius: 15,
+        borderRadius: 16,
     },
     pressableText: {
         color: '#000',

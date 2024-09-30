@@ -1,6 +1,6 @@
 import React from 'react';
-import { Image, TouchableOpacity } from 'react-native';
-import { Text, View } from 'tamagui';
+import { TouchableOpacity } from 'react-native';
+import { Text, View, Image } from 'tamagui';
 
 export interface ItemData {
   itemId: string;
@@ -28,7 +28,7 @@ const Item: React.FC<ItemProps> = ({ item, onPress, showName = true, showCost = 
         <Image 
           source={{ uri: item.imageUri }} 
           style={{ width: 80, height: 80, borderRadius: 10 }} 
-          resizeMode="cover"
+          objectFit="cover"
         />
         {showCost && (
           <Text fontSize="$2" color="$yellow10" marginTop="$1">
