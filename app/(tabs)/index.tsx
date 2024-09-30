@@ -5,7 +5,7 @@ import CreateHomeTile from '../../components/CreateHomeTile';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db, auth } from "firebaseConfig";
-import { getRooms, getRoomById, leaveRoom, createRoom } from 'project-functions/homeFunctions';
+import { getRooms, getRoomById, leaveRoom, createRoom, getTags, addTag } from 'project-functions/homeFunctions';
 import { CodeSquare } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 
@@ -19,6 +19,8 @@ const HomeScreen = () => {
   }
 
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [tagsList, setTagsList] = useState<string[]>([]);
+  const [tagIdsList, setTagIdsList] = useState<string[]>([]);
   const router = useRouter();
 
 
@@ -97,11 +99,30 @@ const HomeScreen = () => {
       }
     }
   }
-  
+
+  const homeAddTag = async (roomId: string, tagId: string, tagName: string) => {
+    console.log(tagId);
+
+    const result = await addTag(roomId, tagId);
+
+    if (result.success) {
+      setRooms((prevRooms) =>
+        prevRooms.map((room) =>
+          room.id === roomId ? { ...room, tags: [...room.tags, tagName] } : room
+        )
+      );
+
+      Alert.alert(
+        'Tag Added',
+        `Tag "${tagName}" added to room.`,
+      );
+    }
+  };
 
 
 
-  
+
+
   const enterRoom = (id: string) => {
     console.log('Go to room ' + id);
 
@@ -125,12 +146,12 @@ const HomeScreen = () => {
         `Are you sure you want to leave "${roomName}" room?`,
         [
           {
-        text: 'No',
-        style: 'cancel',
+            text: 'No',
+            style: 'cancel',
           },
           {
-        text: 'Yes',
-        onPress: () => homeLeaveRoom(roomId, roomName),
+            text: 'Yes',
+            onPress: () => homeLeaveRoom(roomId, roomName),
           }
         ]
       )
@@ -146,6 +167,11 @@ const HomeScreen = () => {
   useEffect(() => {
     console.log(auth.currentUser.uid);
     homeSetRooms();
+
+    getTags().then((result) => {
+      setTagsList(result.tagNames);
+      setTagIdsList(result.tagIds);
+    });
   }, []);
 
   return (
@@ -156,8 +182,11 @@ const HomeScreen = () => {
           name={room.name}
           isAdmin={room.isAdmin}
           tags={room.tags}
+          tagsList={tagsList}
+          tagIdsList={tagIdsList}
           enterRoom={enterRoom}
           homeLeaveRoom={homeLeaveRoom}
+          homeAddTag={homeAddTag}
         />
       ))}
       <CreateHomeTile

@@ -1,11 +1,17 @@
-import { PlusCircle, X } from '@tamagui/lucide-icons';
+import { PlusCircle, X, Check, ChevronDown, ChevronUp } from '@tamagui/lucide-icons';
+import { getTags } from 'project-functions/homeFunctions';
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet, Alert } from 'react-native';
-import { Adapt, Button, Dialog, DialogDescription, Fieldset, Input, Label, Sheet, TextArea, Unspaced, XStack } from 'tamagui';
+import { Adapt, Button, Dialog, DialogDescription, Fieldset, FontSizeTokens, getFontSize, Input, Label, Select, SelectProps, Sheet, TextArea, Unspaced, XStack, YStack } from 'tamagui';
+import { LinearGradient } from 'tamagui/linear-gradient';
 
-const HomeTile = ({ id, name, isAdmin, tags, enterRoom, homeLeaveRoom }) => {
-    const [isOptionsDialogOpen, setOptionsDialogOpen] = useState(false)
-    const [isTagsDialogOpen, setTagsDialogOpen] = useState(false)
+
+const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag }) => {
+    const [isOptionsDialogOpen, setOptionsDialogOpen] = useState(false);
+    const [isTagsDialogOpen, setTagsDialogOpen] = useState(false);
+    const [items, setItems] = useState(tagsList);
+    const [selectedTag, setSelectedTag] = useState('');
     const [bgColor, setBgColor] = useState('');
 
     const colors = [
@@ -20,35 +26,37 @@ const HomeTile = ({ id, name, isAdmin, tags, enterRoom, homeLeaveRoom }) => {
     useEffect(() => {
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         setBgColor(randomColor);
-    }, []);
 
+        setItems(tagsList);
+    }, [tagsList]);
 
+    const openOptionsDialog = () => setOptionsDialogOpen(true);
+    const closeOptionsDialog = () => setOptionsDialogOpen(false);
+    const openTagsDialog = () => setTagsDialogOpen(true);
+    const closeTagsDialog = () => setTagsDialogOpen(false);
 
+    const addTag = () => {
+        closeTagsDialog();
 
+        if (selectedTag === '') {
+            Alert.alert(
+                'Error',
+                'Please select a tag.',
+            );
+            return;
+        }
 
-    const openOptionsDialog = () => {
-        setOptionsDialogOpen(true)
-    }
-    const closeOptionsDialog = () => {
-        setOptionsDialogOpen(false)
-    }
+        const tagId = tagIdsList[tagsList.indexOf(selectedTag)];
+        homeAddTag(id, tagId, selectedTag);
 
-    const openTagsDialog = () => {
-        setTagsDialogOpen(true)
-    }
-    const closeTagsDialog = () => {
-        setTagsDialogOpen(false)
-    }
+        setSelectedTag('');
+    };
 
-
-
-
-    const roomOptions = (option: string, roomName: string, roomId: string) => {
+    const roomOptions = (option, roomName, roomId) => {
         closeOptionsDialog();
 
         if (option === 'addtags') {
             console.log('Add tags');
-
             openTagsDialog();
 
         } else if (option === 'leaveroom') {
@@ -67,7 +75,7 @@ const HomeTile = ({ id, name, isAdmin, tags, enterRoom, homeLeaveRoom }) => {
                         onPress: () => homeLeaveRoom(roomId, roomName),
                     }
                 ]
-            )
+            );
         } else if (option === 'deleteroom') {
             console.log('Delete room');
         }
@@ -203,17 +211,102 @@ const HomeTile = ({ id, name, isAdmin, tags, enterRoom, homeLeaveRoom }) => {
                         <Dialog.Title>Add Tags</Dialog.Title>
 
                         <Dialog.Description>
-                            All tags: {tags.join(', ')}
+                            Current tags: {tags.join(', ')}
                         </Dialog.Description>
 
-                        
+                        <XStack ai="center" gap="$4">
+                            <Label htmlFor="select-demo-2" f={1} miw={80}>
+                                Tag
+                            </Label>
+
+                            <Select
+                                disablePreventBodyScroll
+                                native
+                                onValueChange={(value) => setSelectedTag(value)}
+                            >
+                                <Select.Trigger width={220} iconAfter={ChevronDown}>
+                                    <Select.Value placeholder="Select a tag" />
+                                </Select.Trigger>
+
+                                <Adapt when="sm" platform="touch">
+                                    <Sheet
+                                        native={true}
+                                        modal
+                                        dismissOnSnapToBottom
+                                        animationConfig={{
+                                            type: 'spring',
+                                            damping: 20,
+                                            mass: 1.2,
+                                            stiffness: 250,
+                                        }}
+                                    >
+                                        <Sheet.Frame>
+                                            <Sheet.ScrollView>
+                                                <Adapt.Contents />
+                                            </Sheet.ScrollView>
+                                        </Sheet.Frame>
+                                        <Sheet.Overlay
+                                            animation="lazy"
+                                            enterStyle={{ opacity: 0 }}
+                                            exitStyle={{ opacity: 0 }}
+                                        />
+                                    </Sheet>
+                                </Adapt>
+
+                                <Select.Content zIndex={200000}>
+                                    <Select.ScrollUpButton
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        position="relative"
+                                        width="100%"
+                                        height="$3"
+                                    >
+                                        <YStack zIndex={10}>
+                                            <ChevronUp size={20} />
+                                        </YStack>
+                                    </Select.ScrollUpButton>
+
+                                    <Select.Viewport minWidth={200}>
+                                        <Select.Group>
+                                            {React.useMemo(
+                                                () =>
+                                                    items.map((item, i) => {
+                                                        return (
+                                                            <Select.Item
+                                                                index={i}
+                                                                key={item}
+                                                                value={item}
+                                                            >
+                                                                <Select.ItemText>{item}</Select.ItemText>
+                                                                <Select.ItemIndicator marginLeft="auto">
+                                                                    <Check size={16} />
+                                                                </Select.ItemIndicator>
+                                                            </Select.Item>
+                                                        );
+                                                    }),
+                                                [items]
+                                            )}
+                                        </Select.Group>
+                                    </Select.Viewport>
+
+                                    <Select.ScrollDownButton
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        position="relative"
+                                        width="100%"
+                                        height="$3"
+                                    >
+                                        <YStack zIndex={10}>
+                                            <ChevronDown size={20} />
+                                        </YStack>
+                                    </Select.ScrollDownButton>
+                                </Select.Content>
+                            </Select>
+                        </XStack>
 
                         <XStack alignSelf="flex-end" gap="$4">
-                            <Dialog.Close displayWhenAdapted asChild>
-                                <Button theme="active" aria-label="Close" onPress={closeTagsDialog}>
-                                    Cancel
-                                </Button>
-                            </Dialog.Close>
+                            <Button theme="active" onPress={closeTagsDialog}>Cancel</Button>
+                            <Button theme="active" onPress={addTag}>Add Tag</Button>
                         </XStack>
 
                         <Unspaced>
@@ -234,6 +327,7 @@ const HomeTile = ({ id, name, isAdmin, tags, enterRoom, homeLeaveRoom }) => {
         </View>
     );
 };
+
 
 HomeTile.defaultProps = {
     isAdmin: false,

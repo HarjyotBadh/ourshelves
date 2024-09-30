@@ -1,4 +1,4 @@
-import { getFirestore, doc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db, auth } from 'firebaseConfig';
 import { Alert } from 'react-native';
@@ -67,6 +67,21 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
     return { rooms: [] };
 };
 
+export const getTags = async (): Promise<{ tagNames: string[], tagIds: string[] }> => {
+    try {
+        const tagsCollection = collection(db, 'Tags');
+        const tagsSnapshot = await getDocs(tagsCollection);
+
+        const tagNames = tagsSnapshot.docs.map(doc => doc.data().name);
+        const tagIds = tagsSnapshot.docs.map(doc => doc.id);
+        const tags = tagsSnapshot.docs.map(doc => doc.data().name);
+        return { tagNames, tagIds };
+    } catch (error) {
+        console.error("Error fetching tags: ", error);
+        return { tagNames: [], tagIds: [] };
+    }
+}
+
 export const getTagById = async (tagId: string): Promise<{ success: boolean, tag: string }> => {
     try {
         const tagDoc = await getDoc(doc(db, 'Tags', tagId));
@@ -80,6 +95,27 @@ export const getTagById = async (tagId: string): Promise<{ success: boolean, tag
     }
 
     return { success: false, tag: '' };
+}
+
+export const addTag = async (roomId: string, tagId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+        const roomRef = doc(db, 'Rooms', roomId);
+        const roomDoc = await getDoc(roomRef);
+
+        if (roomDoc.exists()) {
+            const tags = roomDoc.data().tags;
+            tags.push(doc(db, 'Tags', tagId));
+
+            await updateDoc(roomRef, { tags });
+
+            return { success: true, message: 'Tag added to room' };
+        }
+    } catch (e) {
+        console.log(e);
+        return { success: false, message: e.message };
+    }
+
+    return { success: false, message: '' };
 }
 
 export const getRoomById = async (roomId: string): Promise<{ success: boolean, room: Room }> => {
