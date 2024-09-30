@@ -10,9 +10,10 @@ interface ShelfProps {
     onSpotPress: (position: number) => void;
     onItemRemove: (position: number) => void;
     onItemDataUpdate: (position: number, newItemData: Record<string, any>) => void;
+    users: Record<string, any>;
 }
 
-const Shelf: React.FC<ShelfProps> = ({ shelfNumber, items, showPlusSigns, onSpotPress, onItemRemove, onItemDataUpdate }) => {
+const Shelf: React.FC<ShelfProps> = ({ shelfNumber, items, showPlusSigns, onSpotPress, onItemRemove, onItemDataUpdate, users }) => {
     return (
         <YStack>
             <XStack
@@ -29,6 +30,7 @@ const Shelf: React.FC<ShelfProps> = ({ shelfNumber, items, showPlusSigns, onSpot
                     onSpotPress={onSpotPress}
                     onItemRemove={onItemRemove}
                     onItemDataUpdate={onItemDataUpdate}
+                    users={users}
                 />
             </XStack>
             <XStack

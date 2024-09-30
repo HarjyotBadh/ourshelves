@@ -424,6 +424,7 @@ const RoomScreen = () => {
                                         }}
                                         onItemRemove={(position) => handleItemRemove(shelf.id, position)}
                                         onItemDataUpdate={(position, newItemData) => handleItemDataUpdate(shelf.id, position, newItemData)}
+                                        users={users}
                                     />
                                 ))}
                             </YStack>

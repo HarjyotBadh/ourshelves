@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Stack, Text, Image } from 'tamagui';
+import {View, Stack, Text, XStack, YStack, Avatar, Circle} from 'tamagui';
 import { Pressable } from 'react-native';
 import { ref as dbRef, onValue, remove, runTransaction, onDisconnect } from 'firebase/database';
 import { auth, rtdb } from 'firebaseConfig';
 import { PlacedItemData } from '../models/PlacedItemData';
-import { Plus, X } from '@tamagui/lucide-icons';
+import { Plus, X, Lock } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
 import items from './items';
 import { AlertDialog } from './AlertDialog';
@@ -16,9 +16,10 @@ interface ShelfItemSpotProps {
     onSpotPress: (position: number) => void;
     onItemRemove: (position: number) => void;
     onItemDataUpdate: (position: number, newItemData: Record<string, any>) => void;
+    users: Record<string, any>;
 }
 
-const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusSigns, onSpotPress, onItemRemove, onItemDataUpdate }) => {
+const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusSigns, onSpotPress, onItemRemove, onItemDataUpdate, users }) => {
     const [lockStatus, setLockStatus] = useState<{
         lockedBy: string | null;
         userName: string | null;
@@ -36,11 +37,14 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
             const listener = onValue(lockRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    const lockingUser = Object.values(users).find(user => user.id === data.userId);
+
                     setLockStatus({
                         lockedBy: data.userId,
-                        userName: data.userName,
-                        userProfilePicture: data.userProfilePicture
+                        userName: lockingUser?.displayName || data.userName || 'Unknown User',
+                        userProfilePicture: lockingUser?.profilePicture || null
                     });
+
                 } else {
                     setLockStatus({
                         lockedBy: null,
@@ -54,7 +58,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
                 listener();
             };
         }
-    }, [item]);
+    }, [item, users]);
 
     const handleItemPress = async () => {
         if (item && item.shouldLock) {
@@ -122,31 +126,6 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
 
     const isLockedByAnotherUser = Boolean(lockStatus.lockedBy && lockStatus.lockedBy !== auth.currentUser?.uid);
 
-    const barrier = isLockedByAnotherUser ? (
-        <View
-            style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 10
-            }}
-        >
-            {lockStatus.userProfilePicture ? (
-                <Image
-                    source={{ uri: lockStatus.userProfilePicture }}
-                    style={{ width: 50, height: 50, borderRadius: 25 }}
-                />
-            ) : (
-                <Text>{lockStatus.userName}</Text>
-            )}
-        </View>
-    ) : null;
-
     const handleRemovePress = () => {
         setRemoveAlertOpen(true);
     };
@@ -173,6 +152,55 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
             return <Text>Unknown Item</Text>;
         }
     };
+
+
+    const LockOverlay = () => (
+        <View
+            position="absolute"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            backgroundColor="rgba(0,0,0,0.7)"
+            justifyContent="center"
+            alignItems="center"
+            zIndex={10}
+        >
+            <YStack alignItems="center" gap="$3">
+                <XStack
+                    backgroundColor="$gray1"
+                    borderRadius="$4"
+                    padding="$2"
+                    alignItems="center"
+                    gap="$2"
+                    elevation={4}
+                >
+                    <Avatar circular size="$4">
+                        <Avatar.Image src={lockStatus.userProfilePicture || undefined} />
+                        <Avatar.Fallback backgroundColor="$blue5">
+                            <Text color="$blue11" fontSize="$3" fontWeight="bold">
+                                {lockStatus.userName?.[0]?.toUpperCase()}
+                            </Text>
+                        </Avatar.Fallback>
+                    </Avatar>
+                    <Circle size="$3" backgroundColor="$red10">
+                        <Lock size={16} color="white" />
+                    </Circle>
+                </XStack>
+                <Text
+                    color="white"
+                    fontSize="$3"
+                    fontWeight="bold"
+                    textAlign="center"
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                >
+                    {lockStatus.userName || 'Unknown User'}
+                </Text>
+            </YStack>
+        </View>
+    );
+
 
     if (!item) {
         if (showPlusSigns) {
@@ -201,8 +229,8 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
                 >
                     {renderItem(item, position)}
                 </Pressable>
-                {barrier}
-                {showPlusSigns && (
+                {isLockedByAnotherUser && <LockOverlay />}
+                {showPlusSigns && !isLockedByAnotherUser && (
                     <Button
                         unstyled
                         onPress={handleRemovePress}
