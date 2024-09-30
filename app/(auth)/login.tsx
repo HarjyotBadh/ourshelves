@@ -16,15 +16,36 @@ import {
 import { SafeAreaView, Platform } from "react-native";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import validator from "validator";
-import db from "../../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { auth, db } from "../../firebaseConfig";
 
 export default function LoginScreen() {
     const router = useRouter();
     const theme = useTheme();
     const isIOS = Platform.OS === "ios";
     const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [emailError, setEmailError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const [generalError, setGeneralError] = useState("");
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            setEmailError("Please enter your email first");
+            return;
+        }
+    
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setGeneralError("Password reset email sent. Please check your inbox.");
+        } catch (error: any) {
+            if (error.code === "auth/user-not-found") {
+                setGeneralError("No account found with this email address.");
+            } else {
+                setGeneralError("Error: " + error.message);
+            }
+        }
+    };    
 
     const validateEmail = (text: string) => {
         setEmail(text);
@@ -40,20 +61,31 @@ export default function LoginScreen() {
             setEmailError("Please enter a valid email address");
             return;
         }
+        if (password.length < 6) {
+            setPasswordError("Password must be at least 6 characters");
+            return;
+        }
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            console.log("User logged in:", user);
+
+            router.replace("/(tabs)"); 
+        } catch (error: any) {
+            setGeneralError(error.message);
+        }
     };
 
     const handlePhoneLogin = () => {
-        // Navigate to phone login screen
         router.push("/(auth)/phone-login");
     };
 
     const handleGoogleLogin = () => {
-        // Implement Google login logic
         console.log("Google login pressed");
     };
 
     const handleAppleLogin = () => {
-        // Implement Apple login logic
         console.log("Apple login pressed");
     };
 
@@ -82,13 +114,43 @@ export default function LoginScreen() {
                                 ) : null}
                             </YStack>
                             <YStack space="$2">
-                                <Input placeholder="Password" secureTextEntry />
+                                <Input
+                                    placeholder="Password"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry
+                                    style={{ marginBottom: 20 }}
+                                />
+                                {passwordError ? (
+                                    <Text color="$red10" fontSize="$2">
+                                        {passwordError}
+                                    </Text>
+                                ) : null}
                             </YStack>
+                            {generalError ? (
+                                <Text color="$red10" fontSize="$2">
+                                    {generalError}
+                                </Text>
+                            ) : null}
                             <Button width="100%" onPress={handleLogin}>
                                 Login
                             </Button>
                         </YStack>
                     </Form>
+
+                    <Text
+                        onPress={handleForgotPassword} 
+                        style={{
+                        color: 'blue',
+                        textDecorationLine: 'underline', 
+                        fontSize: 14, 
+                        textAlign: 'center', 
+                        marginTop: 10, 
+                        }}
+                    >
+                        Forgot Password?
+                    </Text>
+
 
                     <XStack ai="center" width="100%" my="$4">
                         <Separator flex={1} />
@@ -117,9 +179,7 @@ export default function LoginScreen() {
                             <Button
                                 width="100%"
                                 onPress={handleAppleLogin}
-                                icon={
-                                    <AntDesign name="apple1" size={24} color={theme.color.get()} />
-                                }
+                                icon={<AntDesign name="apple1" size={24} color={theme.color.get()} />}
                             >
                                 Continue with Apple
                             </Button>
