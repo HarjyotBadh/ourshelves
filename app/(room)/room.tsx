@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, Pressable } from 'react-native';
-import {YStack, View, styled, XStack, Text, Button, ScrollView, Image, Progress, Spinner} from 'tamagui';
+import { YStack, View, styled, XStack, Text, Button, ScrollView, Image, Progress, Spinner } from 'tamagui';
 import { ArrowLeft, X } from '@tamagui/lucide-icons';
 import Feather from '@expo/vector-icons/Feather';
 import Shelf from '../../components/Shelf';
-import {useRouter, useLocalSearchParams} from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import ItemSelectionSheet from '../../components/ItemSelectionSheet';
 import RoomSettingsDialog from '../../components/RoomSettingsDialog';
 import {
@@ -19,8 +19,8 @@ import {
     DocumentData
 } from "firebase/firestore";
 import { auth, db } from "firebaseConfig";
-import {PlacedItemData, ItemData } from "../../models/PlacedItemData";
-import {ShelfData} from "../../models/ShelfData";
+import { PlacedItemData, ItemData } from "../../models/PlacedItemData";
+import { ShelfData } from "../../models/ShelfData";
 import items from "../../components/items";
 
 const BACKGROUND_COLOR = '$yellow2Light';
@@ -110,7 +110,6 @@ const RoomScreen = () => {
             shelfRefs.push(newShelfRef);
         }
 
-        // Update the room document with the new shelf references
         const roomRef = doc(db, 'Rooms', roomId);
         batch.update(roomRef, { shelfList: shelfRefs });
 
@@ -149,6 +148,15 @@ const RoomScreen = () => {
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     setUserInventory(userData.inventory || []);
+
+                    // print user inventory
+                    console.log('User inventory:');
+                    for (const ref of userData.inventory || []) {
+                        const itemDoc = await getDoc(ref);
+                        if (itemDoc.exists()) {
+                            console.log(itemDoc.data());
+                        }
+                    }
                 }
             }
         };
@@ -164,20 +172,16 @@ const RoomScreen = () => {
             setLoadingProgress(0);
 
             try {
-                // Fetch room data
                 const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
                 if (roomDoc.exists()) {
                     const roomData = roomDoc.data() as RoomData;
                     setRoomName(roomData.name);
 
-                    // Fetch user and admin data using references
                     const userRefs = roomData.users || [];
                     const adminRefs = roomData.admins || [];
 
-                    // Create a Map to store unique users
                     const userMap = new Map();
 
-                    // Process user references
                     for (const ref of userRefs) {
                         const userDoc = await getDoc(ref);
                         if (userDoc.exists()) {
@@ -191,7 +195,6 @@ const RoomScreen = () => {
                         }
                     }
 
-                    // Process admin references
                     for (const ref of adminRefs) {
                         const userDoc = await getDoc(ref);
                         if (userDoc.exists()) {
@@ -210,11 +213,9 @@ const RoomScreen = () => {
                         }
                     }
 
-                    // Convert Map to array and update state
                     const combinedUsers = Array.from(userMap.values());
                     setUsers(combinedUsers);
 
-                    // Fetch shelves and placed items
                     let shelvesData: ShelfData[];
                     if (roomData.shelfList && roomData.shelfList.length > 0) {
                         const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
@@ -241,12 +242,10 @@ const RoomScreen = () => {
                         ...doc.data()
                     } as ItemData));
 
-                    // Preload images
                     await preloadImages(itemsList);
 
                     setAvailableItems(itemsList);
 
-                    // Add a one-second delay
                     await new Promise(resolve => setTimeout(resolve, 500));
                 } else {
                     console.error('Room not found');
@@ -267,20 +266,20 @@ const RoomScreen = () => {
             const shelfIndex = shelves.findIndex(shelf => shelf.id === shelfId);
             if (shelfIndex === -1) return;
 
-            // Get the initial item data from the item's component
             const ItemComponent = items[item.itemId];
             let initialItemData = {};
             if (ItemComponent && ItemComponent.getInitialData) {
                 initialItemData = ItemComponent.getInitialData();
             }
 
-            // Add new placed item
+            // Add new placed item with shouldLock
             const newPlacedItem: Omit<PlacedItemData, 'id'> = {
                 shelfId,
                 itemId: item.itemId,
                 position,
                 createdAt: new Date(),
                 updatedAt: new Date(),
+                shouldLock: item.shouldLock || false, // Transfer shouldLock
                 itemData: {
                     ...initialItemData,
                     name: item.name,
@@ -288,17 +287,14 @@ const RoomScreen = () => {
                 }
             };
 
-            // print the itemData
             const docRef = await addDoc(collection(db, 'PlacedItems'), newPlacedItem);
             const addedItem: PlacedItemData = { ...newPlacedItem, id: docRef.id };
 
-            // Update shelf's itemList
             const updatedShelves = [...shelves];
             const shelf = updatedShelves[shelfIndex];
             shelf.itemList.push(docRef);
             shelf.placedItems = [...(shelf.placedItems || []), addedItem];
 
-            // Update Firestore
             await updateDoc(doc(db, 'Shelves', shelfId), {
                 itemList: shelf.itemList,
                 updatedAt: new Date()
@@ -317,16 +313,13 @@ const RoomScreen = () => {
         const shelf = shelves[shelfIndex];
         const itemToRemove = shelf.placedItems?.find(item => item.position === position);
         if (itemToRemove) {
-            // Remove from Firestore
             await deleteDoc(doc(db, 'PlacedItems', itemToRemove.id));
 
-            // Update shelf's itemList and placedItems
             const updatedShelves = [...shelves];
             const updatedShelf = updatedShelves[shelfIndex];
             updatedShelf.itemList = updatedShelf.itemList.filter(ref => ref.id !== itemToRemove.id);
             updatedShelf.placedItems = updatedShelf.placedItems?.filter(item => item.id !== itemToRemove.id);
 
-            // Update Firestore
             await updateDoc(doc(db, 'Shelves', shelfId), {
                 itemList: updatedShelf.itemList,
                 updatedAt: new Date()
@@ -343,7 +336,6 @@ const RoomScreen = () => {
         const shelf = shelves[shelfIndex];
         const placedItem = shelf.placedItems?.find(item => item.position === position);
         if (placedItem) {
-            // Update local state
             const updatedShelves = [...shelves];
             const updatedPlacedItem = {
                 ...placedItem,
@@ -354,7 +346,6 @@ const RoomScreen = () => {
                 item.id === placedItem.id ? updatedPlacedItem : item
             );
 
-            // Update Firestore
             await updateDoc(doc(db, 'PlacedItems', placedItem.id), {
                 itemData: updatedPlacedItem.itemData,
                 updatedAt: new Date()
@@ -399,18 +390,18 @@ const RoomScreen = () => {
             <Container>
                 <Header>
                     <HeaderButton unstyled onPress={handleGoBack}>
-                        <ArrowLeft color="white" size={24}/>
+                        <ArrowLeft color="white" size={24} />
                     </HeaderButton>
                     <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
                         {roomName}
                     </Text>
                     {isEditMode ? (
                         <HeaderButton unstyled onPress={disableEditMode}>
-                            <X color="white" size={24}/>
+                            <X color="white" size={24} />
                         </HeaderButton>
                     ) : (
                         <HeaderButton unstyled onPress={() => setIsSettingsOpen(true)}>
-                            <Feather name="menu" color="white" size={24}/>
+                            <Feather name="menu" color="white" size={24} />
                         </HeaderButton>
                     )}
                 </Header>
