@@ -7,7 +7,7 @@ import { Adapt, Button, Dialog, DialogDescription, Fieldset, FontSizeTokens, get
 import { LinearGradient } from 'tamagui/linear-gradient';
 
 
-const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag }) => {
+const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag, homeDeleteRoom }) => {
     const [isOptionsDialogOpen, setOptionsDialogOpen] = useState(false);
     const [isTagsDialogOpen, setTagsDialogOpen] = useState(false);
     const [items, setItems] = useState(tagsList);
@@ -78,12 +78,27 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
             );
         } else if (option === 'deleteroom') {
             console.log('Delete room');
+
+            Alert.alert(
+                'Leave Room',
+                `Are you sure you want to delete "${roomName}" room? This action is PERMANENT.`,
+                [
+                    {
+                        text: 'No',
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'Yes',
+                        onPress: () => homeDeleteRoom(roomId, roomName),
+                    }
+                ]
+            );
         }
     };
 
     return (
         <View style={styles.container}>
-            <Pressable onPress={enterRoom} onLongPress={openOptionsDialog} style={styles.pressable}>
+            <Pressable onPress={() => enterRoom(id)} onLongPress={openOptionsDialog} style={styles.pressable}>
                 <View style={[styles.pressableSquare, { backgroundColor: bgColor }]} />
                 <Text style={styles.pressableText}>{name}</Text>
             </Pressable>
@@ -334,7 +349,9 @@ HomeTile.defaultProps = {
 };
 
 const styles = StyleSheet.create({
-    container: {},
+    container: {
+
+    },
     pressable: {
         padding: 10,
         borderRadius: 8,
