@@ -1,11 +1,11 @@
 import { StyleSheet, Alert } from 'react-native';
-import { Text, View, ScrollView } from 'tamagui';
+import { Text, View, ScrollView, styled } from 'tamagui';
 import HomeTile from '../../components/HomeTile';
 import CreateHomeTile from '../../components/CreateHomeTile';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db, auth } from "firebaseConfig";
-import { getRooms, getRoomById, leaveRoom, createRoom, getTags, addTag } from 'project-functions/homeFunctions';
+import { getRooms, getRoomById, leaveRoom, createRoom, getTags, addTag, deleteRoom } from 'project-functions/homeFunctions';
 import { CodeSquare } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 
@@ -56,6 +56,20 @@ const HomeScreen = () => {
       )
     }
   };
+
+  const homeDeleteRoom = async (roomId: string, roomName: string) => {
+    console.log("Delete room " + roomId);
+    const result = await deleteRoom(roomId);
+
+    if (result.success) {
+      setRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
+
+      Alert.alert(
+        'Room Deleted',
+        `Room "${roomName}" deleted.`,
+      );
+    }
+  }
 
   const homeCreateRoom = async (roomName: string, roomDescription: string) => {
     console.log('== Create room');
@@ -174,32 +188,44 @@ const HomeScreen = () => {
     });
   }, []);
 
+
+
+
+  const HomePageContainer = styled(View, {
+    backgroundColor: '#fff2cf',
+    flex: 1,
+  }
+  )
+
   return (
-    <ScrollView contentContainerStyle={styles.homeContainer}>
-      {rooms.map((room) => (
-        <HomeTile
-          id={room.id}
-          name={room.name}
-          isAdmin={room.isAdmin}
-          tags={room.tags}
-          tagsList={tagsList}
-          tagIdsList={tagIdsList}
-          enterRoom={enterRoom}
-          homeLeaveRoom={homeLeaveRoom}
-          homeAddTag={homeAddTag}
+    <HomePageContainer>
+      <ScrollView contentContainerStyle={styles.homeContainer}>
+        {rooms.map((room) => (
+          <HomeTile
+            id={room.id}
+            name={room.name}
+            isAdmin={room.isAdmin}
+            tags={room.tags}
+            tagsList={tagsList}
+            tagIdsList={tagIdsList}
+            enterRoom={enterRoom}
+            homeLeaveRoom={homeLeaveRoom}
+            homeAddTag={homeAddTag}
+            homeDeleteRoom={homeDeleteRoom}
+          />
+        ))}
+        <CreateHomeTile
+          handleCreateRoom={homeCreateRoom}
         />
-      ))}
-      <CreateHomeTile
-        handleCreateRoom={homeCreateRoom}
-      />
-    </ScrollView>
+      </ScrollView>
+    </HomePageContainer>
   );
 };
 
 
 const styles = StyleSheet.create({
   homeContainer: {
-    backgroundColor: '#fff2cf',
+    // backgroundColor: '#fff2cf',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-evenly',

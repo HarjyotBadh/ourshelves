@@ -1,7 +1,8 @@
-import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db, auth } from 'firebaseConfig';
 import { Alert } from 'react-native';
+import { SelectProvider } from 'tamagui';
 
 interface Room {
     id: string;
@@ -221,4 +222,50 @@ export const createRoom = async (roomName: string, roomDescription: string): Pro
     }
 
     return { success: false, message: 'nothing happened!' };
+}
+
+
+export const deleteRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
+    console.log("deleteRoom in homeFunctions");
+    const userId = auth.currentUser.uid;
+
+    try {
+        const userDocRef = doc(db, 'Users', userId);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+
+            const roomRef = doc(db, 'Rooms', roomId);
+            const roomDoc = await getDoc(roomRef);
+
+            if (roomDoc.exists()) {
+                
+                const shelfRefs = roomDoc.data().shelfList;
+
+                shelfRefs.forEach(async (shelfRef: any) => {
+                    const shelfDoc = await getDoc(shelfRef);
+                    const itemRefs = (shelfDoc.data() as { itemList: any[] }).itemList;
+
+                    itemRefs.forEach(async (itemRef: any) => {
+                        console.log("delete item: " + itemRef.path);
+                        await deleteDoc(itemRef);
+                    });
+
+                    console.log("delete shelf: " + shelfRef.path);
+                    await deleteDoc(shelfRef);
+                });
+
+                
+                console.log("delete room: " + roomRef.path);
+                await deleteDoc(roomRef);
+            }
+
+            return { success: true, message: 'Room deleted.' };
+        }
+    } catch (e) {
+        console.log(e);
+        return { success: false, message: e.message };
+    }
+
+    return { success: false, message: 'Something went wrong in homeFunctions/deleteRoom. Yell at Jack' };
 }
