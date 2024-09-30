@@ -258,6 +258,10 @@ export const deleteRoom = async (roomId: string): Promise<{ success: boolean; me
                 
                 console.log("delete room: " + roomRef.path);
                 await deleteDoc(roomRef);
+
+                const userRooms = userDoc.data().rooms || [];
+                const updatedRooms = userRooms.filter((roomRef: any) => roomRef.id !== roomId);
+                await updateDoc(userDocRef, { rooms: updatedRooms });
             }
 
             return { success: true, message: 'Room deleted.' };
