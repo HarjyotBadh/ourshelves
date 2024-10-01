@@ -79,7 +79,7 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({ isOpen, onClose
                 <Sheet.Handle />
                 <ScrollView>
                     <YStack padding="$4" gap="$4">
-                        {items.length > 0 ? (
+                        {items && items.length > 0 ? (
                             items.map((item) => (
                                 <ShelfContainer key={item.itemId}>
                                     <CategoryHeader onPress={() => toggleItem(item.itemId)}>
@@ -119,7 +119,7 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({ isOpen, onClose
                                     No Items Available
                                 </Text>
                                 <Text fontSize={16} textAlign="center" marginBottom={16} color="black">
-                                    You haven't purchased any items yet. Visit the shop to get started!
+                                    Your inventory is empty. Visit the shop to get some items!
                                 </Text>
                                 <Button
                                     backgroundColor="#8b4513"

@@ -60,7 +60,6 @@ const PlaceholderItem: PlaceholderItemComponent = ({ itemData, onDataUpdate, isA
             <ColorSelectionDialog
                 open={dialogOpen}
                 onOpenChange={(isOpen) => {
-                    console.log('Dialog open state changed:', isOpen);
                     setDialogOpen(isOpen);
                     if (!isOpen) {
                         handleDialogClose();

@@ -91,7 +91,6 @@ const RoomScreen = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [users, setUsers] = useState<{ id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[]>([]);
-    const [userInventory, setUserInventory] = useState<DocumentReference[]>([]);
 
     const initializeShelves = async (roomId: string) => {
         const batch = writeBatch(db);
@@ -143,30 +142,6 @@ const RoomScreen = () => {
 
         await Promise.all(preloadPromises);
     };
-
-    useEffect(() => {
-        const fetchUserInventory = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                const userDoc = await getDoc(doc(db, 'Users', user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    setUserInventory(userData.inventory || []);
-
-                    // print user inventory
-                    console.log('User inventory:');
-                    for (const ref of userData.inventory || []) {
-                        const itemDoc = await getDoc(ref);
-                        if (itemDoc.exists()) {
-                            console.log(itemDoc.data());
-                        }
-                    }
-                }
-            }
-        };
-
-        fetchUserInventory();
-    }, []);
 
     useEffect(() => {
         if (!roomId) return;
@@ -283,16 +258,37 @@ const RoomScreen = () => {
                         });
                     });
 
-                    // Fetch available items using references
-                    const itemDocs = await Promise.all(userInventory.map(ref => getDoc(ref)));
-                    const itemsList = itemDocs.map(doc => ({
-                        itemId: doc.id,
-                        ...doc.data()
-                    } as ItemData));
+                    // Fetch user inventory
+                    const user = auth.currentUser;
+                    if (!user) {
+                        console.error('No user logged in');
+                        return;
+                    }
 
-                    await preloadImages(itemsList);
+                    const userDoc = await getDoc(doc(db, 'Users', user.uid));
+                    if (!userDoc.exists()) {
+                        console.error('User document not found');
+                        return;
+                    }
 
-                    setAvailableItems(itemsList);
+                    const userData = userDoc.data();
+                    const inventoryRefs = userData.inventory || [];
+
+                    if (inventoryRefs.length === 0) {
+                        setAvailableItems([]);
+                    } else {
+                        const itemDocs = await Promise.all(inventoryRefs.map(ref => getDoc(ref)));
+                        const itemsList = itemDocs
+                            .filter(doc => doc.exists())
+                            .map(doc => ({
+                                itemId: doc.id,
+                                ...doc.data()
+                            } as ItemData));
+
+                        setAvailableItems(itemsList);
+
+                        await preloadImages(itemsList);
+                    }
 
                     await new Promise(resolve => setTimeout(resolve, 500));
                 } else {
