@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {View, Stack, Text, XStack, YStack, Avatar, Circle} from 'tamagui';
+import { View, Stack, Text, XStack, YStack, Avatar, Circle } from 'tamagui';
 import { Pressable } from 'react-native';
 import { ref as dbRef, onValue, remove, runTransaction, onDisconnect } from 'firebase/database';
 import { auth, rtdb } from 'firebaseConfig';
@@ -19,7 +19,15 @@ interface ShelfItemSpotProps {
     users: Record<string, any>;
 }
 
-const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusSigns, onSpotPress, onItemRemove, onItemDataUpdate, users }) => {
+const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
+                                                         item,
+                                                         position,
+                                                         showPlusSigns,
+                                                         onSpotPress,
+                                                         onItemRemove,
+                                                         onItemDataUpdate,
+                                                         users,
+                                                     }) => {
     const [lockStatus, setLockStatus] = useState<{
         lockedBy: string | null;
         userName: string | null;
@@ -37,19 +45,18 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
             const listener = onValue(lockRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    const lockingUser = Object.values(users).find(user => user.id === data.userId);
+                    const lockingUser = Object.values(users).find((user) => user.id === data.userId);
 
                     setLockStatus({
                         lockedBy: data.userId,
                         userName: lockingUser?.displayName || data.userName || 'Unknown User',
-                        userProfilePicture: lockingUser?.profilePicture || null
+                        userProfilePicture: lockingUser?.profilePicture || null,
                     });
-
                 } else {
                     setLockStatus({
                         lockedBy: null,
                         userName: null,
-                        userProfilePicture: null
+                        userProfilePicture: null,
                     });
                 }
             });
@@ -72,7 +79,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
                                 userId: user.uid,
                                 userName: user.displayName || 'Unknown User',
                                 userProfilePicture: user.photoURL || null,
-                                timestamp: Date.now()
+                                timestamp: Date.now(),
                             };
                         } else if (currentData.userId === user.uid) {
                             return currentData;
@@ -140,8 +147,17 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
 
         const ItemComponent = items[item.itemId];
         if (ItemComponent) {
+            const getMillis = (date) => {
+                if (date instanceof Date) return date.getTime();
+                if (date && typeof date.toMillis === 'function') return date.toMillis();
+                return new Date().getTime();
+            };
+
+            const updatedAtKey = getMillis(item.updatedAt);
+
             return (
                 <ItemComponent
+                    key={updatedAtKey}
                     itemData={item.itemData}
                     onDataUpdate={(newItemData) => onItemDataUpdate(position, newItemData)}
                     isActive={isItemActive}
@@ -152,7 +168,6 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
             return <Text>Unknown Item</Text>;
         }
     };
-
 
     const LockOverlay = () => (
         <View
@@ -201,7 +216,6 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
         </View>
     );
 
-
     if (!item) {
         if (showPlusSigns) {
             return (
@@ -222,11 +236,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({ item, position, showPlusS
     } else {
         return (
             <Stack key={position} width="30%" height="100%" position="relative">
-                <Pressable
-                    onPress={handleItemPress}
-                    disabled={isLockedByAnotherUser}
-                    style={{ flex: 1 }}
-                >
+                <Pressable onPress={handleItemPress} disabled={isLockedByAnotherUser} style={{ flex: 1 }}>
                     {renderItem(item, position)}
                 </Pressable>
                 {isLockedByAnotherUser && <LockOverlay />}

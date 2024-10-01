@@ -13,10 +13,14 @@ import {
     deleteDoc,
     doc,
     getDoc,
+    getDocs,
     writeBatch,
-    DocumentReference,
     updateDoc,
-    DocumentData
+    DocumentReference,
+    DocumentData,
+    query,
+    where,
+    onSnapshot
 } from "firebase/firestore";
 import { auth, db } from "firebaseConfig";
 import { PlacedItemData, ItemData } from "../../models/PlacedItemData";
@@ -165,14 +169,19 @@ const RoomScreen = () => {
     }, []);
 
     useEffect(() => {
+        if (!roomId) return;
+
+        setIsLoading(true);
+        setLoadingProgress(0);
+
+        let unsubscribeShelves: () => void;
+        let unsubscribePlacedItems: () => void;
+
+        const roomRef = doc(db, 'Rooms', roomId);
+
         const fetchRoomData = async () => {
-            if (!roomId) return;
-
-            setIsLoading(true);
-            setLoadingProgress(0);
-
             try {
-                const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
+                const roomDoc = await getDoc(roomRef);
                 if (roomDoc.exists()) {
                     const roomData = roomDoc.data() as RoomData;
                     setRoomName(roomData.name);
@@ -216,24 +225,63 @@ const RoomScreen = () => {
                     const combinedUsers = Array.from(userMap.values());
                     setUsers(combinedUsers);
 
-                    let shelvesData: ShelfData[];
-                    if (roomData.shelfList && roomData.shelfList.length > 0) {
-                        const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
-                        shelvesData = shelfDocs.map(doc => ({ ...doc.data(), id: doc.id } as ShelfData));
-                    } else {
-                        shelvesData = await initializeShelves(roomId);
+                    // Initialize shelves if they don't exist
+                    const shelvesQuery = query(collection(db, 'Shelves'), where('roomId', '==', roomId));
+                    const shelvesSnapshot = await getDocs(shelvesQuery);
+                    if (shelvesSnapshot.empty) {
+                        await initializeShelves(roomId);
                     }
 
-                    const placedItemRefs = shelvesData.flatMap(shelf => shelf.itemList);
-                    const placedItemDocs = await Promise.all(placedItemRefs.map(ref => getDoc(ref)));
-                    const placedItems = placedItemDocs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
+                    // Set up listener on shelves
+                    unsubscribeShelves = onSnapshot(shelvesQuery, (shelvesSnapshot) => {
+                        const shelvesData: ShelfData[] = shelvesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShelfData));
 
-                    const updatedShelvesData = shelvesData.map(shelf => ({
-                        ...shelf,
-                        placedItems: placedItems.filter(item => item.shelfId === shelf.id)
-                    }));
+                        // Update shelves with existing placedItems
+                        setShelves(prevShelves => {
+                            const placedItemsMap = new Map<string, PlacedItemData[]>();
+                            if (prevShelves) {
+                                for (const shelf of prevShelves) {
+                                    if (shelf.placedItems) {
+                                        placedItemsMap.set(shelf.id, shelf.placedItems);
+                                    }
+                                }
+                            }
 
-                    setShelves(updatedShelvesData);
+                            const updatedShelves = shelvesData.map(shelf => ({
+                                ...shelf,
+                                placedItems: placedItemsMap.get(shelf.id) || []
+                            }));
+
+                            return updatedShelves;
+                        });
+                    });
+
+                    // Set up listener on PlacedItems
+                    const placedItemsQuery = query(collection(db, 'PlacedItems'), where('roomId', '==', roomId));
+                    unsubscribePlacedItems = onSnapshot(placedItemsQuery, (snapshot) => {
+                        const placedItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
+
+                        setShelves(prevShelves => {
+                            if (!prevShelves) return prevShelves;
+
+                            const shelvesMap = new Map<string, ShelfData>();
+                            for (const shelf of prevShelves) {
+                                shelvesMap.set(shelf.id, { ...shelf, placedItems: [] });
+                            }
+
+                            for (const item of placedItems) {
+                                const shelf = shelvesMap.get(item.shelfId);
+                                if (shelf) {
+                                    if (!shelf.placedItems) {
+                                        shelf.placedItems = [];
+                                    }
+                                    shelf.placedItems.push(item);
+                                }
+                            }
+
+                            return Array.from(shelvesMap.values());
+                        });
+                    });
 
                     // Fetch available items using references
                     const itemDocs = await Promise.all(userInventory.map(ref => getDoc(ref)));
@@ -258,6 +306,11 @@ const RoomScreen = () => {
         };
 
         fetchRoomData();
+
+        return () => {
+            if (unsubscribeShelves) unsubscribeShelves();
+            if (unsubscribePlacedItems) unsubscribePlacedItems();
+        };
     }, [roomId]);
 
     const handleItemSelect = async (item: ItemData) => {
@@ -272,8 +325,8 @@ const RoomScreen = () => {
                 initialItemData = ItemComponent.getInitialData();
             }
 
-            // Add new placed item with shouldLock
             const newPlacedItem: Omit<PlacedItemData, 'id'> = {
+                roomId,
                 shelfId,
                 itemId: item.itemId,
                 position,

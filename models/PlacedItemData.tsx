@@ -1,5 +1,6 @@
 export interface PlacedItemData {
     id: string;
+    roomId: string;
     shelfId: string;
     itemId: string;
     position: number;
