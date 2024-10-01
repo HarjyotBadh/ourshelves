@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { auth, db } from "firebaseConfig";
 import { updateProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import {doc, setDoc, Timestamp} from "firebase/firestore";
 
 const MAX_NAME_LENGTH = 16;
 const NAME_REGEX = /^[a-zA-Z0-9_]+$/;
@@ -36,13 +36,29 @@ export default function DisplayNameInputScreen() {
                 const user = auth.currentUser;
 
                 if (user) {
-                    // Update the user's display name in the database
-                    const userRef = doc(db, "Users", user.uid);
-                    await setDoc(userRef, { displayName: displayName }, { merge: true });
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-                    // Update the displayName of the current user
+                    // Generate default profile picture URL
+                    const defaultProfilePicture = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+
+                    // Create a new user document with default values
+                    const userRef = doc(db, "Users", user.uid);
+                    await setDoc(userRef, {
+                        displayName: displayName,
+                        profilePicture: defaultProfilePicture,
+                        rooms: [],
+                        inventory: [],
+                        lastDailyGiftClaim: Timestamp.fromDate(oneWeekAgo),
+                        coins: 100,
+                        shelfColors: [],
+                        wallpapers: []
+                    });
+
+                    // Update the displayName and photoURL of the current user
                     await updateProfile(user, {
                         displayName: displayName,
+                        photoURL: defaultProfilePicture,
                     });
 
                     router.replace("/(tabs)");
@@ -50,8 +66,8 @@ export default function DisplayNameInputScreen() {
                     setError("No user is signed in.");
                 }
             } catch (err) {
-                console.error("Error updating display name:", err);
-                setError("Failed to update display name. Please try again.");
+                console.error("Error updating user data:", err);
+                setError("Failed to update user data. Please try again.");
             }
         }
     };
