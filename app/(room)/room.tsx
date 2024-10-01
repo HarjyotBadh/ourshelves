@@ -73,6 +73,7 @@ interface UserData {
 
 interface RoomData extends DocumentData {
     name: string;
+    description?: string;
     users: DocumentReference[];
     admins: DocumentReference[];
     shelfList?: DocumentReference[];
@@ -82,6 +83,7 @@ const RoomScreen = () => {
     const router = useRouter();
     const { roomId } = useLocalSearchParams<{ roomId: string }>();
     const [roomName, setRoomName] = useState<string>('');
+    const [roomDescription, setRoomDescription] = useState<string | undefined>(undefined);
     const [shelves, setShelves] = useState<ShelfData[]>([]);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -159,7 +161,9 @@ const RoomScreen = () => {
                 const roomDoc = await getDoc(roomRef);
                 if (roomDoc.exists()) {
                     const roomData = roomDoc.data() as RoomData;
+
                     setRoomName(roomData.name);
+                    setRoomDescription(roomData.description);
 
                     const userRefs = roomData.users || [];
                     const adminRefs = roomData.admins || [];
@@ -490,6 +494,7 @@ const RoomScreen = () => {
                     open={isSettingsOpen}
                     onOpenChange={setIsSettingsOpen}
                     users={users}
+                    roomDescription={roomDescription}
                 />
             </Container>
         </SafeAreaWrapper>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, Accordion, YStack, Button, Text, XStack, styled, ScrollView, Avatar } from 'tamagui';
-import { Settings, Users, Shield, ChevronDown, ChevronUp, X } from '@tamagui/lucide-icons';
+import { Settings, Users, Shield, ChevronDown, ChevronUp, X, Info } from '@tamagui/lucide-icons';
 
 const BACKGROUND_COLOR = '$yellow2Light';
 const HEADER_BACKGROUND = '#8B4513';
@@ -17,6 +17,7 @@ interface RoomSettingsDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     users: User[];
+    roomDescription?: string;
 }
 
 const StyledAccordionItem = styled(Accordion.Item, {
@@ -70,7 +71,7 @@ const HeaderButton = styled(Button, {
     alignItems: 'center',
 });
 
-const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenChange, users }) => {
+const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenChange, users, roomDescription }) => {
     const renderUserList = () => (
         <YStack gap="$2">
             {users.map((user) => (
@@ -140,6 +141,23 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                         <ScrollView flex={1}>
                             <YStack padding="$4" gap="$4">
                                 <Accordion type="multiple" overflow="hidden" width="100%">
+                                    <StyledAccordionItem value="description">
+                                        <StyledAccordionTrigger>
+                                            {({ open }) => (
+                                                <XStack alignItems="center">
+                                                    <IconWrapper backgroundColor="$blue8">
+                                                        <Info color="white" />
+                                                    </IconWrapper>
+                                                    <Text flex={1} fontSize="$5" fontWeight="600" color="white">Room Description</Text>
+                                                    {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
+                                                </XStack>
+                                            )}
+                                        </StyledAccordionTrigger>
+                                        <StyledAccordionContent>
+                                            <Text color="$color">{roomDescription || 'No description available.'}</Text>
+                                        </StyledAccordionContent>
+                                    </StyledAccordionItem>
+
                                     <StyledAccordionItem value="users">
                                         <StyledAccordionTrigger>
                                             {({ open }) => (
