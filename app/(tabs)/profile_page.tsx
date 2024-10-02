@@ -7,6 +7,7 @@ import {  doc, getDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileAbtMe } from 'functions/profileFunctions';
 import { Wrench } from '@tamagui/lucide-icons'
+import { auth } from "../../firebaseConfig";
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -31,16 +32,14 @@ export default function ProfilePage() {
   const [profileIcon, setIcon] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
-  const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder ProfilePage doc id
+  const profileId = auth.currentUser?.uid; // Placeholder ProfilePage doc id
   const { iconId } = useLocalSearchParams(); // Getting Local Query Data
 
   useEffect(() => {
-    
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-
         // Fetch user data
         if (profileId) {
           const profilePageDocRef = doc(db, 'Users', profileId);

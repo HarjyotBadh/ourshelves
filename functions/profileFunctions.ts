@@ -1,14 +1,14 @@
 import { getFirestore, doc, runTransaction, arrayUnion, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { auth } from "../firebaseConfig";
 
 
 // function to update user's "About Me" section of their profile page 
 export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ success: boolean; message: string }> => {
-  const auth = getAuth();
   const db = getFirestore();
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
-  const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder
+  const profileId = auth.currentUser?.uid; // Placeholder
   const profileRef = doc(db, "Users", profileId);
 
   try {
@@ -36,11 +36,10 @@ export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ succ
 
 // Function to update user's profile icon
 export const updateProfileIcon = async (updatedIcon: string): Promise<{ success: boolean; message: string }> => {
-  const auth = getAuth();
   const db = getFirestore();
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
-  const profileId = "SZN3uKd5nTwYvrmy7TJf"; // Placeholder
+  const profileId = auth.currentUser?.uid; // Placeholder
   const profileRef = doc(db, 'Users', profileId);
 
   try {
