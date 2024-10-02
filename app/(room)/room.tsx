@@ -13,7 +13,6 @@ import {
     deleteDoc,
     doc,
     getDoc,
-    getDocs,
     writeBatch,
     updateDoc,
     DocumentReference,
