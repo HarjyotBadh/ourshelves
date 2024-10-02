@@ -48,7 +48,6 @@ export default function IconGallery() {
   }, []);
     
   // For when an icon is selected
-  // TODO - when the screen navigates back to profile_page, animates weird. eventually fix
   const iconSelect = async(iconUri) => {
     const result = await updateProfileIcon(iconUri)
     if (!result) {
