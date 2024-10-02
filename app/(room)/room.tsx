@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, Pressable } from 'react-native';
-import {YStack, View, styled, XStack, Text, Button, ScrollView, Image, Progress, Spinner} from 'tamagui';
+import {SafeAreaView, Pressable, Platform, StatusBar} from 'react-native';
+import { YStack, View, styled, XStack, Text, Button, ScrollView, Image, Progress, Spinner } from 'tamagui';
 import { ArrowLeft, X } from '@tamagui/lucide-icons';
 import Feather from '@expo/vector-icons/Feather';
 import Shelf from '../../components/Shelf';
-import {router, useLocalSearchParams} from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import ItemSelectionSheet from '../../components/ItemSelectionSheet';
 import RoomSettingsDialog from '../../components/RoomSettingsDialog';
 import {
@@ -13,17 +13,41 @@ import {
     deleteDoc,
     doc,
     getDoc,
-    getDocs,
     writeBatch,
-    DocumentReference, updateDoc
+    updateDoc,
+    DocumentReference,
+    DocumentData,
+    query,
+    where,
+    onSnapshot
 } from "firebase/firestore";
-import { db } from "firebaseConfig";
-import {PlacedItemData, ItemData } from "../../models/PlacedItemData";
-import {ShelfData} from "../../models/ShelfData";
+import { auth, db } from "firebaseConfig";
+import { PlacedItemData, ItemData } from "../../models/PlacedItemData";
+import { ShelfData } from "../../models/ShelfData";
 import items from "../../components/items";
 
 const BACKGROUND_COLOR = '$yellow2Light';
 const HEADER_BACKGROUND = '#8B4513';
+
+const UnauthorizedContainer = styled(YStack, {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: BACKGROUND_COLOR,
+    padding: 20,
+});
+
+const UnauthorizedCard = styled(View, {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: "$white",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+});
+
 
 const Container = styled(YStack, {
     flex: 1,
@@ -44,6 +68,7 @@ const Header = styled(XStack, {
 const SafeAreaWrapper = styled(SafeAreaView, {
     flex: 1,
     backgroundColor: HEADER_BACKGROUND,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0
 });
 
 const HeaderButton = styled(Button, {
@@ -61,9 +86,24 @@ const LoadingContainer = styled(YStack, {
     padding: 20,
 });
 
+interface UserData {
+    displayName: string;
+    profilePicture?: string;
+}
+
+interface RoomData extends DocumentData {
+    name: string;
+    description?: string;
+    users: DocumentReference[];
+    admins: DocumentReference[];
+    shelfList: DocumentReference[];
+}
+
 const RoomScreen = () => {
+    const router = useRouter();
     const { roomId } = useLocalSearchParams<{ roomId: string }>();
     const [roomName, setRoomName] = useState<string>('');
+    const [roomDescription, setRoomDescription] = useState<string | undefined>(undefined);
     const [shelves, setShelves] = useState<ShelfData[]>([]);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -72,7 +112,8 @@ const RoomScreen = () => {
     const [availableItems, setAvailableItems] = useState<ItemData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
-
+    const [users, setUsers] = useState<{ id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[]>([]);
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     const initializeShelves = async (roomId: string) => {
         const batch = writeBatch(db);
@@ -80,7 +121,6 @@ const RoomScreen = () => {
         const shelfRefs: DocumentReference[] = [];
 
         for (let i = 0; i < 10; i++) {
-            console.log("Creating shelf #", i + 1);
             const newShelfRef = doc(collection(db, 'Shelves'));
             const newShelfData: ShelfData = {
                 id: newShelfRef.id,
@@ -96,12 +136,10 @@ const RoomScreen = () => {
             shelfRefs.push(newShelfRef);
         }
 
-        // Update the room document with the new shelf references
         const roomRef = doc(db, 'Rooms', roomId);
         batch.update(roomRef, { shelfList: shelfRefs });
 
         await batch.commit();
-        console.log("All shelves created and room updated...");
         return newShelves;
     };
 
@@ -129,54 +167,190 @@ const RoomScreen = () => {
     };
 
     useEffect(() => {
+        if (!roomId) return;
+
+        setIsLoading(true);
+        setLoadingProgress(0);
+
+        // Array to hold unsubscribe functions for shelf listeners
+        let unsubscribeShelves: (() => void)[] = [];
+        let unsubscribePlacedItems: () => void;
+
+        const roomRef = doc(db, 'Rooms', roomId);
+
         const fetchRoomData = async () => {
-            if (!roomId) return;
-
-            setIsLoading(true);
-            setLoadingProgress(0);
-
             try {
-                // Fetch room data
-                const roomDoc = await getDoc(doc(db, 'Rooms', roomId));
+                const roomDoc = await getDoc(roomRef);
                 if (roomDoc.exists()) {
-                    const roomData = roomDoc.data();
-                    setRoomName(roomData.name);
+                    const roomData = roomDoc.data() as RoomData;
 
-                    let shelvesData: ShelfData[];
-                    if (roomData.shelfList && roomData.shelfList.length > 0) {
-                        const shelfDocs = await Promise.all(roomData.shelfList.map((shelfRef: DocumentReference) => getDoc(shelfRef)));
-                        shelvesData = shelfDocs.map(doc => ({ ...doc.data(), id: doc.id } as ShelfData));
-                    } else {
-                        shelvesData = await initializeShelves(roomId);
+                    setRoomName(roomData.name);
+                    setRoomDescription(roomData.description);
+
+                    // Handle users and admins
+                    const userRefs = roomData.users || [];
+                    const adminRefs = roomData.admins || [];
+
+                    const userMap = new Map<string, { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }>();
+
+                    // Fetch regular users
+                    for (const ref of userRefs) {
+                        const userDoc = await getDoc(ref);
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data() as UserData;
+                            userMap.set(userDoc.id, {
+                                id: userDoc.id,
+                                displayName: userData.displayName || 'Unknown User',
+                                profilePicture: userData.profilePicture,
+                                isAdmin: false
+                            });
+                        }
                     }
 
-                    console.log("# of shelves: " + shelvesData.length);
+                    // Check if the current user is authorized
+                    const currentUser = auth.currentUser;
+                    if (currentUser && userMap.has(currentUser.uid)) {
+                        setIsAuthorized(true);
+                    } else {
+                        setIsAuthorized(false);
+                    }
 
-                    const placedItemRefs = shelvesData.flatMap(shelf => shelf.itemList);
-                    const placedItemDocs = await Promise.all(placedItemRefs.map(ref => getDoc(ref)));
-                    const placedItems = placedItemDocs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
+                    // Fetch admin users and update their status
+                    for (const ref of adminRefs) {
+                        const userDoc = await getDoc(ref);
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data() as UserData;
+                            const existingUser = userMap.get(userDoc.id);
+                            if (existingUser) {
+                                existingUser.isAdmin = true;
+                            } else {
+                                userMap.set(userDoc.id, {
+                                    id: userDoc.id,
+                                    displayName: userData.displayName || 'Unknown User',
+                                    profilePicture: userData.profilePicture,
+                                    isAdmin: true
+                                });
+                            }
+                        }
+                    }
 
-                    const updatedShelvesData = shelvesData.map(shelf => ({
-                        ...shelf,
-                        placedItems: placedItems.filter(item => item.shelfId === shelf.id)
-                    }));
+                    // Update users state
+                    const combinedUsers = Array.from(userMap.values());
+                    setUsers(combinedUsers);
 
-                    setShelves(updatedShelvesData);
+                    // Fetch shelves using references from shelfList
+                    const shelfRefs = roomData.shelfList || [];
 
-                    // Fetch available items
-                    const itemsCollection = collection(db, 'Items');
-                    const itemsSnapshot = await getDocs(itemsCollection);
-                    const itemsList = itemsSnapshot.docs.map(doc => ({
-                        itemId: doc.id,
-                        ...doc.data()
-                    } as ItemData));
+                    if (shelfRefs.length === 0) {
+                        // Initialize shelves if shelfList is empty
+                        const newShelves = await initializeShelves(roomId);
+                        setShelves(newShelves);
 
-                    // Preload images
-                    await preloadImages(itemsList);
+                        // Optionally, set up listeners for newly created shelves
+                        newShelves.forEach(shelf => {
+                            const shelfRef = doc(db, 'Shelves', shelf.id);
+                            const unsubscribe = onSnapshot(shelfRef, (docSnapshot) => {
+                                if (docSnapshot.exists()) {
+                                    setShelves(prevShelves =>
+                                        prevShelves.map(prevShelf =>
+                                            prevShelf.id === docSnapshot.id
+                                                ? { ...prevShelf, ...docSnapshot.data() } as ShelfData
+                                                : prevShelf
+                                        )
+                                    );
+                                }
+                            });
+                            unsubscribeShelves.push(unsubscribe);
+                        });
+                    } else {
+                        // Fetch existing shelves using their references
+                        const shelvesSnapshot = await Promise.all(
+                            shelfRefs.map(ref => getDoc(ref))
+                        );
 
-                    setAvailableItems(itemsList);
+                        const shelvesData: ShelfData[] = shelvesSnapshot
+                            .filter(docSnap => docSnap.exists())
+                            .map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as ShelfData) }));
 
-                    // Add a one-second delay
+                        setShelves(shelvesData);
+
+                        // Set up real-time listeners for each shelf
+                        shelfRefs.forEach(ref => {
+                            const unsubscribe = onSnapshot(ref, (docSnapshot) => {
+                                if (docSnapshot.exists()) {
+                                    setShelves(prevShelves =>
+                                        prevShelves.map(shelf =>
+                                            shelf.id === docSnapshot.id
+                                                ? { ...shelf, ...docSnapshot.data() } as ShelfData
+                                                : shelf
+                                        )
+                                    );
+                                }
+                            });
+                            unsubscribeShelves.push(unsubscribe);
+                        });
+                    }
+
+                    // Set up listener on PlacedItems
+                    const placedItemsQuery = query(collection(db, 'PlacedItems'), where('roomId', '==', roomId));
+                    unsubscribePlacedItems = onSnapshot(placedItemsQuery, (snapshot) => {
+                        const placedItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PlacedItemData));
+
+                        setShelves(prevShelves => {
+                            if (!prevShelves) return prevShelves;
+
+                            const shelvesMap = new Map<string, ShelfData>();
+                            for (const shelf of prevShelves) {
+                                shelvesMap.set(shelf.id, { ...shelf, placedItems: [] });
+                            }
+
+                            for (const item of placedItems) {
+                                const shelf = shelvesMap.get(item.shelfId);
+                                if (shelf) {
+                                    if (!shelf.placedItems) {
+                                        shelf.placedItems = [];
+                                    }
+                                    shelf.placedItems.push(item);
+                                }
+                            }
+
+                            return Array.from(shelvesMap.values());
+                        });
+                    });
+
+                    // Fetch user inventory
+                    const user = auth.currentUser;
+                    if (!user) {
+                        console.error('No user logged in');
+                        return;
+                    }
+
+                    const userDoc = await getDoc(doc(db, 'Users', user.uid));
+                    if (!userDoc.exists()) {
+                        console.error('User document not found');
+                        return;
+                    }
+
+                    const userData = userDoc.data();
+                    const inventoryRefs: DocumentReference[] = userData.inventory || [];
+
+                    if (inventoryRefs.length === 0) {
+                        setAvailableItems([]);
+                    } else {
+                        const itemDocs = await Promise.all(inventoryRefs.map(ref => getDoc(ref)));
+                        const itemsList: ItemData[] = itemDocs
+                            .filter(docSnap => docSnap.exists())
+                            .map(docSnap => ({
+                                itemId: docSnap.id,
+                                ...(docSnap.data() as ItemData)
+                            }));
+
+                        setAvailableItems(itemsList);
+
+                        await preloadImages(itemsList);
+                    }
+
+                    // Simulate loading delay (optional)
                     await new Promise(resolve => setTimeout(resolve, 500));
                 } else {
                     console.error('Room not found');
@@ -189,6 +363,12 @@ const RoomScreen = () => {
         };
 
         fetchRoomData();
+
+        // Cleanup listeners on unmount or when roomId changes
+        return () => {
+            unsubscribeShelves.forEach(unsub => unsub());
+            if (unsubscribePlacedItems) unsubscribePlacedItems();
+        };
     }, [roomId]);
 
     const handleItemSelect = async (item: ItemData) => {
@@ -197,20 +377,20 @@ const RoomScreen = () => {
             const shelfIndex = shelves.findIndex(shelf => shelf.id === shelfId);
             if (shelfIndex === -1) return;
 
-            // Get the initial item data from the item's component
             const ItemComponent = items[item.itemId];
             let initialItemData = {};
             if (ItemComponent && ItemComponent.getInitialData) {
                 initialItemData = ItemComponent.getInitialData();
             }
 
-            // Add new placed item
             const newPlacedItem: Omit<PlacedItemData, 'id'> = {
+                roomId,
                 shelfId,
                 itemId: item.itemId,
                 position,
                 createdAt: new Date(),
                 updatedAt: new Date(),
+                shouldLock: item.shouldLock || false, // Transfer shouldLock
                 itemData: {
                     ...initialItemData,
                     name: item.name,
@@ -218,18 +398,14 @@ const RoomScreen = () => {
                 }
             };
 
-            // print the itemData
-            console.log("itemData: ", newPlacedItem.itemData);
             const docRef = await addDoc(collection(db, 'PlacedItems'), newPlacedItem);
             const addedItem: PlacedItemData = { ...newPlacedItem, id: docRef.id };
 
-            // Update shelf's itemList
             const updatedShelves = [...shelves];
             const shelf = updatedShelves[shelfIndex];
             shelf.itemList.push(docRef);
             shelf.placedItems = [...(shelf.placedItems || []), addedItem];
 
-            // Update Firestore
             await updateDoc(doc(db, 'Shelves', shelfId), {
                 itemList: shelf.itemList,
                 updatedAt: new Date()
@@ -248,16 +424,13 @@ const RoomScreen = () => {
         const shelf = shelves[shelfIndex];
         const itemToRemove = shelf.placedItems?.find(item => item.position === position);
         if (itemToRemove) {
-            // Remove from Firestore
             await deleteDoc(doc(db, 'PlacedItems', itemToRemove.id));
 
-            // Update shelf's itemList and placedItems
             const updatedShelves = [...shelves];
             const updatedShelf = updatedShelves[shelfIndex];
             updatedShelf.itemList = updatedShelf.itemList.filter(ref => ref.id !== itemToRemove.id);
             updatedShelf.placedItems = updatedShelf.placedItems?.filter(item => item.id !== itemToRemove.id);
 
-            // Update Firestore
             await updateDoc(doc(db, 'Shelves', shelfId), {
                 itemList: updatedShelf.itemList,
                 updatedAt: new Date()
@@ -274,7 +447,6 @@ const RoomScreen = () => {
         const shelf = shelves[shelfIndex];
         const placedItem = shelf.placedItems?.find(item => item.position === position);
         if (placedItem) {
-            // Update local state
             const updatedShelves = [...shelves];
             const updatedPlacedItem = {
                 ...placedItem,
@@ -285,7 +457,6 @@ const RoomScreen = () => {
                 item.id === placedItem.id ? updatedPlacedItem : item
             );
 
-            // Update Firestore
             await updateDoc(doc(db, 'PlacedItems', placedItem.id), {
                 itemData: updatedPlacedItem.itemData,
                 updatedAt: new Date()
@@ -304,7 +475,11 @@ const RoomScreen = () => {
     };
 
     const handleGoBack = () => {
-        router.push('(tabs)');
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            router.push('/(tabs)');
+        }
     };
 
     if (isLoading) {
@@ -321,29 +496,58 @@ const RoomScreen = () => {
         );
     }
 
+    if (isAuthorized === false) {
+        return (
+            <SafeAreaWrapper>
+                <UnauthorizedContainer>
+                    <UnauthorizedCard>
+                        <Feather name="lock" size={48} color="#FF6347" />
+                        <Text fontSize={24} fontWeight="bold" marginTop={20} textAlign="center" color="red">
+                            Unauthorized Access
+                        </Text>
+                        <Text fontSize={16} marginTop={10} textAlign="center" color="black">
+                            You have not been invited to the room:
+                        </Text>
+                        <Text fontSize={18} fontWeight="bold" marginTop={5} textAlign="center" color="black">
+                            {roomName}
+                        </Text>
+                        <Button
+                            onPress={() => router.push('/(tabs)')}
+                            backgroundColor="$blue10"
+                            color="white"
+                            marginTop={20}
+                        >
+                            Go Back Home
+                        </Button>
+                    </UnauthorizedCard>
+                </UnauthorizedContainer>
+            </SafeAreaWrapper>
+        );
+    }
+
     return (
         <SafeAreaWrapper>
             <Container>
                 <Header>
                     <HeaderButton unstyled onPress={handleGoBack}>
-                        <ArrowLeft color="white" size={24}/>
+                        <ArrowLeft color="white" size={24} />
                     </HeaderButton>
                     <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
                         {roomName}
                     </Text>
                     {isEditMode ? (
                         <HeaderButton unstyled onPress={disableEditMode}>
-                            <X color="white" size={24}/>
+                            <X color="white" size={24} />
                         </HeaderButton>
                     ) : (
                         <HeaderButton unstyled onPress={() => setIsSettingsOpen(true)}>
-                            <Feather name="menu" color="white" size={24}/>
+                            <Feather name="menu" color="white" size={24} />
                         </HeaderButton>
                     )}
                 </Header>
                 <Content>
-                    <Pressable onLongPress={handleLongPress} delayLongPress={500}>
-                        <ScrollView scrollEventThrottle={16}>
+                    <ScrollView scrollEventThrottle={16}>
+                        <Pressable onLongPress={handleLongPress} delayLongPress={500}>
                             <YStack backgroundColor={BACKGROUND_COLOR} padding="$4" gap="$6">
                                 {shelves.map((shelf, index) => (
                                     <Shelf
@@ -360,11 +564,12 @@ const RoomScreen = () => {
                                         }}
                                         onItemRemove={(position) => handleItemRemove(shelf.id, position)}
                                         onItemDataUpdate={(position, newItemData) => handleItemDataUpdate(shelf.id, position, newItemData)}
+                                        users={users}
                                     />
                                 ))}
                             </YStack>
-                        </ScrollView>
-                    </Pressable>
+                        </Pressable>
+                    </ScrollView>
                 </Content>
                 <ItemSelectionSheet
                     isOpen={isSheetOpen}
@@ -375,6 +580,8 @@ const RoomScreen = () => {
                 <RoomSettingsDialog
                     open={isSettingsOpen}
                     onOpenChange={setIsSettingsOpen}
+                    users={users}
+                    roomDescription={roomDescription}
                 />
             </Container>
         </SafeAreaWrapper>

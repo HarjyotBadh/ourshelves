@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack } from "tamagui";
-import { SafeAreaView } from "react-native";
+import {Platform, SafeAreaView, StatusBar} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { auth, db } from "firebaseConfig";
 import { signInWithCredential, PhoneAuthProvider } from "firebase/auth";
@@ -112,7 +112,7 @@ export default function PhoneLoginVerifyScreen() {
 
     if (!verificationId || !phoneNumber) {
         return (
-            <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
                 <Stack f={1} ai="center" jc="center">
                     <Button onPress={() => router.back()} mt="$4">
                         Go Back
@@ -123,7 +123,7 @@ export default function PhoneLoginVerifyScreen() {
     }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
             <FirebaseRecaptchaVerifierModal
                 ref={recaptchaVerifier}
                 firebaseConfig={auth.app.options}

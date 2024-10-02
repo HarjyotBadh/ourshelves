@@ -51,9 +51,6 @@ export async function refreshShop() {
       shelfColors: selectedShelfColors,
     }, { merge: true });
 
-    console.log("Shop refreshed successfully");
-    console.log("Next refresh time (Eastern Time):", nextRefresh.toDate().toLocaleString("en-US",
-        { timeZone: "America/New_York" }));
   } catch (error) {
     console.error("Error refreshing shop:", error);
     throw new Error("Failed to refresh shop");

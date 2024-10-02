@@ -73,7 +73,7 @@ export default function DisplayNameInputScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
             <Stack f={1} ai="center" jc="center">
                 <XStack
                     position="absolute"

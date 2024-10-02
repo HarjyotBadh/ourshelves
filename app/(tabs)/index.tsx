@@ -1,12 +1,10 @@
 import { StyleSheet, Alert } from 'react-native';
-import { Text, View, ScrollView, styled } from 'tamagui';
+import { View, ScrollView, styled } from 'tamagui';
 import HomeTile from '../../components/HomeTile';
 import CreateHomeTile from '../../components/CreateHomeTile';
-import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { db, auth } from "firebaseConfig";
+import { auth } from "firebaseConfig";
 import { getRooms, getRoomById, leaveRoom, createRoom, getTags, addTag, deleteRoom } from 'project-functions/homeFunctions';
-import { CodeSquare } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 
 
@@ -39,7 +37,6 @@ const HomeScreen = () => {
 
   const homeLeaveRoom = async (roomId: string, roomName: string) => {
     const result = await leaveRoom(roomId);
-    console.log(result);
 
     if (result.success) {
       setRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
@@ -58,7 +55,6 @@ const HomeScreen = () => {
   };
 
   const homeDeleteRoom = async (roomId: string, roomName: string) => {
-    console.log("Delete room " + roomId);
     const result = await deleteRoom(roomId);
 
     if (result.success) {
@@ -72,8 +68,6 @@ const HomeScreen = () => {
   }
 
   const homeCreateRoom = async (roomName: string, roomDescription: string) => {
-    console.log('== Create room');
-
     if (roomName === '') {
       Alert.alert(
         'Error',
@@ -83,11 +77,9 @@ const HomeScreen = () => {
     }
 
     const result = await createRoom(roomName, roomDescription);
-    console.log(result.message);
 
     if (result.success) {
       const getRoomResult = await getRoomById(result.message);
-      console.log(getRoomResult);
 
       if (getRoomResult.success) {
         setRooms((prevRooms) => [
@@ -115,8 +107,6 @@ const HomeScreen = () => {
   }
 
   const homeAddTag = async (roomId: string, tagId: string, tagName: string) => {
-    console.log(tagId);
-
     const result = await addTag(roomId, tagId);
 
     if (result.success) {
@@ -138,8 +128,6 @@ const HomeScreen = () => {
 
 
   const enterRoom = (id: string) => {
-    console.log('Go to room ' + id);
-
     router.push({
       pathname: "/(room)/room",
       params: {
@@ -148,38 +136,7 @@ const HomeScreen = () => {
     });
   };
 
-  const roomOptions = (option: string, roomName: string, roomId: string) => {
-    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    if (option === 'addtags') {
-      console.log('Add tags');
-    } else if (option === 'leaveroom') {
-      console.log('Leave room option');
-
-      Alert.alert(
-        'Leave Room',
-        `Are you sure you want to leave "${roomName}" room?`,
-        [
-          {
-            text: 'No',
-            style: 'cancel',
-          },
-          {
-            text: 'Yes',
-            onPress: () => homeLeaveRoom(roomId, roomName),
-          }
-        ]
-      )
-    } else if (option === 'deleteroom') {
-      console.log('Delete room');
-    }
-  };
-
-
-
-
-
   useEffect(() => {
-    console.log(auth.currentUser.uid);
     homeSetRooms();
 
     getTags().then((result) => {
@@ -187,9 +144,6 @@ const HomeScreen = () => {
       setTagIdsList(result.tagIds);
     });
   }, []);
-
-
-
 
   const HomePageContainer = styled(View, {
     backgroundColor: '#fff2cf',
