@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Button, Text } from "tamagui";
+import { View, Button, Text, YStack } from "tamagui";
 import { Timestamp } from "firebase/firestore";
+import { useToastController } from '@tamagui/toast';
 import Item from "./item";
 
 interface User {
@@ -30,6 +31,8 @@ const DailyGift: React.FC<DailyGiftProps> = ({
   isDemoRefreshComplete,
 }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [canClaim, setCanClaim] = useState(false);
+  const toast = useToastController();
 
   useEffect(() => {
     if (!shopMetadata) return;
@@ -47,19 +50,26 @@ const DailyGift: React.FC<DailyGiftProps> = ({
     return () => clearInterval(timer);
   }, [shopMetadata]);
 
-  const canClaimDailyGift =
-    user &&
-    shopMetadata &&
-    (isDemoRefreshComplete || timeRemaining === 0) &&
-    (!user.lastDailyGiftClaim ||
-      user.lastDailyGiftClaim.toDate() < shopMetadata.lastRefresh.toDate());
+  useEffect(() => {
+    if (user && shopMetadata) {
+      const canClaimGift = !user.lastDailyGiftClaim || 
+        user.lastDailyGiftClaim.toDate() < shopMetadata.lastRefresh.toDate();
+      setCanClaim(canClaimGift);
+    }
+  }, [user, shopMetadata, isDemoRefreshComplete]);
 
   const handleDailyGiftClaim = async () => {
-    if (!user || !canClaimDailyGift || !shopMetadata) return;
+    if (!user || !canClaim || !shopMetadata) return;
 
     const now = Timestamp.now();
     const newCoins = user.coins + 100;
     onClaimDailyGift(newCoins, now);
+    setCanClaim(false);
+    
+    toast.show('Daily Gift Claimed!', {
+      message: 'You received 100 coins.',
+      duration: 3000,
+    });
   };
 
   const formatTime = (seconds: number): string => {
@@ -98,7 +108,7 @@ const DailyGift: React.FC<DailyGiftProps> = ({
           Free!
         </Text>
       </View>
-      {canClaimDailyGift ? (
+      {canClaim ? (
         <Button
           onPress={handleDailyGiftClaim}
           backgroundColor="$green8"
@@ -112,7 +122,7 @@ const DailyGift: React.FC<DailyGiftProps> = ({
         <Text fontSize="$2" textAlign="center" marginTop="$1">
           {isDemoMode
             ? "Demo refresh in progress..."
-            : formatTime(timeRemaining)}
+            : `Next gift in ${formatTime(timeRemaining)}`}
         </Text>
       )}
     </View>
