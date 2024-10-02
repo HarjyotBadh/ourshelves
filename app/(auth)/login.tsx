@@ -14,7 +14,7 @@ import {
     Text,
 } from "tamagui";
 import {SafeAreaView, Platform, StatusBar} from "react-native";
-import { AntDesign, Feather } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import validator from "validator";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
@@ -22,7 +22,6 @@ import { auth } from "../../firebaseConfig";
 export default function LoginScreen() {
     const router = useRouter();
     const theme = useTheme();
-    const isIOS = Platform.OS === "ios";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [emailError, setEmailError] = useState("");
@@ -69,9 +68,8 @@ export default function LoginScreen() {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            console.log("User logged in:", user);
 
-            router.replace("/(tabs)"); 
+            router.replace("/(tabs)");
         } catch (error: any) {
             setGeneralError(error.message);
         }
@@ -79,14 +77,6 @@ export default function LoginScreen() {
 
     const handlePhoneLogin = () => {
         router.push("/(auth)/phone-login");
-    };
-
-    const handleGoogleLogin = () => {
-        console.log("Google login pressed");
-    };
-
-    const handleAppleLogin = () => {
-        console.log("Apple login pressed");
     };
 
     return (
@@ -166,24 +156,6 @@ export default function LoginScreen() {
                         >
                             Continue with Phone
                         </Button>
-
-                        <Button
-                            width="100%"
-                            onPress={handleGoogleLogin}
-                            icon={<AntDesign name="google" size={24} color={theme.color.get()} />}
-                        >
-                            Continue with Google
-                        </Button>
-
-                        {isIOS && (
-                            <Button
-                                width="100%"
-                                onPress={handleAppleLogin}
-                                icon={<AntDesign name="apple1" size={24} color={theme.color.get()} />}
-                            >
-                                Continue with Apple
-                            </Button>
-                        )}
 
                         <XStack ai="center" width="100%" my="$2">
                             <Separator flex={1} />

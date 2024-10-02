@@ -1,7 +1,4 @@
-import { ExternalLink } from '@tamagui/lucide-icons'
-import { Anchor, H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
-import { ToastControl } from 'app/CurrentToast'
-import { ImageBackground } from 'react-native'
+import { H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
 
 export default function TabTwoScreen() {
   return (

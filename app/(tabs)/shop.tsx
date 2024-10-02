@@ -6,12 +6,11 @@ import {
   View,
   XStack,
   YStack,
-  useTheme,
   styled,
   Spinner,
   Progress,
 } from "tamagui";
-import { doc, getDoc, Timestamp, DocumentReference } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { differenceInSeconds } from "date-fns";
 import { db, functions, auth } from "firebaseConfig";
@@ -96,7 +95,6 @@ const ContentContainer = styled(YStack, {
 });
 
 export default function ShopScreen() {
-  // State variables
   const [items, setItems] = useState<ItemData[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -123,9 +121,6 @@ export default function ShopScreen() {
 
   const toast = useToastController();
 
-  // TODO: Replace with actual user authentication
-  //const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
-
   // Fetch shop metadata from Firestore
   const fetchShopMetadata = async (): Promise<ShopMetadata | null> => {
     const shopMetadataRef = doc(db, "GlobalSettings", "shopMetadata");
@@ -136,7 +131,6 @@ export default function ShopScreen() {
   };
 
   const preloadImages = async (items: ItemData[]) => {
-    console.log("Starting to preload images...");
     setTotalItems(items.length);
     setLoadedItems(0);
 
@@ -147,11 +141,7 @@ export default function ShopScreen() {
             setLoadedItems((prevLoaded) => {
               const newLoaded = prevLoaded + 1;
               const progress = (newLoaded / items.length) * 100;
-              console.log(
-                `Loaded image ${newLoaded}/${
-                  items.length
-                }, Progress: ${progress.toFixed(2)}%`
-              );
+
               setLoadingProgress(progress);
               return newLoaded;
             });
@@ -161,11 +151,7 @@ export default function ShopScreen() {
             setLoadedItems((prevLoaded) => {
               const newLoaded = prevLoaded + 1;
               const progress = (newLoaded / items.length) * 100;
-              console.log(
-                `Failed to load image ${newLoaded}/${
-                  items.length
-                }, Progress: ${progress.toFixed(2)}%`
-              );
+
               setLoadingProgress(progress);
               return newLoaded;
             });
@@ -175,7 +161,6 @@ export default function ShopScreen() {
     });
 
     await Promise.all(preloadPromises);
-    console.log("Finished preloading images.");
   };
 
   //for sprint 1 testing
@@ -204,7 +189,6 @@ export default function ShopScreen() {
 
   // Fetch all necessary data
   const fetchData = useCallback(async () => {
-    console.log("Fetching data...");
     setIsLoading(true);
     setLoadingProgress(0);
     try {

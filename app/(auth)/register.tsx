@@ -12,7 +12,7 @@ import {
     Text,
 } from "tamagui";
 import {SafeAreaView, Platform, StatusBar} from "react-native";
-import { AntDesign, Feather } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import validator from "validator";
 import { auth, db } from "../../firebaseConfig"; 
 import { createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged} from "firebase/auth";
@@ -22,7 +22,6 @@ import { doc, setDoc } from "firebase/firestore";
 export default function RegisterScreen() {
     const router = useRouter();
     const theme = useTheme();
-    const isIOS = Platform.OS === "ios";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -61,12 +60,9 @@ export default function RegisterScreen() {
                     emailVerified: user.emailVerified,
                 });
 
-                console.log("Registration successful and data stored");
                 onAuthStateChanged(auth, async (user) => {
                     if (user && user.emailVerified) {
                         router.push("/(tabs)");
-                    } else {
-                        console.log("Please verify your email to continue.");
                     }
                 });
             } catch (error) {
@@ -133,28 +129,9 @@ export default function RegisterScreen() {
                         <Button
                             width="100%"
                             icon={<Feather name="phone" size={24} color={theme.color.get()} />}
-                            onPress={() => console.log("Phone login pressed")}
                         >
                             Continue with Phone
                         </Button>
-
-                        <Button
-                            width="100%"
-                            icon={<AntDesign name="google" size={24} color={theme.color.get()} />}
-                            onPress={() => console.log("Google login pressed")}
-                        >
-                            Continue with Google
-                        </Button>
-
-                        {isIOS && (
-                            <Button
-                                width="100%"
-                                icon={<AntDesign name="apple1" size={24} color={theme.color.get()} />}
-                                onPress={() => console.log("Apple login pressed")}
-                            >
-                                Continue with Apple
-                            </Button>
-                        )}
 
                         <XStack ai="center" width="100%" my="$2">
                             <Separator flex={1} />
