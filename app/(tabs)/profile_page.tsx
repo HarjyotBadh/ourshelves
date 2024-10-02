@@ -92,17 +92,21 @@ export default function ProfilePage() {
     if (aboutMeText.length < 100 && !(/\n/.test(aboutMeText))) { 
 
       var result;
+      var savedString;
 
       // Ensuring the about me text isn't empty
       if (aboutMeText.length == 0 || aboutMeText == "") {
         result =  await updateProfileAbtMe("N/A")
+        savedString = "N/A"
       } else {
         result =  await updateProfileAbtMe(aboutMeText)
+        savedString = aboutMeText
       }
       if (!result) {
         console.log("ERROR - Update to profile failed") 
       } else {
         alert("About Me Updated");
+        setAboutMe(savedString)
       }
     } else {
       alert("ERROR - Update cannot exceeded 100 characters or contain a newline")
