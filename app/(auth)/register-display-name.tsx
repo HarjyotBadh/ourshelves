@@ -3,8 +3,12 @@ import { useRouter } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, XStack, Input, Text, useTheme } from "tamagui";
 import {Platform, SafeAreaView, StatusBar} from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { auth } from "firebaseConfig";
+import { auth, db } from "firebaseConfig";
 import { updateProfile } from "firebase/auth";
+import {doc, setDoc, Timestamp} from "firebase/firestore";
+
+const MAX_NAME_LENGTH = 16;
+const NAME_REGEX = /^[a-zA-Z0-9_]+$/;
 
 export default function DisplayNameInputScreen() {
     const router = useRouter();
@@ -15,8 +19,7 @@ export default function DisplayNameInputScreen() {
     const handleSignOut = async () => {
         try {
             await auth.signOut();
-
-            // User should be auto rerouted to login screen by the onAuthStateChanged listener in _layout.tsx
+            // User should be auto rerouted to login screen by the onAuthStateChanged listener in root _layout.tsx
         } catch (err) {
             console.error("Failed to sign out:", err);
         }
@@ -25,17 +28,37 @@ export default function DisplayNameInputScreen() {
     const handleNext = async () => {
         if (displayName.trim() === "") {
             setError("Please enter a valid display name.");
+        } else if (!NAME_REGEX.test(displayName)) {
+            setError("Display name can only contain letters, numbers, and underscores.");
         } else {
             setError("");
             try {
                 const user = auth.currentUser;
 
                 if (user) {
-                    // @TODO: Update the user's display name in the database
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-                    // Update the displayName of the current user
+                    // Generate default profile picture URL
+                    const defaultProfilePicture = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+
+                    // Create a new user document with default values
+                    const userRef = doc(db, "Users", user.uid);
+                    await setDoc(userRef, {
+                        displayName: displayName,
+                        profilePicture: defaultProfilePicture,
+                        rooms: [],
+                        inventory: [],
+                        lastDailyGiftClaim: Timestamp.fromDate(oneWeekAgo),
+                        coins: 100,
+                        shelfColors: [],
+                        wallpapers: []
+                    });
+
+                    // Update the displayName and photoURL of the current user
                     await updateProfile(user, {
                         displayName: displayName,
+                        photoURL: defaultProfilePicture,
                     });
 
                     router.replace("/(tabs)");
@@ -43,8 +66,8 @@ export default function DisplayNameInputScreen() {
                     setError("No user is signed in.");
                 }
             } catch (err) {
-                console.error("Error updating display name:", err);
-                setError("Failed to update display name. Please try again.");
+                console.error("Error updating user data:", err);
+                setError("Failed to update user data. Please try again.");
             }
         }
     };
@@ -79,9 +102,12 @@ export default function DisplayNameInputScreen() {
                         placeholder="Enter your display name"
                         value={displayName}
                         onChangeText={(text) => {
-                            setDisplayName(text);
-                            setError(""); // Clear error when user types
+                            if (NAME_REGEX.test(text) || text === "") {
+                                setDisplayName(text);
+                                setError(""); // Clear error when user types
+                            }
                         }}
+                        maxLength={MAX_NAME_LENGTH}
                         width="100%"
                         borderColor={theme.borderColor.get()}
                         style={{
@@ -91,6 +117,12 @@ export default function DisplayNameInputScreen() {
                         }}
                     />
 
+                    {displayName.length === MAX_NAME_LENGTH && (
+                        <Text color="$orange10" ta="center">
+                            Maximum character limit reached
+                        </Text>
+                    )}
+
                     {error ? (
                         <Text color="$red10" ta="center">
                             {error}
@@ -98,6 +130,7 @@ export default function DisplayNameInputScreen() {
                     ) : (
                         <Paragraph size="$2" ta="center">
                             This name will be visible to others in the app.
+                            Only letters, numbers, and underscores are allowed.
                         </Paragraph>
                     )}
 
