@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { db } from "firebaseConfig";
-import { Link, useRouter, useLocalSearchParams } from "expo-router";
-import { Avatar, styled, TextArea, Progress, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Image } from 'tamagui'
+import {Link, useLocalSearchParams, Stack} from "expo-router";
+import { Avatar, styled, TextArea, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Dialog } from 'tamagui'
 import {  doc, getDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileAbtMe } from 'functions/profileFunctions';
-import { Wrench } from '@tamagui/lucide-icons'
-import { auth } from "../../firebaseConfig";
+import { Wrench, LogOut } from '@tamagui/lucide-icons'
+import { auth } from "firebaseConfig";
+import { signOut } from "firebase/auth";
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -34,6 +35,8 @@ export default function ProfilePage() {
   const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
   const profileId = auth.currentUser?.uid; // Placeholder ProfilePage doc id
   const { iconId } = useLocalSearchParams(); // Getting Local Query Data
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -110,7 +113,80 @@ export default function ProfilePage() {
     }
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const HeaderRight = () => (
+      <Button
+          size="$4"
+          icon={<LogOut size={18} />}
+          onPress={() => setShowSignOutDialog(true)}
+          theme="red"
+          marginRight={10}
+          animation="bouncy"
+          pressStyle={{ scale: 0.9 }}
+      >
+        Sign Out
+      </Button>
+  );
+
+
   return (
+  <>
+      <Stack.Screen
+          options={{
+            headerRight: () => <HeaderRight />,
+            title: "Profile",
+          }}
+      />
+
+    <Dialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+        />
+        <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              'quick',
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            gap="$4"
+        >
+          <Dialog.Title>Confirm Sign Out</Dialog.Title>
+          <Dialog.Description>
+            Are you sure you want to sign out?
+          </Dialog.Description>
+          <XStack gap="$3" justifyContent="flex-end">
+            <Dialog.Close asChild>
+              <Button theme="alt1">Cancel</Button>
+            </Dialog.Close>
+            <Dialog.Close asChild>
+              <Button theme="red" onPress={handleSignOut}>Sign Out</Button>
+            </Dialog.Close>
+          </XStack>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+
     <SafeAreaView>
     {!isEditMode ? 
     (
@@ -143,10 +219,10 @@ export default function ProfilePage() {
             setIsEditMode(true);
           }}
           color="$white"
-          borderRadius="50%" // Ensure the button is circular
+          borderRadius="50%"
           justifyContent="center"
           alignItems="center"
-          display="flex" // Use flex to ensure alignment works
+          display="flex"
           icon={<Wrench size="$4" />}>
         </Button>
     </YStack> ) : 
@@ -161,7 +237,6 @@ export default function ProfilePage() {
             <Avatar.Fallback backgroundColor="$blue10" />
           </Avatar>
 
-          {/* Button for Changing Profile Picture */}
           <Link href="/profile-icons" asChild>
               <Button mr="$2" bg="$yellow8" color="$yellow12">
                   Select Picture Icon
@@ -176,17 +251,17 @@ export default function ProfilePage() {
           </Button>
 
           <Button
-            size="$7" // Adjust size as needed
+            size="$7"
             circular
             onPress={() => {
               setIsEditMode(false);
             }}
             bg="$yellow8"
             color="$white"
-            borderRadius="50%" // Ensure the button is circular
+            borderRadius="50%"
             justifyContent="center"
             alignItems="center"
-            display="flex" // Use flex to ensure alignment works
+            display="flex"
             icon={<Wrench size="$4" />}>
           </Button>
 
@@ -194,5 +269,6 @@ export default function ProfilePage() {
     </TouchableWithoutFeedback>
     )}
     </SafeAreaView>
+  </>
   )
 }
