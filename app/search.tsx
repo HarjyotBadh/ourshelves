@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, TextInput, Pressable, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { Text, YStack } from 'tamagui';
+import React, { useState, useEffect } from "react";
+import {
+  ScrollView,
+  TextInput,
+  Pressable,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
+import { Text, YStack } from "tamagui";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "firebaseConfig";
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from "expo-router";
 
 interface User {
   id: string;
@@ -17,11 +23,11 @@ export default function NameList() {
   const router = useRouter();
 
   // State to handle the search query
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch user names and their document IDs from Firestore when searchQuery changes
   useEffect(() => {
-    if (searchQuery.trim() === '') {
+    if (searchQuery.trim() === "") {
       // If search query is empty, don't fetch users
       setUserNames([]);
       return;
@@ -30,13 +36,13 @@ export default function NameList() {
     const fetchUserNames = async () => {
       setLoading(true); // Show loading state while fetching
       try {
-        const usersRef = collection(db, 'Users');
+        const usersRef = collection(db, "Users");
         const querySnapshot = await getDocs(usersRef);
 
         // Extracting the displayName and document ID from each document
-        const users: User[] = querySnapshot.docs.map(doc => ({
+        const users: User[] = querySnapshot.docs.map((doc) => ({
           id: doc.id, // Grab the document ID
-          displayName: doc.data().displayName
+          displayName: doc.data().displayName,
         }));
 
         setUserNames(users); // Correct typing for state
@@ -51,7 +57,7 @@ export default function NameList() {
   }, [searchQuery]);
 
   // Filtered names based on search query
-  const filteredNames = userNames.filter(user =>
+  const filteredNames = userNames.filter((user) =>
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -61,55 +67,65 @@ export default function NameList() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <YStack f={1} padding="$3"> 
-        {/* Search Bar */}
-        <TextInput
-          style={{
-            height: 60,
-            borderColor: 'gray',
-            borderWidth: 1,
-            borderRadius: 5,
-            paddingHorizontal: 10,
-            marginBottom: 20,
-            fontSize: 40,
-            color: 'white' // Text color
-          }}
-          placeholder="Search for a user"
-          placeholderTextColor="gray"
-          value={searchQuery}
-          onChangeText={text => setSearchQuery(text)}
-        />
+    <>
+      <Stack.Screen
+        options={{
+          title: "Search Users",
+          headerBackTitle: "Home",
+        }}
+      />
 
-        {/* Scrollable List of Names */}
-        <ScrollView contentContainerStyle={{ paddingVertical: 10 }}>
-          {loading ? (
-            <Text fontSize="$6" color="$color">
-              Loading...
-            </Text>
-          ) : filteredNames.length > 0 ? (
-            filteredNames.map((user) => (
-              <Pressable
-                key={user.id} // Use document ID as the key
-                onPress={() => 
-                  selectUser(user.id) // Pass the document ID to selectUser
-                }>
-                <Text
-                  fontSize="$10" // Tamagui font size
-                  color="$color"
-                  marginBottom="$2" // Tamagui spacing
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <YStack f={1} padding="$3">
+          {/* Search Bar */}
+          <TextInput
+            style={{
+              height: 60,
+              borderColor: "gray",
+              borderWidth: 1,
+              borderRadius: 5,
+              paddingHorizontal: 10,
+              marginBottom: 20,
+              fontSize: 40,
+              color: "white", // Text color
+            }}
+            placeholder="Search for a user"
+            placeholderTextColor="gray"
+            value={searchQuery}
+            onChangeText={(text) => setSearchQuery(text)}
+          />
+
+          {/* Scrollable List of Names */}
+          <ScrollView contentContainerStyle={{ paddingVertical: 10 }}>
+            {loading ? (
+              <Text fontSize="$6" color="$color">
+                Loading...
+              </Text>
+            ) : filteredNames.length > 0 ? (
+              filteredNames.map((user) => (
+                <Pressable
+                  key={user.id} // Use document ID as the key
+                  onPress={
+                    () => selectUser(user.id) // Pass the document ID to selectUser
+                  }
                 >
-                  {user.displayName}
-                </Text>
-              </Pressable>
-            ))
-          ) : (
-            <Text fontSize="$8" color="$color">
-              -- No Results --
-            </Text>
-          )}
-        </ScrollView>
-      </YStack>
-    </TouchableWithoutFeedback>
+                  <Text
+                    fontSize="$10" // Tamagui font size
+                    color="$color"
+                    marginBottom="$2" // Tamagui spacing
+                  >
+                    {user.displayName}
+                  </Text>
+                </Pressable>
+              ))
+            ) : (
+              <Text fontSize="$8" color="$color">
+                -- No Results --
+              </Text>
+            )}
+          </ScrollView>
+        </YStack>
+      </TouchableWithoutFeedback>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Keyboard, TouchableWithoutFeedback } from 'react-native'
+import {Keyboard, Platform, StatusBar, TouchableWithoutFeedback} from 'react-native'
 import { db } from "firebaseConfig";
 import {Link, useLocalSearchParams, Stack} from "expo-router";
 import { Avatar, styled, TextArea, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Dialog } from 'tamagui'
@@ -182,7 +182,7 @@ export default function ProfilePage() {
       </Dialog.Portal>
     </Dialog>
 
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
     {!isEditMode ? 
     (
     <YStack ai="center" gap="$4" px="$10" pt="$1">
