@@ -14,7 +14,7 @@ import {
 import { doc, getDoc, Timestamp, DocumentReference } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { differenceInSeconds } from "date-fns";
-import { db, functions } from "firebaseConfig";
+import { db, functions, auth } from "firebaseConfig";
 import {
   purchaseItem,
   purchaseShelfColor,
@@ -121,7 +121,7 @@ export default function ShopScreen() {
   const dataFetchedRef = useRef(false);
 
   // TODO: Replace with actual user authentication
-  const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
+  //const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
 
   // Fetch shop metadata from Firestore
   const fetchShopMetadata = async (): Promise<ShopMetadata | null> => {
@@ -251,14 +251,15 @@ export default function ShopScreen() {
       setShelfColors(fetchedShelfColors);
 
       // Fetch user data
-      if (userId) {
-        const userDocRef = doc(db, "Users", userId);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userDocRef = doc(db, "Users", currentUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data() as User;
           setUser(userData);
         } else {
-          throw new Error("User not found");
+          throw new Error("User data not found");
         }
       } else {
         throw new Error("User not authenticated");
@@ -279,7 +280,7 @@ export default function ShopScreen() {
       setLoadedItems(0);
       setLoadingProgress(0);
     }
-  }, [userId]);
+  }, []);
 
   // Initial data fetch and refresh timer setup
   useEffect(() => {

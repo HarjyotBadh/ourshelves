@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { db } from '../firebaseConfig';
 
 // TODO: Remove this hardcoded userId and use the actual user's ID in production
-const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder for testing
+//const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder for testing
 
 interface Item {
   itemId: string;
@@ -37,8 +37,16 @@ interface User {
   lastDailyGiftClaim: Timestamp | null;
 }
 
+const getCurrentUserId = () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("No authenticated user found");
+  return user.uid;
+};
+
 export const purchaseItem = async (item: Item, user: User): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
-  const userRef = doc(db, "Users", userId); // Using hardcoded userId for testing
+  const userId = getCurrentUserId();
+  const userRef = doc(db, "Users", userId);
 
   try {
     const result = await runTransaction(db, async (transaction) => {
@@ -79,8 +87,8 @@ export const purchaseItem = async (item: Item, user: User): Promise<{ success: b
 };
 
 export const purchaseWallpaper = async (wallpaper: WallpaperData, user: User): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
-  const userRef = doc(db, "Users", userId); // Using hardcoded userId for testing
-
+  const userId = getCurrentUserId();
+  const userRef = doc(db, "Users", userId);
   try {
     const result = await runTransaction(db, async (transaction) => {
       const userDoc = await transaction.get(userRef);
@@ -121,7 +129,8 @@ export const purchaseWallpaper = async (wallpaper: WallpaperData, user: User): P
 };
 
 export const purchaseShelfColor = async (shelfColor: ShelfColorData, user: User): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
-  const userRef = doc(db, "Users", userId); // Using hardcoded userId for testing
+  const userId = getCurrentUserId();
+  const userRef = doc(db, "Users", userId);
 
   try {
     const result = await runTransaction(db, async (transaction) => {
@@ -166,7 +175,8 @@ export const purchaseShelfColor = async (shelfColor: ShelfColorData, user: User)
 export const handleEarnCoins = async (user: User, amount: number = 50): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
   try {
     // const userDocRef = doc(db, "Users", user.userId);
-    const userDocRef = doc(db, "Users", userId); // Using hardcoded userId for testing
+    const userId = getCurrentUserId();
+    const userDocRef = doc(db, "Users", userId);
     const newCoins = user.coins + amount;
     await updateDoc(userDocRef, { coins: newCoins });
 
@@ -181,7 +191,8 @@ export const handleEarnCoins = async (user: User, amount: number = 50): Promise<
 export const handleLoseCoins = async (user: User, amount: number = 50): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
   try {
     // const userDocRef = doc(db, "Users", user.userId);
-    const userDocRef = doc(db, "Users", userId); // Using hardcoded userId for testing
+    const userId = getCurrentUserId();
+    const userDocRef = doc(db, "Users", userId);
     const newCoins = Math.max(0, user.coins - amount); // Ensure coins don't go below 0
     await updateDoc(userDocRef, { coins: newCoins });
 
@@ -196,7 +207,8 @@ export const handleLoseCoins = async (user: User, amount: number = 50): Promise<
 export const handleDailyGiftClaim = async (user: User): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
   try {
     // const userDocRef = doc(db, "Users", user.userId);
-    const userDocRef = doc(db, "Users", userId); // Using hardcoded userId for testing
+    const userId = getCurrentUserId();
+    const userDocRef = doc(db, "Users", userId);
     const now = Timestamp.now();
     const newCoins = user.coins + 100;
     await updateDoc(userDocRef, {
