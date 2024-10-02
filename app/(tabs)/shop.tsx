@@ -35,6 +35,7 @@ import { ShopMetadata } from "models/ShopMetadata";
 import { WallpaperData } from "models/WallpaperData";
 import { ShelfColorData } from "models/ShelfColorData";
 import { User } from "models/UserData";
+import { ToastViewport, useToastController } from '@tamagui/toast';
 
 const BACKGROUND_COLOR = "$pink6";
 
@@ -119,6 +120,8 @@ export default function ShopScreen() {
   const [isDemoRefreshComplete, setIsDemoRefreshComplete] = useState(false);
 
   const dataFetchedRef = useRef(false);
+
+  const toast = useToastController();
 
   // TODO: Replace with actual user authentication
   //const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
@@ -334,7 +337,11 @@ export default function ShopScreen() {
     const result = await purchaseItem(item, user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show(item.name + ' Purchased!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -345,7 +352,11 @@ export default function ShopScreen() {
     const result = await purchaseWallpaper(wallpaper, user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show(wallpaper.name + ' Purchased!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -356,7 +367,11 @@ export default function ShopScreen() {
     const result = await purchaseShelfColor(shelfColor, user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show(shelfColor.name + ' Purchased!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -367,7 +382,11 @@ export default function ShopScreen() {
     const result = await handleEarnCoins(user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show('You earned 50 coins! Great job!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -378,7 +397,11 @@ export default function ShopScreen() {
     const result = await handleLoseCoins(user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show('You lost 50 coins! Great job!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -488,6 +511,7 @@ export default function ShopScreen() {
           onDemoRefresh={handleDemoRefresh}
         />
       </ContentContainer>
+      <ToastViewport name="shop" />
     </ShopContainer>
   );
 }
