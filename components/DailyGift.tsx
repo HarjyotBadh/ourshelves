@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Button, Text, YStack } from "tamagui";
+import { View, Button, Text } from "tamagui";
 import { Timestamp } from "firebase/firestore";
 import { useToastController } from '@tamagui/toast';
 import Item from "./item";
@@ -94,6 +94,7 @@ const DailyGift: React.FC<DailyGiftProps> = ({
           imageUri:
             "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/items%2Fdailygift.png?alt=media&token=46ad85b5-9fb5-4ef0-b32f-1894091e82f3",
           cost: 0,
+          shouldLock: false,
         }}
         showName={true}
         showCost={false}

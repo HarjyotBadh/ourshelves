@@ -1,10 +1,8 @@
-import { PlusCircle, X, Check, ChevronDown, ChevronUp } from '@tamagui/lucide-icons';
-import { getTags } from 'project-functions/homeFunctions';
+import { X, Check, ChevronDown, ChevronUp } from '@tamagui/lucide-icons';
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable, StyleSheet, Alert } from 'react-native';
-import { Adapt, Button, Dialog, DialogDescription, Fieldset, FontSizeTokens, getFontSize, Input, Label, Select, SelectProps, Sheet, TextArea, Unspaced, XStack, YStack } from 'tamagui';
-import { LinearGradient } from 'tamagui/linear-gradient';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { Adapt, Button, Dialog, Label, Select, Sheet, Unspaced, XStack, YStack } from 'tamagui';
 
 
 const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag, homeDeleteRoom }) => {
@@ -56,11 +54,9 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
         closeOptionsDialog();
 
         if (option === 'addtags') {
-            console.log('Add tags');
             openTagsDialog();
 
         } else if (option === 'leaveroom') {
-            console.log('Leave room option');
 
             Alert.alert(
                 'Leave Room',
@@ -77,8 +73,6 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
                 ]
             );
         } else if (option === 'deleteroom') {
-            console.log('Delete room');
-
             Alert.alert(
                 'Leave Room',
                 `Are you sure you want to delete "${roomName}" room? This action is PERMANENT.`,

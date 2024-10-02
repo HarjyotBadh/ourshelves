@@ -20,8 +20,6 @@ const CreateHomeTile = ({ handleCreateRoom }) => {
     const [roomDescription, setRoomDescription] = React.useState('')
 
     const createRoom = () => {
-        console.log('Save changes');
-
         handleCreateRoom(roomName, roomDescription);
     }
 
