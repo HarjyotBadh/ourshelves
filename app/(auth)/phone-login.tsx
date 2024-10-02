@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack, Text } from "tamagui";
-import { SafeAreaView, StyleSheet } from "react-native";
+import {Platform, SafeAreaView, StatusBar, StyleSheet} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import PhoneInput from "react-native-phone-number-input";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
@@ -53,7 +53,7 @@ export default function PhoneLoginScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
             <FirebaseRecaptchaVerifierModal
                 ref={recaptchaVerifier}
                 firebaseConfig={auth.app.options}
@@ -78,13 +78,13 @@ export default function PhoneLoginScreen() {
                     </Button>
                 </XStack>
 
-                <YStack space="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
+                <YStack gap="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
                     <H1 ta="center" mb="$4">
                         Sign in with Phone
                     </H1>
 
                     <Form onSubmit={handleNext} width="100%">
-                        <YStack space="$4" width="100%">
+                        <YStack gap="$4" width="100%">
                             <PhoneInput
                                 ref={phoneInput}
                                 defaultValue={phoneNumber}

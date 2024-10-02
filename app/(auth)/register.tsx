@@ -11,7 +11,7 @@ import {
     Input,
     Text,
 } from "tamagui";
-import { SafeAreaView, Platform } from "react-native";
+import {SafeAreaView, Platform, StatusBar} from "react-native";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import validator from "validator";
 import { auth, db } from "../../firebaseConfig"; 
@@ -77,14 +77,14 @@ export default function RegisterScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
             <Stack f={1} ai="center" jc="center">
-                <YStack space="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
+                <YStack gap="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
                     <H1 ta="center" mb="$4">
                         Register
                     </H1>
 
-                    <YStack space="$4" width="100%">
+                    <YStack gap="$4" width="100%">
                         <Input
                             placeholder="Email"
                             value={email}
@@ -129,7 +129,7 @@ export default function RegisterScreen() {
                         <Separator flex={1} />
                     </XStack>
 
-                    <YStack space="$4" width="100%">
+                    <YStack gap="$4" width="100%">
                         <Button
                             width="100%"
                             icon={<Feather name="phone" size={24} color={theme.color.get()} />}

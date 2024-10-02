@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, XStack, Input, Text, useTheme } from "tamagui";
-import { SafeAreaView } from "react-native";
+import {Platform, SafeAreaView, StatusBar} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { auth } from "firebaseConfig";
 import { updateProfile } from "firebase/auth";
@@ -50,7 +50,7 @@ export default function DisplayNameInputScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
             <Stack f={1} ai="center" jc="center">
                 <XStack
                     position="absolute"

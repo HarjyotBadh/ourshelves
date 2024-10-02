@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, Pressable } from 'react-native';
+import {SafeAreaView, Pressable, Platform, StatusBar} from 'react-native';
 import { YStack, View, styled, XStack, Text, Button, ScrollView, Image, Progress, Spinner } from 'tamagui';
 import { ArrowLeft, X } from '@tamagui/lucide-icons';
 import Feather from '@expo/vector-icons/Feather';
@@ -68,6 +68,7 @@ const Header = styled(XStack, {
 const SafeAreaWrapper = styled(SafeAreaView, {
     flex: 1,
     backgroundColor: HEADER_BACKGROUND,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0
 });
 
 const HeaderButton = styled(Button, {
