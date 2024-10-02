@@ -30,6 +30,26 @@ import items from "../../components/items";
 const BACKGROUND_COLOR = '$yellow2Light';
 const HEADER_BACKGROUND = '#8B4513';
 
+const UnauthorizedContainer = styled(YStack, {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: BACKGROUND_COLOR,
+    padding: 20,
+});
+
+const UnauthorizedCard = styled(View, {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: "$white",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+});
+
+
 const Container = styled(YStack, {
     flex: 1,
     backgroundColor: BACKGROUND_COLOR,
@@ -93,6 +113,7 @@ const RoomScreen = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [users, setUsers] = useState<{ id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[]>([]);
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     const initializeShelves = async (roomId: string) => {
         const batch = writeBatch(db);
@@ -181,6 +202,14 @@ const RoomScreen = () => {
                                 isAdmin: false
                             });
                         }
+                    }
+
+                    // Check if the current user is in userMap
+                    const currentUser = auth.currentUser;
+                    if (currentUser && userMap.has(currentUser.uid)) {
+                        setIsAuthorized(true);
+                    } else {
+                        setIsAuthorized(false);
                     }
 
                     for (const ref of adminRefs) {
@@ -435,6 +464,35 @@ const RoomScreen = () => {
                     <Progress.Indicator animation="bouncy" backgroundColor="$blue10" />
                 </Progress>
             </LoadingContainer>
+        );
+    }
+
+    if (isAuthorized === false) {
+        return (
+            <SafeAreaWrapper>
+                <UnauthorizedContainer>
+                    <UnauthorizedCard>
+                        <Feather name="lock" size={48} color="#FF6347" />
+                        <Text fontSize={24} fontWeight="bold" marginTop={20} textAlign="center" color="red">
+                            Unauthorized Access
+                        </Text>
+                        <Text fontSize={16} marginTop={10} textAlign="center" color="black">
+                            You have not been invited to the room:
+                        </Text>
+                        <Text fontSize={18} fontWeight="bold" marginTop={5} textAlign="center" color="black">
+                            {roomName}
+                        </Text>
+                        <Button
+                            onPress={() => router.push('/(tabs)')}
+                            backgroundColor="$blue10"
+                            color="white"
+                            marginTop={20}
+                        >
+                            Go Back Home
+                        </Button>
+                    </UnauthorizedCard>
+                </UnauthorizedContainer>
+            </SafeAreaWrapper>
         );
     }
 

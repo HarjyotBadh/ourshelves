@@ -84,7 +84,7 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                         )}
                         <Avatar.Fallback bc="$blue5" />
                     </Avatar>
-                    <Text flex={1} color="$color">{user.displayName}</Text>
+                    <Text flex={1} color="black">{user.displayName}</Text>
                     {user.isAdmin && (
                         <IconWrapper backgroundColor="$blue8">
                             <Shield color="$blue11" size={16} />
@@ -154,7 +154,7 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                                             )}
                                         </StyledAccordionTrigger>
                                         <StyledAccordionContent>
-                                            <Text color="$color">{roomDescription || 'No description available.'}</Text>
+                                            <Text color="black">{roomDescription || 'No description available.'}</Text>
                                         </StyledAccordionContent>
                                     </StyledAccordionItem>
 
@@ -188,9 +188,9 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                                             )}
                                         </StyledAccordionTrigger>
                                         <StyledAccordionContent>
-                                            <Text color="$color">Setting 1: Value</Text>
-                                            <Text color="$color">Setting 2: Value</Text>
-                                            <Text color="$color">Setting 3: Value</Text>
+                                            <Text color="black">Setting 1: Value</Text>
+                                            <Text color="black">Setting 2: Value</Text>
+                                            <Text color="black">Setting 3: Value</Text>
                                         </StyledAccordionContent>
                                     </StyledAccordionItem>
                                 </Accordion>
