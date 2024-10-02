@@ -96,7 +96,7 @@ interface RoomData extends DocumentData {
     description?: string;
     users: DocumentReference[];
     admins: DocumentReference[];
-    shelfList?: DocumentReference[];
+    shelfList: DocumentReference[];
 }
 
 const RoomScreen = () => {
@@ -172,7 +172,8 @@ const RoomScreen = () => {
         setIsLoading(true);
         setLoadingProgress(0);
 
-        let unsubscribeShelves: () => void;
+        // Array to hold unsubscribe functions for shelf listeners
+        let unsubscribeShelves: (() => void)[] = [];
         let unsubscribePlacedItems: () => void;
 
         const roomRef = doc(db, 'Rooms', roomId);
@@ -186,11 +187,13 @@ const RoomScreen = () => {
                     setRoomName(roomData.name);
                     setRoomDescription(roomData.description);
 
+                    // Handle users and admins
                     const userRefs = roomData.users || [];
                     const adminRefs = roomData.admins || [];
 
-                    const userMap = new Map();
+                    const userMap = new Map<string, { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }>();
 
+                    // Fetch regular users
                     for (const ref of userRefs) {
                         const userDoc = await getDoc(ref);
                         if (userDoc.exists()) {
@@ -204,7 +207,7 @@ const RoomScreen = () => {
                         }
                     }
 
-                    // Check if the current user is in userMap
+                    // Check if the current user is authorized
                     const currentUser = auth.currentUser;
                     if (currentUser && userMap.has(currentUser.uid)) {
                         setIsAuthorized(true);
@@ -212,6 +215,7 @@ const RoomScreen = () => {
                         setIsAuthorized(false);
                     }
 
+                    // Fetch admin users and update their status
                     for (const ref of adminRefs) {
                         const userDoc = await getDoc(ref);
                         if (userDoc.exists()) {
@@ -230,39 +234,62 @@ const RoomScreen = () => {
                         }
                     }
 
+                    // Update users state
                     const combinedUsers = Array.from(userMap.values());
                     setUsers(combinedUsers);
 
-                    // Initialize shelves if they don't exist
-                    const shelvesQuery = query(collection(db, 'Shelves'), where('roomId', '==', roomId));
-                    const shelvesSnapshot = await getDocs(shelvesQuery);
-                    if (shelvesSnapshot.empty) {
-                        await initializeShelves(roomId);
-                    }
+                    // Fetch shelves using references from shelfList
+                    const shelfRefs = roomData.shelfList || [];
 
-                    // Set up listener on shelves
-                    unsubscribeShelves = onSnapshot(shelvesQuery, (shelvesSnapshot) => {
-                        const shelvesData: ShelfData[] = shelvesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShelfData));
+                    if (shelfRefs.length === 0) {
+                        // Initialize shelves if shelfList is empty
+                        const newShelves = await initializeShelves(roomId);
+                        setShelves(newShelves);
 
-                        // Update shelves with existing placedItems
-                        setShelves(prevShelves => {
-                            const placedItemsMap = new Map<string, PlacedItemData[]>();
-                            if (prevShelves) {
-                                for (const shelf of prevShelves) {
-                                    if (shelf.placedItems) {
-                                        placedItemsMap.set(shelf.id, shelf.placedItems);
-                                    }
+                        // Optionally, set up listeners for newly created shelves
+                        newShelves.forEach(shelf => {
+                            const shelfRef = doc(db, 'Shelves', shelf.id);
+                            const unsubscribe = onSnapshot(shelfRef, (docSnapshot) => {
+                                if (docSnapshot.exists()) {
+                                    setShelves(prevShelves =>
+                                        prevShelves.map(prevShelf =>
+                                            prevShelf.id === docSnapshot.id
+                                                ? { ...prevShelf, ...docSnapshot.data() } as ShelfData
+                                                : prevShelf
+                                        )
+                                    );
                                 }
-                            }
-
-                            const updatedShelves = shelvesData.map(shelf => ({
-                                ...shelf,
-                                placedItems: placedItemsMap.get(shelf.id) || []
-                            }));
-
-                            return updatedShelves;
+                            });
+                            unsubscribeShelves.push(unsubscribe);
                         });
-                    });
+                    } else {
+                        // Fetch existing shelves using their references
+                        const shelvesSnapshot = await Promise.all(
+                            shelfRefs.map(ref => getDoc(ref))
+                        );
+
+                        const shelvesData: ShelfData[] = shelvesSnapshot
+                            .filter(docSnap => docSnap.exists())
+                            .map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as ShelfData) }));
+
+                        setShelves(shelvesData);
+
+                        // Set up real-time listeners for each shelf
+                        shelfRefs.forEach(ref => {
+                            const unsubscribe = onSnapshot(ref, (docSnapshot) => {
+                                if (docSnapshot.exists()) {
+                                    setShelves(prevShelves =>
+                                        prevShelves.map(shelf =>
+                                            shelf.id === docSnapshot.id
+                                                ? { ...shelf, ...docSnapshot.data() } as ShelfData
+                                                : shelf
+                                        )
+                                    );
+                                }
+                            });
+                            unsubscribeShelves.push(unsubscribe);
+                        });
+                    }
 
                     // Set up listener on PlacedItems
                     const placedItemsQuery = query(collection(db, 'PlacedItems'), where('roomId', '==', roomId));
@@ -305,24 +332,25 @@ const RoomScreen = () => {
                     }
 
                     const userData = userDoc.data();
-                    const inventoryRefs = userData.inventory || [];
+                    const inventoryRefs: DocumentReference[] = userData.inventory || [];
 
                     if (inventoryRefs.length === 0) {
                         setAvailableItems([]);
                     } else {
                         const itemDocs = await Promise.all(inventoryRefs.map(ref => getDoc(ref)));
-                        const itemsList = itemDocs
-                            .filter(doc => doc.exists())
-                            .map(doc => ({
-                                itemId: doc.id,
-                                ...doc.data()
-                            } as ItemData));
+                        const itemsList: ItemData[] = itemDocs
+                            .filter(docSnap => docSnap.exists())
+                            .map(docSnap => ({
+                                itemId: docSnap.id,
+                                ...(docSnap.data() as ItemData)
+                            }));
 
                         setAvailableItems(itemsList);
 
                         await preloadImages(itemsList);
                     }
 
+                    // Simulate loading delay (optional)
                     await new Promise(resolve => setTimeout(resolve, 500));
                 } else {
                     console.error('Room not found');
@@ -336,8 +364,9 @@ const RoomScreen = () => {
 
         fetchRoomData();
 
+        // Cleanup listeners on unmount or when roomId changes
         return () => {
-            if (unsubscribeShelves) unsubscribeShelves();
+            unsubscribeShelves.forEach(unsub => unsub());
             if (unsubscribePlacedItems) unsubscribePlacedItems();
         };
     }, [roomId]);
@@ -517,8 +546,8 @@ const RoomScreen = () => {
                     )}
                 </Header>
                 <Content>
-                    <Pressable onLongPress={handleLongPress} delayLongPress={500}>
-                        <ScrollView scrollEventThrottle={16}>
+                    <ScrollView scrollEventThrottle={16}>
+                        <Pressable onLongPress={handleLongPress} delayLongPress={500}>
                             <YStack backgroundColor={BACKGROUND_COLOR} padding="$4" gap="$6">
                                 {shelves.map((shelf, index) => (
                                     <Shelf
@@ -539,8 +568,8 @@ const RoomScreen = () => {
                                     />
                                 ))}
                             </YStack>
-                        </ScrollView>
-                    </Pressable>
+                        </Pressable>
+                    </ScrollView>
                 </Content>
                 <ItemSelectionSheet
                     isOpen={isSheetOpen}
