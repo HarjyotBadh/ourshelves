@@ -57,7 +57,6 @@ export default function NameList() {
 
   // Navigating to profile screen of the selected user using document ID
   const selectUser = async (userId: string) => {
-    alert(userId)
     router.push(`/other_user_page?profileId=${userId}`);
   };
 
