@@ -1,8 +1,5 @@
-import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { db, auth } from 'firebaseConfig';
-import { Alert } from 'react-native';
-import { SelectProvider } from 'tamagui';
 
 interface Room {
     id: string;
@@ -23,7 +20,6 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
                     const roomDoc = await getDoc(roomRef);
 
                     if (roomDoc.exists()) {
-                        console.log(roomDoc.id);
                         const roomData = roomDoc.data() as { admins: { path: string }[] };
                         const isAdmin = roomData.admins.some((adminRef) => adminRef.path.includes(currentUserId));
                         
@@ -35,8 +31,6 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
                             })
                         ); 
                     
-                        console.log(tags);
-                        
                         return {
                             id: roomDoc.id,
                             name: (roomDoc.data() as Room).name,
@@ -75,7 +69,6 @@ export const getTags = async (): Promise<{ tagNames: string[], tagIds: string[] 
 
         const tagNames = tagsSnapshot.docs.map(doc => doc.data().name);
         const tagIds = tagsSnapshot.docs.map(doc => doc.id);
-        const tags = tagsSnapshot.docs.map(doc => doc.data().name);
         return { tagNames, tagIds };
     } catch (error) {
         console.error("Error fetching tags: ", error);
@@ -112,7 +105,6 @@ export const addTag = async (roomId: string, tagId: string): Promise<{ success: 
             return { success: true, message: 'Tag added to room' };
         }
     } catch (e) {
-        console.log(e);
         return { success: false, message: e.message };
     }
 
@@ -144,7 +136,6 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean, r
 }
 
 export const leaveRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
-    console.log("leaveRoom in homeFunctions");
     const userId = auth.currentUser.uid;
 
     try {
@@ -159,7 +150,6 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
                     const roomRef = doc(db, 'Rooms', roomId);
                     const roomDoc = await getDoc(roomRef);
                     if (roomDoc.exists()) {
-                        console.log(roomDoc.data().admins.length);
                         if (roomDoc.data().users.length === 1) {
                             return { success: false, message: 'Cannot leave a room with only one user in it (you).' };
                         }
@@ -182,7 +172,6 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
             }
         }
     } catch (e) {
-        console.log(e);
         return { success: false, message: e.message };
     }
 
@@ -190,9 +179,7 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
 }
 
 export const createRoom = async (roomName: string, roomDescription: string): Promise<{ success: boolean; message: string }> => {
-    console.log("createRoom in homeFunctions - " + roomName + " - " + roomDescription);
     const userId = auth.currentUser.uid;
-    console.log(userId);
 
     try {
         const userDoc = await getDoc(doc(db, 'Users', userId));
@@ -217,7 +204,6 @@ export const createRoom = async (roomName: string, roomDescription: string): Pro
             return { success: true, message: `${roomRef.id}` };
         }
     } catch (e) {
-        console.log(e);
         return { success: false, message: e.message };
     }
 
@@ -226,7 +212,6 @@ export const createRoom = async (roomName: string, roomDescription: string): Pro
 
 
 export const deleteRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
-    console.log("deleteRoom in homeFunctions");
     const userId = auth.currentUser.uid;
 
     try {
@@ -247,16 +232,12 @@ export const deleteRoom = async (roomId: string): Promise<{ success: boolean; me
                     const itemRefs = (shelfDoc.data() as { itemList: any[] }).itemList;
 
                     itemRefs.forEach(async (itemRef: any) => {
-                        console.log("delete item: " + itemRef.path);
                         await deleteDoc(itemRef);
                     });
 
-                    console.log("delete shelf: " + shelfRef.path);
                     await deleteDoc(shelfRef);
                 });
 
-                
-                console.log("delete room: " + roomRef.path);
                 await deleteDoc(roomRef);
 
                 const userRooms = userDoc.data().rooms || [];
@@ -267,7 +248,6 @@ export const deleteRoom = async (roomId: string): Promise<{ success: boolean; me
             return { success: true, message: 'Room deleted.' };
         }
     } catch (e) {
-        console.log(e);
         return { success: false, message: e.message };
     }
 

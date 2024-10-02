@@ -4,9 +4,11 @@ import { Text, View, Image } from 'tamagui';
 
 export interface ItemData {
   itemId: string;
-  cost: number;
-  imageUri: string;
   name: string;
+  imageUri: string;
+  cost: number;
+  shouldLock: boolean;
+  [key: string]: any;
 }
 
 interface ItemProps {

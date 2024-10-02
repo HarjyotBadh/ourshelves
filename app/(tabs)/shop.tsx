@@ -6,15 +6,14 @@ import {
   View,
   XStack,
   YStack,
-  useTheme,
   styled,
   Spinner,
   Progress,
 } from "tamagui";
-import { doc, getDoc, Timestamp, DocumentReference } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { differenceInSeconds } from "date-fns";
-import { db, functions } from "firebaseConfig";
+import { db, functions, auth } from "firebaseConfig";
 import {
   purchaseItem,
   purchaseShelfColor,
@@ -35,6 +34,7 @@ import { ShopMetadata } from "models/ShopMetadata";
 import { WallpaperData } from "models/WallpaperData";
 import { ShelfColorData } from "models/ShelfColorData";
 import { User } from "models/UserData";
+import { ToastViewport, useToastController } from '@tamagui/toast';
 
 const BACKGROUND_COLOR = "$pink6";
 
@@ -95,7 +95,6 @@ const ContentContainer = styled(YStack, {
 });
 
 export default function ShopScreen() {
-  // State variables
   const [items, setItems] = useState<ItemData[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,8 +119,7 @@ export default function ShopScreen() {
 
   const dataFetchedRef = useRef(false);
 
-  // TODO: Replace with actual user authentication
-  const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder
+  const toast = useToastController();
 
   // Fetch shop metadata from Firestore
   const fetchShopMetadata = async (): Promise<ShopMetadata | null> => {
@@ -133,7 +131,6 @@ export default function ShopScreen() {
   };
 
   const preloadImages = async (items: ItemData[]) => {
-    console.log("Starting to preload images...");
     setTotalItems(items.length);
     setLoadedItems(0);
 
@@ -144,11 +141,7 @@ export default function ShopScreen() {
             setLoadedItems((prevLoaded) => {
               const newLoaded = prevLoaded + 1;
               const progress = (newLoaded / items.length) * 100;
-              console.log(
-                `Loaded image ${newLoaded}/${
-                  items.length
-                }, Progress: ${progress.toFixed(2)}%`
-              );
+
               setLoadingProgress(progress);
               return newLoaded;
             });
@@ -158,11 +151,7 @@ export default function ShopScreen() {
             setLoadedItems((prevLoaded) => {
               const newLoaded = prevLoaded + 1;
               const progress = (newLoaded / items.length) * 100;
-              console.log(
-                `Failed to load image ${newLoaded}/${
-                  items.length
-                }, Progress: ${progress.toFixed(2)}%`
-              );
+
               setLoadingProgress(progress);
               return newLoaded;
             });
@@ -172,7 +161,6 @@ export default function ShopScreen() {
     });
 
     await Promise.all(preloadPromises);
-    console.log("Finished preloading images.");
   };
 
   //for sprint 1 testing
@@ -201,7 +189,6 @@ export default function ShopScreen() {
 
   // Fetch all necessary data
   const fetchData = useCallback(async () => {
-    console.log("Fetching data...");
     setIsLoading(true);
     setLoadingProgress(0);
     try {
@@ -251,14 +238,15 @@ export default function ShopScreen() {
       setShelfColors(fetchedShelfColors);
 
       // Fetch user data
-      if (userId) {
-        const userDocRef = doc(db, "Users", userId);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userDocRef = doc(db, "Users", currentUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data() as User;
           setUser(userData);
         } else {
-          throw new Error("User not found");
+          throw new Error("User data not found");
         }
       } else {
         throw new Error("User not authenticated");
@@ -279,7 +267,7 @@ export default function ShopScreen() {
       setLoadedItems(0);
       setLoadingProgress(0);
     }
-  }, [userId]);
+  }, []);
 
   // Initial data fetch and refresh timer setup
   useEffect(() => {
@@ -333,7 +321,11 @@ export default function ShopScreen() {
     const result = await purchaseItem(item, user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show(item.name + ' Purchased!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -344,7 +336,11 @@ export default function ShopScreen() {
     const result = await purchaseWallpaper(wallpaper, user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show(wallpaper.name + ' Purchased!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -355,7 +351,11 @@ export default function ShopScreen() {
     const result = await purchaseShelfColor(shelfColor, user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show(shelfColor.name + ' Purchased!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -366,7 +366,11 @@ export default function ShopScreen() {
     const result = await handleEarnCoins(user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show('You earned 50 coins! Great job!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -377,7 +381,11 @@ export default function ShopScreen() {
     const result = await handleLoseCoins(user);
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
-      alert(result.message);
+      //alert(result.message);
+      toast.show('You lost 50 coins! Great job!', {
+        message: result.message,
+        duration: 3000,
+      });
     } else {
       alert(result.message);
     }
@@ -487,6 +495,7 @@ export default function ShopScreen() {
           onDemoRefresh={handleDemoRefresh}
         />
       </ContentContainer>
+      <ToastViewport name="shop" />
     </ShopContainer>
   );
 }

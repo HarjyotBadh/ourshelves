@@ -13,16 +13,15 @@ import {
     Form,
     Text,
 } from "tamagui";
-import { SafeAreaView, Platform } from "react-native";
-import { AntDesign, Feather } from "@expo/vector-icons";
+import {SafeAreaView, Platform, StatusBar} from "react-native";
+import { Feather } from "@expo/vector-icons";
 import validator from "validator";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { auth, db } from "../../firebaseConfig";
+import { auth } from "../../firebaseConfig";
 
 export default function LoginScreen() {
     const router = useRouter();
     const theme = useTheme();
-    const isIOS = Platform.OS === "ios";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [emailError, setEmailError] = useState("");
@@ -69,9 +68,8 @@ export default function LoginScreen() {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            console.log("User logged in:", user);
 
-            router.replace("/(tabs)"); 
+            router.replace("/(tabs)");
         } catch (error: any) {
             setGeneralError(error.message);
         }
@@ -81,25 +79,17 @@ export default function LoginScreen() {
         router.push("/(auth)/phone-login");
     };
 
-    const handleGoogleLogin = () => {
-        console.log("Google login pressed");
-    };
-
-    const handleAppleLogin = () => {
-        console.log("Apple login pressed");
-    };
-
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
             <Stack f={1} ai="center" jc="center">
-                <YStack space="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
+                <YStack gap="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
                     <H1 ta="center" mb="$4">
                         OurShelves
                     </H1>
 
                     <Form onSubmit={handleLogin} width="100%">
-                        <YStack space="$4" width="100%">
-                            <YStack space="$2">
+                        <YStack gap="$4" width="100%">
+                            <YStack gap="$2">
                                 <Input
                                     placeholder="Email"
                                     value={email}
@@ -113,7 +103,7 @@ export default function LoginScreen() {
                                     </Text>
                                 ) : null}
                             </YStack>
-                            <YStack space="$2">
+                            <YStack gap="$2">
                                 <Input
                                     placeholder="Password"
                                     value={password}
@@ -158,7 +148,7 @@ export default function LoginScreen() {
                         <Separator flex={1} />
                     </XStack>
 
-                    <YStack space="$4" width="100%">
+                    <YStack gap="$4" width="100%">
                         <Button
                             width="100%"
                             onPress={handlePhoneLogin}
@@ -166,24 +156,6 @@ export default function LoginScreen() {
                         >
                             Continue with Phone
                         </Button>
-
-                        <Button
-                            width="100%"
-                            onPress={handleGoogleLogin}
-                            icon={<AntDesign name="google" size={24} color={theme.color.get()} />}
-                        >
-                            Continue with Google
-                        </Button>
-
-                        {isIOS && (
-                            <Button
-                                width="100%"
-                                onPress={handleAppleLogin}
-                                icon={<AntDesign name="apple1" size={24} color={theme.color.get()} />}
-                            >
-                                Continue with Apple
-                            </Button>
-                        )}
 
                         <XStack ai="center" width="100%" my="$2">
                             <Separator flex={1} />

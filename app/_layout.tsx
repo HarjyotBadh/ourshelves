@@ -57,7 +57,6 @@ export default function RootLayout() {
                         router.replace("/(tabs)");
                     }
                 } else {
-                    console.log("User is signed out");
                     router.replace("/(auth)/login");
                 }
             }, 0);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack } from "tamagui";
-import { SafeAreaView } from "react-native";
+import {Platform, SafeAreaView, StatusBar} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { auth } from "firebaseConfig";
 import { signInWithCredential, PhoneAuthProvider } from "firebase/auth";
@@ -90,7 +90,7 @@ export default function PhoneLoginVerifyScreen() {
 
     if (!verificationId || !phoneNumber) {
         return (
-            <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
                 <Stack f={1} ai="center" jc="center">
                     <Button onPress={() => router.back()} mt="$4">
                         Go Back
@@ -101,7 +101,7 @@ export default function PhoneLoginVerifyScreen() {
     }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get() }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
             <FirebaseRecaptchaVerifierModal
                 ref={recaptchaVerifier}
                 firebaseConfig={auth.app.options}
@@ -126,7 +126,7 @@ export default function PhoneLoginVerifyScreen() {
                     </Button>
                 </XStack>
 
-                <YStack space="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
+                <YStack gap="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
                     <H1 ta="center" mb="$4">
                         Verify Your Phone
                     </H1>
@@ -136,7 +136,7 @@ export default function PhoneLoginVerifyScreen() {
                     </Paragraph>
 
                     <Form onSubmit={handleVerify} width="100%">
-                        <YStack space="$4" width="100%" ai="center">
+                        <YStack gap="$4" width="100%" ai="center">
                             <VerificationInput
                                 code={verificationCode}
                                 setCode={setVerificationCode}
