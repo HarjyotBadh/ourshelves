@@ -1,6 +1,16 @@
-import { H2, H4, Paragraph, XStack, YStack, SizableText, Image } from 'tamagui'
+import {Text, H2, H4, Paragraph, XStack, YStack, SizableText, Image, Button} from 'tamagui'
+import {auth} from 'firebaseConfig'
 
 export default function TabTwoScreen() {
+
+    const signOut = async () => {
+        try {
+            await auth.signOut();
+            // User should be auto rerouted to login screen by the onAuthStateChanged listener in root _layout.tsx
+        } catch (err) {
+            console.error("Failed to sign out:", err);
+        }
+    }
   return (
     <YStack f={1} ai="center" gap="$4" px="$10" pt="$5">
         <H2>User Profile</H2>
@@ -21,6 +31,10 @@ export default function TabTwoScreen() {
         <H4>Number Rooms I'm In:</H4>
         <SizableText theme="alt2" size="$8" fontWeight="800">1</SizableText>
         </XStack>
+
+        <Button width="100%" onPress={signOut}>
+            <Text> Sign out </Text>
+        </Button>
     </YStack>
   )
 }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, XStack, Input, Text, useTheme } from "tamagui";
-import { SafeAreaView } from "react-native";
+import {Platform, SafeAreaView, StatusBar} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { auth, db } from "firebaseConfig";
 import { updateProfile } from "firebase/auth";
