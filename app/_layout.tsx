@@ -98,6 +98,18 @@ function RootLayoutNav() {
                                 }}
                             />
                             <Stack.Screen
+                                name="profile-icons"
+                                options={{
+                                    headerShown: true,
+                                }}
+                            />
+                            <Stack.Screen
+                                name="other_user_page"
+                                options={{
+                                    headerShown: true,
+                                }}
+                            />
+                            <Stack.Screen
                                 name="(room)"
                                 options={{
                                     headerShown: false,
