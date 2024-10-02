@@ -1,5 +1,5 @@
 import { PlusCircle, X } from '@tamagui/lucide-icons'
-import React from 'react';
+import React, {useCallback} from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import {
     Adapt,
@@ -22,6 +22,10 @@ const CreateHomeTile = ({ handleCreateRoom }) => {
     const createRoom = () => {
         handleCreateRoom(roomName, roomDescription);
     }
+
+    const handleDescriptionChange = useCallback((text) => {
+        setRoomDescription(text);
+    }, []);
 
     return (
         <Dialog modal>
@@ -83,7 +87,6 @@ const CreateHomeTile = ({ handleCreateRoom }) => {
                         </Label>
                         <Input
                             flex={1}
-                            id="roomName"
                             placeholder='Room name'
                             value={roomName}
                             onChangeText={setRoomName}
@@ -95,10 +98,9 @@ const CreateHomeTile = ({ handleCreateRoom }) => {
                         </Label>
                         <TextArea
                             flex={1}
-                            id="roomDescription"
                             placeholder='Room description'
-                            value={roomDescription}
-                            onChangeText={setRoomDescription}
+                            defaultValue={roomDescription}
+                            onChangeText={handleDescriptionChange}
                         />
                     </Fieldset>
 
