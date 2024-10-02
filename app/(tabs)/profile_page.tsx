@@ -43,21 +43,21 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         setError(null);
-        // Fetch user data
         if (profileId) {
           const profilePageDocRef = doc(db, 'Users', profileId);
           const profilePageDoc = await getDoc(profilePageDocRef);
           if (profilePageDoc.exists()) {
             const profilePageData = profilePageDoc.data();
+            const aboutMe = profilePageData.aboutMe || "N/A";
             setProfilePage({
-              aboutMe: profilePageData.aboutMe || "N/A",
+              aboutMe: aboutMe,
               profilePicture: profilePageData.profilePicture,
               rooms: profilePageData.rooms,
               displayName: profilePageData.displayName
             });
 
             setIcon(profilePageData.profilePicture);
-            setAboutMe(profilePageData.aboutMe);
+            setAboutMe(aboutMe);
 
           } else {
             throw new Error('User not found');
@@ -72,7 +72,7 @@ export default function ProfilePage() {
       }
     };
     fetchData();
-  }, [iconId]);
+  }, [iconId, profileId]);
 
   // The Loading Page
   if (loading) {
