@@ -13,7 +13,7 @@ import { signOut } from "firebase/auth";
 // Data for profile page to be queried from db
 interface ProfilePage {
   aboutMe: string;
-  profilePic: string;
+  profilePicture: string;
   rooms: string;
   displayName: string
 }
@@ -50,19 +50,15 @@ export default function ProfilePage() {
           if (profilePageDoc.exists()) {
             const profilePageData = profilePageDoc.data();
             setProfilePage({
-              aboutMe: profilePageData.aboutMe,
-              profilePic: profilePageData.profilePic,
+              aboutMe: profilePageData.aboutMe || "N/A",
+              profilePicture: profilePageData.profilePicture,
               rooms: profilePageData.rooms,
               displayName: profilePageData.displayName
             });
-            
-            // Ensuring the about me text isn't empty
-            if (profilePageData.aboutMe.length == 0 || profilePageData.aboutMe == "") {
-              setAboutMe("N/A");
-            } else {
-              setAboutMe(profilePageData.aboutMe);
-            }
-            setIcon(profilePageData.profilePic)
+
+            setIcon(profilePageData.profilePicture);
+            setAboutMe(profilePageData.aboutMe);
+
           } else {
             throw new Error('User not found');
           }
@@ -136,7 +132,6 @@ export default function ProfilePage() {
       </Button>
   );
 
-
   return (
   <>
       <Stack.Screen
@@ -195,7 +190,7 @@ export default function ProfilePage() {
         
         <Avatar circular size="$12">
           <Avatar.Image
-            accessibilityLabel="ProfilePic"
+            accessibilityLabel="profilePicture"
             src={profileIcon}/>
           <Avatar.Fallback backgroundColor="$blue10" />
         </Avatar>
@@ -232,7 +227,7 @@ export default function ProfilePage() {
           <H2>{profilePage?.displayName}</H2>
             <Avatar circular size="$12">
             <Avatar.Image
-              accessibilityLabel="ProfilePic"
+              accessibilityLabel="profilePicture"
               src={profileIcon}/>
             <Avatar.Fallback backgroundColor="$blue10" />
           </Avatar>

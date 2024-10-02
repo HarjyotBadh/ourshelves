@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { db } from "firebaseConfig";
 import { useLocalSearchParams } from "expo-router";
-import { Avatar, styled, TextArea, Progress, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Image } from 'tamagui';
+import { Avatar, styled, TextArea, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText } from 'tamagui';
 import { doc, getDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus } from '@tamagui/lucide-icons';
@@ -10,7 +9,7 @@ import { Plus } from '@tamagui/lucide-icons';
 // Data for profile page to be queried from db
 interface ProfilePage {
   aboutMe: string;
-  profilePic: string;
+  profilePicture: string;
   rooms: string;
   displayName: string;
 }
@@ -45,12 +44,12 @@ export default function ProfilePage() {
             const profilePageData = profilePageDoc.data();
             setProfilePage({
               aboutMe: profilePageData?.aboutMe || "N/A", // Handle empty aboutMe
-              profilePic: profilePageData?.profilePic || "",
+              profilePicture: profilePageData?.profilePicture || "",
               rooms: profilePageData?.rooms || [],
               displayName: profilePageData?.displayName || "Unknown User",
             });
             setAboutMe(profilePageData?.aboutMe || "N/A");
-            setIcon(profilePageData?.profilePic || "");
+            setIcon(profilePageData?.profilePicture || "");
           } else {
             throw new Error('User not found');
           }
