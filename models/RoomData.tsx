@@ -1,6 +1,4 @@
 import { DocumentReference } from "firebase/firestore";
-// @ts-ignore
-import { PlacedItemData } from "models/PlacedItemData";
 
 export interface ShelfData {
   id: string;
