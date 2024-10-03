@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, Pressable, Platform, StatusBar } from "react-native";
+import { Pressable } from "react-native";
 import {
   YStack,
-  View,
-  styled,
   XStack,
   Text,
   Button,
@@ -16,10 +14,7 @@ import {
 } from "tamagui";
 import { ArrowLeft, X } from "@tamagui/lucide-icons";
 import Feather from "@expo/vector-icons/Feather";
-import Shelf from "../../components/Shelf";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import ItemSelectionSheet from "../../components/ItemSelectionSheet";
-import RoomSettingsDialog from "../../components/RoomSettingsDialog";
 import {
   addDoc,
   collection,
@@ -35,46 +30,23 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { auth, db } from "firebaseConfig";
-import { PlacedItemData, ItemData } from "../../models/PlacedItemData";
-import { ShelfData } from "../../models/ShelfData";
+import Shelf from "../../components/Shelf";
+import ItemSelectionSheet from "../../components/ItemSelectionSheet";
+import RoomSettingsDialog from "../../components/RoomSettingsDialog";
 import items from "../../components/items";
+import { PlacedItemData, ItemData, ShelfData } from "../../models/RoomData";
+import { UserData } from "../../models/UserData";
+import {
+  BACKGROUND_COLOR,
+  HEADER_BACKGROUND,
+  HeaderButton,
+  Header,
+  Content,
+  SafeAreaWrapper,
+  Container,
+} from "../../styles/RoomStyles";
 
-const BACKGROUND_COLOR = "$yellow2Light";
-const HEADER_BACKGROUND = "#8B4513";
-
-const Container = styled(YStack, {
-  flex: 1,
-  backgroundColor: BACKGROUND_COLOR,
-});
-
-const Content = styled(View, {
-  flex: 1,
-});
-
-const Header = styled(XStack, {
-  height: 60,
-  backgroundColor: HEADER_BACKGROUND,
-  alignItems: "center",
-  paddingHorizontal: "$4",
-});
-
-const SafeAreaWrapper = styled(SafeAreaView, {
-  flex: 1,
-  backgroundColor: HEADER_BACKGROUND,
-  paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-});
-
-const HeaderButton = styled(Button, {
-  width: 50,
-  height: 50,
-  justifyContent: "center",
-  alignItems: "center",
-});
-
-interface UserData {
-  displayName: string;
-  profilePicture?: string;
-}
+// ==================================================== //
 
 interface RoomData extends DocumentData {
   name: string;
@@ -288,6 +260,7 @@ const RoomScreen = () => {
             const shelvesData: ShelfData[] = shelvesSnapshot
               .filter((docSnap) => docSnap.exists())
               .map((docSnap) => ({
+                // @ts-ignore
                 id: docSnap.id,
                 ...(docSnap.data() as ShelfData),
               }));
@@ -347,14 +320,12 @@ const RoomScreen = () => {
 
           setLoadingProgress(80);
 
-          // Fetch user inventory
-          const user = auth.currentUser;
-          if (!user) {
+          if (!currentUser) {
             console.error("No user logged in");
             return;
           }
 
-          const userDoc = await getDoc(doc(db, "Users", user.uid));
+          const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
           if (!userDoc.exists()) {
             console.error("User document not found");
             return;
@@ -374,6 +345,7 @@ const RoomScreen = () => {
             const itemsList: ItemData[] = itemDocs
               .filter((docSnap) => docSnap.exists())
               .map((docSnap) => ({
+                // @ts-ignore
                 itemId: docSnap.id,
                 ...(docSnap.data() as ItemData),
               }));
