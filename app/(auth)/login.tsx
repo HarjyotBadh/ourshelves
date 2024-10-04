@@ -16,7 +16,7 @@ import {
 import {SafeAreaView, Platform, StatusBar} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import validator from "validator";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail} from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 
 export default function LoginScreen() {
@@ -27,24 +27,45 @@ export default function LoginScreen() {
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [generalError, setGeneralError] = useState("");
+    const [loginError, setLoginError] = useState("");
+
+    const clearErrors = () => {
+        setEmailError("");
+        setPasswordError("");
+        setGeneralError("");
+        setLoginError("");
+    };
 
     const handleForgotPassword = async () => {
+        clearErrors();
         if (!email) {
             setEmailError("Please enter your email first");
             return;
         }
-    
+
+        if (!validator.isEmail(email)) {
+            setEmailError("Please enter a valid email address");
+            return;
+        }
+
         try {
+            // Check if the email exists
+            const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+            
+            if (signInMethods.length === 0) {
+                // Email doesn't exist in Firebase
+                setGeneralError("No account found with this email address.");
+                return;
+            }
+
+            // Email exists, send password reset email
             await sendPasswordResetEmail(auth, email);
             setGeneralError("Password reset email sent. Please check your inbox.");
         } catch (error: any) {
-            if (error.code === "auth/user-not-found") {
-                setGeneralError("No account found with this email address.");
-            } else {
-                setGeneralError("Error: " + error.message);
-            }
+            console.error("Error in password reset:", error);
+            setGeneralError("An error occurred. Please try again later.");
         }
-    };    
+    };
 
     const validateEmail = (text: string) => {
         setEmail(text);
@@ -56,6 +77,7 @@ export default function LoginScreen() {
     };
 
     const handleLogin = async () => {
+        clearErrors();
         if (!validator.isEmail(email)) {
             setEmailError("Please enter a valid email address");
             return;
@@ -71,11 +93,12 @@ export default function LoginScreen() {
 
             router.replace("/(tabs)");
         } catch (error: any) {
-            setGeneralError(error.message);
+            setLoginError("Incorrect username or password");
         }
     };
 
     const handlePhoneLogin = () => {
+        clearErrors();
         router.push("/(auth)/phone-login");
     };
 
@@ -107,7 +130,10 @@ export default function LoginScreen() {
                                 <Input
                                     placeholder="Password"
                                     value={password}
-                                    onChangeText={setPassword}
+                                    onChangeText={(text) => {
+                                        setPassword(text);
+                                        setPasswordError("");
+                                    }}
                                     secureTextEntry
                                     style={{ marginBottom: 20 }}
                                 />
@@ -117,6 +143,11 @@ export default function LoginScreen() {
                                     </Text>
                                 ) : null}
                             </YStack>
+                            {loginError ? (
+                                <Text color="$red10" fontSize="$2">
+                                    {loginError}
+                                </Text>
+                            ) : null}
                             {generalError ? (
                                 <Text color="$red10" fontSize="$2">
                                     {generalError}
@@ -140,7 +171,6 @@ export default function LoginScreen() {
                     >
                         Forgot Password?
                     </Text>
-
 
                     <XStack ai="center" width="100%" my="$4">
                         <Separator flex={1} />
@@ -166,7 +196,10 @@ export default function LoginScreen() {
                         <Button
                             width="100%"
                             variant="outlined"
-                            onPress={() => router.push("/(auth)/register")}
+                            onPress={() => {
+                                clearErrors();
+                                router.push("/(auth)/register");
+                            }}
                             borderColor={theme.color.get()}
                             borderWidth={1}
                         >

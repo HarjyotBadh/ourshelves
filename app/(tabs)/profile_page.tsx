@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Keyboard, TouchableWithoutFeedback } from 'react-native'
+import { Keyboard, TouchableWithoutFeedback, Alert } from 'react-native'
 import { db } from "firebaseConfig";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { Avatar, styled, TextArea, Progress, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Image } from 'tamagui'
-import {  doc, getDoc } from 'firebase/firestore';
+import {  doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileAbtMe } from 'functions/profileFunctions';
 import { Wrench } from '@tamagui/lucide-icons'
 import { auth } from "../../firebaseConfig";
+import { deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -34,6 +35,7 @@ export default function ProfilePage() {
   const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
   const profileId = auth.currentUser?.uid; // Placeholder ProfilePage doc id
   const { iconId } = useLocalSearchParams(); // Getting Local Query Data
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -110,6 +112,50 @@ export default function ProfilePage() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    Alert.prompt(
+      "Confirm Password",
+      "Please enter your password to delete your account",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "OK",
+          onPress: async (password) => {
+            if (!password) {
+              Alert.alert("Error", "Password is required");
+              return;
+            }
+            const credential = EmailAuthProvider.credential(user.email, password);
+            try {
+              await reauthenticateWithCredential(user, credential);
+              await deleteDoc(doc(db, "Users", user.uid));
+              await deleteUser(user);
+              Alert.alert(
+                'Account Deleted',
+                'Your account has been successfully deleted.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => router.push("/(auth)/login")
+                  }
+                ]
+              );
+            } catch (error) {
+              Alert.alert("Error", `Failed to delete account: ${error.message}`);
+            }
+          }
+        }
+      ],
+      "secure-text"
+    );
+  };
+
   return (
     <SafeAreaView>
     {!isEditMode ? 
@@ -174,7 +220,14 @@ export default function ProfilePage() {
           <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
             Update About Me        
           </Button>
-
+          <Button
+              onPress={handleDeleteAccount}
+              bg="$yellow8"
+              color="$yellow12"
+              mr="$2"
+            >
+              Delete Account
+            </Button>
           <Button
             size="$7" // Adjust size as needed
             circular
@@ -189,7 +242,6 @@ export default function ProfilePage() {
             display="flex" // Use flex to ensure alignment works
             icon={<Wrench size="$4" />}>
           </Button>
-
       </YStack>
     </TouchableWithoutFeedback>
     )}
