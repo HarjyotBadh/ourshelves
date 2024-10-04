@@ -28,6 +28,8 @@ import {
   query,
   where,
   onSnapshot,
+  arrayRemove,
+  arrayUnion,
 } from "firebase/firestore";
 import { auth, db } from "firebaseConfig";
 import Shelf from "../../components/Shelf";
@@ -298,22 +300,19 @@ const RoomScreen = () => {
 
             setShelves((prevShelves) => {
               if (!prevShelves) return prevShelves;
-
+            
               const shelvesMap = new Map<string, ShelfData>();
               for (const shelf of prevShelves) {
                 shelvesMap.set(shelf.id, { ...shelf, placedItems: [] });
               }
-
+            
               for (const item of placedItems) {
                 const shelf = shelvesMap.get(item.shelfId);
-                if (shelf) {
-                  if (!shelf.placedItems) {
-                    shelf.placedItems = [];
-                  }
+                if (shelf && shelf.placedItems) {
                   shelf.placedItems.push(item);
                 }
               }
-
+            
               return Array.from(shelvesMap.values());
             });
           });
@@ -381,15 +380,13 @@ const RoomScreen = () => {
   const handleItemSelect = async (item: ItemData) => {
     if (selectedSpot) {
       const { shelfId, position } = selectedSpot;
-      const shelfIndex = shelves.findIndex((shelf) => shelf.id === shelfId);
-      if (shelfIndex === -1) return;
-
+  
       const ItemComponent = items[item.itemId];
       let initialItemData = {};
       if (ItemComponent && ItemComponent.getInitialData) {
         initialItemData = ItemComponent.getInitialData();
       }
-
+  
       const newPlacedItem: Omit<PlacedItemData, "id"> = {
         roomId,
         shelfId,
@@ -397,59 +394,43 @@ const RoomScreen = () => {
         position,
         createdAt: new Date(),
         updatedAt: new Date(),
-        shouldLock: item.shouldLock || false, // Transfer shouldLock
+        shouldLock: item.shouldLock || false,
         itemData: {
           ...initialItemData,
           name: item.name,
           imageUri: item.imageUri,
         },
       };
-
+  
       const docRef = await addDoc(collection(db, "PlacedItems"), newPlacedItem);
-      const addedItem: PlacedItemData = { ...newPlacedItem, id: docRef.id };
-
-      const updatedShelves = [...shelves];
-      const shelf = updatedShelves[shelfIndex];
-      shelf.itemList.push(docRef);
-      shelf.placedItems = [...(shelf.placedItems || []), addedItem];
-
+  
+      // Update the shelf's itemList in Firestore
       await updateDoc(doc(db, "Shelves", shelfId), {
-        itemList: shelf.itemList,
+        itemList: arrayUnion(docRef),
         updatedAt: new Date(),
       });
-
-      setShelves(updatedShelves);
+  
+      // Close the item selection sheet
       setIsSheetOpen(false);
       setSelectedSpot(null);
     }
   };
 
   const handleItemRemove = async (shelfId: string, position: number) => {
-    const shelfIndex = shelves.findIndex((shelf) => shelf.id === shelfId);
-    if (shelfIndex === -1) return;
-
-    const shelf = shelves[shelfIndex];
+    const shelf = shelves.find((shelf) => shelf.id === shelfId);
+    if (!shelf) return;
+  
     const itemToRemove = shelf.placedItems?.find(
       (item) => item.position === position
     );
     if (itemToRemove) {
       await deleteDoc(doc(db, "PlacedItems", itemToRemove.id));
-
-      const updatedShelves = [...shelves];
-      const updatedShelf = updatedShelves[shelfIndex];
-      updatedShelf.itemList = updatedShelf.itemList.filter(
-        (ref) => ref.id !== itemToRemove.id
-      );
-      updatedShelf.placedItems = updatedShelf.placedItems?.filter(
-        (item) => item.id !== itemToRemove.id
-      );
-
+  
+      // Update the shelf's itemList in Firestore
       await updateDoc(doc(db, "Shelves", shelfId), {
-        itemList: updatedShelf.itemList,
+        itemList: arrayRemove(doc(db, "PlacedItems", itemToRemove.id)),
         updatedAt: new Date(),
       });
-
-      setShelves(updatedShelves);
     }
   };
 
@@ -678,3 +659,4 @@ const RoomScreen = () => {
 };
 
 export default RoomScreen;
+
