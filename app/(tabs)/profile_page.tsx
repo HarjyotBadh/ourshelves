@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import {Keyboard, Platform, StatusBar, TouchableWithoutFeedback} from 'react-native'
+import {Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert} from 'react-native'
 import { db } from "firebaseConfig";
-import {Link, useLocalSearchParams, Stack} from "expo-router";
+import { useRouter, Link, useLocalSearchParams, Stack} from "expo-router";
 import { Avatar, styled, TextArea, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Dialog } from 'tamagui'
-import {  doc, getDoc } from 'firebase/firestore';
+import {  doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileAbtMe } from 'functions/profileFunctions';
 import { Wrench, LogOut } from '@tamagui/lucide-icons'
 import { auth } from "firebaseConfig";
-import { signOut } from "firebase/auth";
+import { deleteUser, reauthenticateWithCredential, EmailAuthProvider, signOut } from "firebase/auth";
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -36,7 +36,7 @@ export default function ProfilePage() {
   const profileId = auth.currentUser?.uid; // Placeholder ProfilePage doc id
   const { iconId } = useLocalSearchParams(); // Getting Local Query Data
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
-
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,6 +112,50 @@ export default function ProfilePage() {
       alert("ERROR - Update cannot exceeded 100 characters or contain a newline")
     }
   }
+
+  const handleDeleteAccount = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    Alert.prompt(
+      "Confirm Password",
+      "Please enter your password to delete your account",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "OK",
+          onPress: async (password) => {
+            if (!password) {
+              Alert.alert("Error", "Password is required");
+              return;
+            }
+            const credential = EmailAuthProvider.credential(user.email, password);
+            try {
+              await reauthenticateWithCredential(user, credential);
+              await deleteDoc(doc(db, "Users", user.uid));
+              await deleteUser(user);
+              Alert.alert(
+                'Account Deleted',
+                'Your account has been successfully deleted.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => router.push("/(auth)/login")
+                  }
+                ]
+              );
+            } catch (error) {
+              Alert.alert("Error", `Failed to delete account: ${error.message}`);
+            }
+          }
+        }
+      ],
+      "secure-text"
+    );
+  };
 
   const handleSignOut = async () => {
     try {
@@ -248,7 +292,14 @@ export default function ProfilePage() {
           <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
             Update About Me        
           </Button>
-
+          <Button
+              onPress={handleDeleteAccount}
+              bg="$yellow8"
+              color="$yellow12"
+              mr="$2"
+            >
+              Delete Account
+            </Button>
           <Button
             size="$7"
             circular
@@ -263,7 +314,6 @@ export default function ProfilePage() {
             display="flex"
             icon={<Wrench size="$4" />}>
           </Button>
-
       </YStack>
     </TouchableWithoutFeedback>
     )}
