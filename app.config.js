@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 
 export default {
     expo: {
@@ -12,33 +12,33 @@ export default {
         splash: {
             image: "./assets/images/splash.png",
             resizeMode: "contain",
-            backgroundColor: "#ffffff"
+            backgroundColor: "#ffffff",
         },
-        assetBundlePatterns: [
-            "**/*"
-        ],
+        assetBundlePatterns: ["**/*"],
         ios: {
             supportsTablet: true,
-            bundleIdentifier: "com.harjyotbadh.OurShelves"
+            bundleIdentifier: "com.harjyotbadh.OurShelves",
+            infoPlist: {
+                NSAppTransportSecurity: {
+                    NSAllowsArbitraryLoads: true,
+                },
+            },
         },
         android: {
             adaptiveIcon: {
                 foregroundImage: "./assets/images/adaptive-icon.png",
-                backgroundColor: "#ffffff"
+                backgroundColor: "#ffffff",
             },
-            package: "com.harjyotbadh.OurShelves"
+            package: "com.harjyotbadh.OurShelves",
         },
         web: {
             bundler: "metro",
             output: "static",
-            favicon: "./assets/images/favicon.png"
+            favicon: "./assets/images/favicon.png",
         },
-        plugins: [
-            "expo-router",
-            "expo-font"
-        ],
+        plugins: ["expo-router", "expo-font"],
         experiments: {
-            typedRoutes: true
+            typedRoutes: true,
         },
         extra: {
             firebaseApiKey: process.env.FIREBASE_API_KEY,
@@ -49,5 +49,5 @@ export default {
             firebaseAppId: process.env.FIREBASE_APP_ID,
             firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID,
         },
-    }
+    },
 };

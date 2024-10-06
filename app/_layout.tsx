@@ -11,6 +11,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { TamaguiProvider } from "@tamagui/core";
 import { ToastProvider } from "@tamagui/toast";
 import config from "tamagui.config";
+import "expo-dev-client";
 
 LogBox.ignoreLogs([
     "FirebaseRecaptcha: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.",

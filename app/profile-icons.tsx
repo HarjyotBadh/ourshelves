@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { db } from "firebaseConfig";
-import { Avatar, Text, XStack, YStack, SizableText, Image } from 'tamagui'
-import { ToastControl } from 'app/CurrentToast'
-import { TouchableOpacity, ScrollView } from 'react-native'
-import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { updateProfileIcon } from 'functions/profileFunctions';
-import { useRouter } from 'expo-router';
-
-// TODO - figure out how to change the header names and (tabs) back button
-
+import { Avatar, Text, YStack } from "tamagui";
+import { TouchableOpacity, ScrollView } from "react-native";
+import { doc, getDoc } from "firebase/firestore";
+import { updateProfileIcon } from "functions/profileFunctions";
+import { useRouter, Stack } from "expo-router";
 
 export default function IconGallery() {
   const [loading, setLoading] = useState(true);
@@ -27,56 +22,63 @@ export default function IconGallery() {
 
         // Fetch icon data
         if (profileId) {
-          const profileIconDocRef = doc(db, 'GlobalSettings', profileId);
+          const profileIconDocRef = doc(db, "GlobalSettings", profileId);
           const profileIconDoc = await getDoc(profileIconDocRef);
           if (profileIconDoc.exists()) {
             const profileIconData = profileIconDoc.data();
-            setIconArray(profileIconData.icons)
+            setIconArray(profileIconData.icons);
           } else {
-            throw new Error('User not found');
+            throw new Error("User not found");
           }
         } else {
-          throw new Error('User not authenticated');
+          throw new Error("User not authenticated");
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
       } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
-    
+
   // For when an icon is selected
-  const iconSelect = async(iconUri) => {
-    const result = await updateProfileIcon(iconUri)
+  const iconSelect = async (iconUri) => {
+    const result = await updateProfileIcon(iconUri);
     if (!result) {
-      console.log("ERROR - Update to profile failed") 
+      console.log("ERROR - Update to profile failed");
     } else {
-      alert("Profile Icon Updated")
+      alert("Profile Icon Updated");
       router.push(`/profile_page?iconId=${iconUri}`);
     }
   };
 
-  // Loading page 
   if (loading) {
     return <Text>Loading...</Text>;
   }
 
   return (
-    <ScrollView>
-      <YStack ai="center" gap="$4" px="$4" py="$4">
-        {icons.map((iconUri, index) => (
-          <TouchableOpacity key={index} onPress={() => iconSelect(iconUri)}>
-            <Avatar circular size="$15">
-              <Avatar.Image
-                accessibilityLabel="ProfilePic"
-                src={iconUri}/>
-              <Avatar.Fallback backgroundColor="$blue10" />
-            </Avatar>
-          </TouchableOpacity>
-        ))}
-      </YStack>
-    </ScrollView>
+    <>
+      <Stack.Screen
+        options={{
+          title: "Profile Icons",
+          headerBackTitle: "Back",
+        }}
+      />
+      <ScrollView>
+        <YStack ai="center" gap="$4" px="$4" py="$4">
+          {icons.map((iconUri, index) => (
+            <TouchableOpacity key={index} onPress={() => iconSelect(iconUri)}>
+              <Avatar circular size="$15">
+                <Avatar.Image accessibilityLabel="ProfilePic" src={iconUri} />
+                <Avatar.Fallback backgroundColor="$blue10" />
+              </Avatar>
+            </TouchableOpacity>
+          ))}
+        </YStack>
+      </ScrollView>
+    </>
   );
 }
