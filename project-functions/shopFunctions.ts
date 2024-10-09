@@ -1,6 +1,8 @@
-import { getFirestore, doc, runTransaction, arrayUnion, Timestamp, DocumentReference, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, runTransaction, arrayUnion, Timestamp, DocumentReference, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../firebaseConfig';
+import { ItemData } from 'components/item';
+import { PurchasedItem } from 'models/PurchasedItem';
 
 // TODO: Remove this hardcoded userId and use the actual user's ID in production
 //const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder for testing
@@ -44,10 +46,8 @@ const getCurrentUserId = () => {
   return user.uid;
 };
 
-export const purchaseItem = async (item: Item, user: User): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
-  const userId = getCurrentUserId();
-  const userRef = doc(db, "Users", userId);
-
+export const purchaseItem = async (item: ItemData, user: User): Promise<{ success: boolean; message: string; updatedUser: User | null }> => {
+  const userRef = doc(db, "Users", getCurrentUserId());
   try {
     const result = await runTransaction(db, async (transaction) => {
       const userDoc = await transaction.get(userRef);
@@ -62,16 +62,38 @@ export const purchaseItem = async (item: Item, user: User): Promise<{ success: b
         return { success: false, message: `Not enough coins to purchase ${item.name}!`, updatedUser: null };
       }
 
-      // Check if the user already owns the item
-      const itemReference = doc(db, "Items", item.itemId);
-      if (userData.inventory.some(ref => ref.path === itemReference.path)) {
+      const purchasedItemsQuery = query(
+        collection(db, "PurchasedItems"),
+        where("userId", "==", userRef.id),
+        where("itemRef", "==", doc(db, "Items", item.itemId))
+      );
+      const purchasedItemsSnapshot = await getDocs(purchasedItemsQuery);
+
+      if (!purchasedItemsSnapshot.empty) {
         return { success: false, message: `You already own ${item.name}!`, updatedUser: null };
       }
+
+      // Create a new PurchasedItem document
+      const purchasedItemRef = doc(collection(db, "PurchasedItems"));
+      const purchasedItemData: PurchasedItem = {
+        id: purchasedItemRef.id,
+        userId: userRef.id,
+        itemRef: doc(db, "Items", item.itemId),
+        purchaseDate: Timestamp.now(),
+        itemData: {
+          name: item.name,
+          cost: item.cost,
+          imageUri: item.imageUri,
+          // Add any other relevant item data here
+        }
+      };
+
+      transaction.set(purchasedItemRef, purchasedItemData);
 
       const updatedUser = {
         ...userData,
         coins: userData.coins - item.cost,
-        inventory: [...userData.inventory, itemReference],
+        inventory: [...userData.inventory, purchasedItemRef],
       };
 
       transaction.update(userRef, updatedUser);

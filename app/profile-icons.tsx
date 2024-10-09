@@ -5,7 +5,7 @@ import { ToastControl } from 'app/CurrentToast'
 import { TouchableOpacity, ScrollView } from 'react-native'
 import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { updateProfileIcon } from 'functions/profileFunctions';
+import { updateProfileIcon } from 'project-functions/profileFunctions';
 import { useRouter } from 'expo-router';
 
 // TODO - figure out how to change the header names and (tabs) back button

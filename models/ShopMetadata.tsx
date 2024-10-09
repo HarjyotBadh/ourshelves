@@ -1,9 +1,9 @@
-import { Timestamp } from "firebase/firestore";
+import { DocumentReference, Timestamp } from "firebase/firestore";
 
 export interface ShopMetadata {
   lastRefresh: Timestamp;
   nextRefresh: Timestamp;
-  items: string[];
+  items: DocumentReference[];
   wallpapers: string[];
   shelfColors: string[];
 }

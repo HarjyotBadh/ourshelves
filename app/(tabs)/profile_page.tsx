@@ -5,7 +5,7 @@ import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { Avatar, styled, TextArea, Progress, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Image } from 'tamagui'
 import {  doc, getDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { updateProfileAbtMe } from 'functions/profileFunctions';
+import { updateProfileAbtMe } from 'project-functions/profileFunctions';
 import { Wrench } from '@tamagui/lucide-icons'
 import { auth } from "../../firebaseConfig";
 

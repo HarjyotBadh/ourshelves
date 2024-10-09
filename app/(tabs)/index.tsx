@@ -3,7 +3,7 @@ import { View, ScrollView, styled } from 'tamagui';
 import HomeTile from '../../components/HomeTile';
 import CreateHomeTile from '../../components/CreateHomeTile';
 import { useEffect, useState } from 'react';
-import { auth } from "firebaseConfig";
+import { auth, functions } from "firebaseConfig";
 import { getRooms, getRoomById, leaveRoom, createRoom, getTags, addTag, deleteRoom } from 'project-functions/homeFunctions';
 import { useRouter } from 'expo-router';
 
