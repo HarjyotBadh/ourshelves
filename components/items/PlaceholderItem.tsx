@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, Text } from "tamagui";
+import { View, styled, YStack } from "tamagui";
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
 
 interface PlaceholderItemProps {
@@ -44,7 +44,7 @@ const PlaceholderItem: PlaceholderItemComponent = ({
 }) => {
     const [dialogOpen, setDialogOpen] = useState(false);
 
-    // Custom properties (remove this)
+    // Custom properties (remove these)
     const [clickCount, setClickCount] = useState(itemData.clickCount || 0);
     const [color, setColor] = useState(itemData.color || "red");
 
@@ -77,7 +77,7 @@ const PlaceholderItem: PlaceholderItemComponent = ({
     }
 
     // Renders item when active/clicked
-    // (item is clicked and dialog is open)
+    // (item is clicked and dialog is open, feel free to change this return)
     return (
         <YStack flex={1}>
             <PlaceholderItemView backgroundColor={color} />
