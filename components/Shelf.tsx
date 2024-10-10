@@ -47,8 +47,6 @@ const Shelf: React.FC<ShelfProps> = ({
       <XStack
         backgroundColor="#8B4513"
         height={20}
-        borderBottomLeftRadius="$2"
-        borderBottomRightRadius="$2"
         justifyContent="flex-end"
         paddingRight="$2"
       >

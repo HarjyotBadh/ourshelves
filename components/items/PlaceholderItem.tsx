@@ -5,10 +5,10 @@ import { ColorSelectionDialog } from '../ColorSelectionDialog';
 interface PlaceholderItemProps {
     itemData: {
         color: string;
-        name: string;
-        imageUri: string;
+        name: string; // do not change
+        imageUri: string; // do not change
         clickCount?: number;
-        [key: string]: any;
+        [key: string]: any; // do not change
     };
     onDataUpdate: (newItemData: Record<string, any>) => void;
     isActive: boolean;
