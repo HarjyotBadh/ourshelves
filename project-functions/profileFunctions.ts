@@ -1,3 +1,4 @@
+import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, runTransaction } from 'firebase/firestore';
 import { auth} from 'firebaseConfig';
 
@@ -5,9 +6,13 @@ import { auth} from 'firebaseConfig';
 // function to update user's "About Me" section of their profile page 
 export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ success: boolean; message: string }> => {
   const db = getFirestore();
+  const auth = getAuth();
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
   const profileId = auth.currentUser?.uid; // Placeholder
+  if (!profileId) {
+    throw new Error("User is not authenticated");
+  }
   const profileRef = doc(db, "Users", profileId);
 
   try {
@@ -36,9 +41,13 @@ export const updateProfileAbtMe = async (updatedAboutMe: string): Promise<{ succ
 // Function to update user's profile icon
 export const updateProfileIcon = async (updatedIcon: string): Promise<{ success: boolean; message: string }> => {
   const db = getFirestore();
+  const auth = getAuth();
 
   // For now, we're using a placeholder userId. In a real app, you'd use auth.currentUser.uid
   const profileId = auth.currentUser?.uid; // Placeholder
+  if (!profileId) {
+    throw new Error("User is not authenticated");
+  }
   const profileRef = doc(db, 'Users', profileId);
 
   try {

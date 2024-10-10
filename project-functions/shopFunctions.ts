@@ -1,7 +1,20 @@
-import { doc, runTransaction, Timestamp, updateDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  runTransaction,
+  arrayUnion,
+  Timestamp,
+  DocumentReference,
+  updateDoc,
+  query,
+  collection,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebaseConfig";
 import { ItemData, WallpaperData, ShelfColorData } from "../models/RoomData";
+import { PurchasedItem } from "models/PurchasedItem";
 import { UserData } from "../models/UserData";
 
 const getCurrentUserId = () => {
@@ -44,9 +57,14 @@ export const purchaseItem = async (
         };
       }
 
-      // Check if the user already owns the item
-      const itemReference = doc(db, "Items", item.itemId);
-      if (userData.inventory.some((ref) => ref.path === itemReference.path)) {
+      const purchasedItemsQuery = query(
+        collection(db, "PurchasedItems"),
+        where("userId", "==", userRef.id),
+        where("itemRef", "==", doc(db, "Items", item.itemId))
+      );
+      const purchasedItemsSnapshot = await getDocs(purchasedItemsQuery);
+
+      if (!purchasedItemsSnapshot.empty) {
         return {
           success: false,
           message: `You already own ${item.name}!`,
@@ -54,10 +72,25 @@ export const purchaseItem = async (
         };
       }
 
+      // Create a new PurchasedItem document
+      const purchasedItemRef = doc(collection(db, "PurchasedItems"));
+      const purchasedItemData: PurchasedItem = {
+        id: purchasedItemRef.id,
+        userId: userRef.id,
+        itemRef: doc(db, "Items", item.itemId),
+        purchaseDate: Timestamp.now(),
+        name: item.name,
+        cost: item.cost,
+        imageUri: item.imageUri,
+        // Add any other relevant item data here
+      };
+
+      transaction.set(purchasedItemRef, purchasedItemData);
+
       const updatedUser = {
         ...userData,
         coins: userData.coins - item.cost,
-        inventory: [...userData.inventory, itemReference],
+        inventory: [...userData.inventory, purchasedItemRef],
       };
 
       transaction.update(userRef, updatedUser);

@@ -1,5 +1,5 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { DocumentReference, getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const db = getFirestore();
 
@@ -27,20 +27,20 @@ export async function refreshShop() {
   try {
     // Get all item IDs
     const itemsSnapshot = await db.collection("Items").get();
-    const allItemIds = itemsSnapshot.docs.map((doc) => doc.id);
+    const allItemRefs = itemsSnapshot.docs.map((doc) => doc.ref);
 
-    // Get all wallpaper IDs
+    // Get all wallpaper IDs (unchanged)
     const wallpapersSnapshot = await db.collection("Wallpapers").get();
     const allWallpaperIds = wallpapersSnapshot.docs.map((doc) => doc.id);
 
-    // Get all shelf color IDs
+    // Get all shelf color IDs (unchanged)
     const shelfColorsSnapshot = await db.collection("ShelfColors").get();
     const allShelfColorIds = shelfColorsSnapshot.docs.map((doc) => doc.id);
 
     // Randomly select 6 items, 3 wallpapers, and 3 shelf colors
-    const selectedItems = getRandomItems(allItemIds, 6);
-    const selectedWallpapers = getRandomItems(allWallpaperIds, 3);
-    const selectedShelfColors = getRandomItems(allShelfColorIds, 3);
+    const selectedItems = getRandomItems(allItemRefs, 6);
+    const selectedWallpapers = getRandomOtherItems(allWallpaperIds, 3);
+    const selectedShelfColors = getRandomOtherItems(allShelfColorIds, 3);
 
     // Update shop metadata
     await db.doc("GlobalSettings/shopMetadata").set({
@@ -50,7 +50,6 @@ export async function refreshShop() {
       wallpapers: selectedWallpapers,
       shelfColors: selectedShelfColors,
     }, { merge: true });
-
   } catch (error) {
     console.error("Error refreshing shop:", error);
     throw new Error("Failed to refresh shop");
@@ -59,11 +58,22 @@ export async function refreshShop() {
 
 /**
  * Selects random items from the given array.
+ * @param {DocymentReferebce[]} items - Array of item refs.
+ * @param {number} count - Number of items to select.
+ * @return {DocumentReference[]} Array of randomly selected item refs.
+ */
+function getRandomItems(items: DocumentReference[], count: number): DocumentReference[] {
+  const shuffled = items.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+/**
+ * Selects random items from the given array.
  * @param {string[]} items - Array of item IDs.
  * @param {number} count - Number of items to select.
  * @return {string[]} Array of randomly selected item IDs.
  */
-function getRandomItems(items: string[], count: number): string[] {
+function getRandomOtherItems(items: string[], count: number): string[] {
   const shuffled = items.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }

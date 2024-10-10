@@ -10,7 +10,7 @@ import {
   Spinner,
   Progress,
 } from "tamagui";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, DocumentReference, getDoc, Timestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { differenceInSeconds } from "date-fns";
 import { db, functions, auth } from "firebaseConfig";
@@ -203,30 +203,25 @@ export default function ShopScreen() {
 
       // Fetch items
       const fetchedItems = await Promise.all(
-        gottenShopMetadata.items.map(async (itemId) => {
-          const itemDoc = await getDoc(doc(db, "Items", itemId));
-          return { itemId, ...itemDoc.data() } as ItemData;
+        gottenShopMetadata.items.map(async (itemRef: DocumentReference) => {
+          const itemDoc = await getDoc(itemRef);
+          return { itemId: itemDoc.id, ...itemDoc.data() } as ItemData;
         })
       );
 
-      // Fetch wallpapers
+      // Fetch wallpapers (unchanged)
       const fetchedWallpapers = await Promise.all(
-        gottenShopMetadata.wallpapers.map(async (wallpaperId) => {
+        gottenShopMetadata.wallpapers.map(async (wallpaperId: string) => {
           const wallpaperDoc = await getDoc(doc(db, "Wallpapers", wallpaperId));
           return { id: wallpaperId, ...wallpaperDoc.data() } as WallpaperData;
         })
       );
 
-      // Fetch shelf colors
+      // Fetch shelf colors (unchanged)
       const fetchedShelfColors = await Promise.all(
-        gottenShopMetadata.shelfColors.map(async (shelfColorId) => {
-          const shelfColorDoc = await getDoc(
-            doc(db, "ShelfColors", shelfColorId)
-          );
-          return {
-            id: shelfColorId,
-            ...shelfColorDoc.data(),
-          } as ShelfColorData;
+        gottenShopMetadata.shelfColors.map(async (shelfColorId: string) => {
+          const shelfColorDoc = await getDoc(doc(db, "ShelfColors", shelfColorId));
+          return { id: shelfColorId, ...shelfColorDoc.data() } as ShelfColorData;
         })
       );
 
