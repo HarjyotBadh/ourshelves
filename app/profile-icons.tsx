@@ -3,7 +3,7 @@ import { db } from "firebaseConfig";
 import { Avatar, Text, YStack } from "tamagui";
 import { TouchableOpacity, ScrollView } from "react-native";
 import { doc, getDoc } from "firebase/firestore";
-import { updateProfileIcon } from "functions/profileFunctions";
+import { updateProfileIcon } from "project-functions/profileFunctions";
 import { useRouter, Stack } from "expo-router";
 
 export default function IconGallery() {

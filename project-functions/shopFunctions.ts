@@ -1,44 +1,21 @@
-import { getFirestore, doc, runTransaction, arrayUnion, Timestamp, DocumentReference, updateDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { db } from '../firebaseConfig';
+import {
+  getFirestore,
+  doc,
+  runTransaction,
+  arrayUnion,
+  Timestamp,
+  DocumentReference,
+  updateDoc,
+  query,
+  collection,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { db } from "../firebaseConfig";
 import { ItemData, WallpaperData, ShelfColorData } from "../models/RoomData";
-import { PurchasedItem } from 'models/PurchasedItem';
+import { PurchasedItem } from "models/PurchasedItem";
 import { UserData } from "../models/UserData";
-
-// TODO: Remove this hardcoded userId and use the actual user's ID in production
-//const userId = "DAcD1sojAGTxQcYe7nAx"; // Placeholder for testing
-
-interface Item {
-  itemId: string;
-  cost: number;
-  imageUri: string;
-  name: string;
-}
-
-interface WallpaperData {
-  id: string;
-  name: string;
-  cost: number;
-  gradientColors: string[];
-  description?: string;
-}
-
-interface ShelfColorData {
-  id: string;
-  name: string;
-  cost: number;
-  color: string;
-  description?: string;
-}
-
-interface User {
-  userId: string;
-  coins: number;
-  inventory: DocumentReference[];
-  wallpapers: DocumentReference[];
-  shelfColors: DocumentReference[];
-  lastDailyGiftClaim: Timestamp | null;
-}
 
 const getCurrentUserId = () => {
   const auth = getAuth();
@@ -88,7 +65,11 @@ export const purchaseItem = async (
       const purchasedItemsSnapshot = await getDocs(purchasedItemsQuery);
 
       if (!purchasedItemsSnapshot.empty) {
-        return { success: false, message: `You already own ${item.name}!`, updatedUser: null };
+        return {
+          success: false,
+          message: `You already own ${item.name}!`,
+          updatedUser: null,
+        };
       }
 
       // Create a new PurchasedItem document
@@ -98,12 +79,10 @@ export const purchaseItem = async (
         userId: userRef.id,
         itemRef: doc(db, "Items", item.itemId),
         purchaseDate: Timestamp.now(),
-        itemData: {
-          name: item.name,
-          cost: item.cost,
-          imageUri: item.imageUri,
-          // Add any other relevant item data here
-        }
+        name: item.name,
+        cost: item.cost,
+        imageUri: item.imageUri,
+        // Add any other relevant item data here
       };
 
       transaction.set(purchasedItemRef, purchasedItemData);

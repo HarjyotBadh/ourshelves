@@ -5,10 +5,8 @@ export interface PurchasedItem {
   userId: string;
   itemRef: DocumentReference;
   purchaseDate: Timestamp;
-  itemData: {
-    name: string;
-    cost: number;
-    imageUri: string;
-    // Add any other relevant item data here
-  };
+  name: string;
+  cost: number;
+  imageUri: string;
+  // Add any other relevant item data here
 }

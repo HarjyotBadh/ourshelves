@@ -1,3 +1,4 @@
+import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, runTransaction } from 'firebase/firestore';
 import { auth} from 'firebaseConfig';
 
