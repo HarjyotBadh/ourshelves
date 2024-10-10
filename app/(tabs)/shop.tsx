@@ -31,10 +31,9 @@ import ShelfColorsList from "components/ShelfColorsList";
 import ShopRefreshTimer from "components/ShopRefreshTimer";
 import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
 import { ShopMetadata } from "models/ShopMetadata";
-import { WallpaperData } from "models/WallpaperData";
-import { ShelfColorData } from "models/ShelfColorData";
-import { User } from "models/UserData";
-import { ToastViewport, useToastController } from '@tamagui/toast';
+import { WallpaperData, ShelfColorData } from "models/RoomData";
+import { UserData } from "models/UserData";
+import { ToastViewport, useToastController } from "@tamagui/toast";
 
 const BACKGROUND_COLOR = "$pink6";
 
@@ -96,7 +95,7 @@ const ContentContainer = styled(YStack, {
 
 export default function ShopScreen() {
   const [items, setItems] = useState<ItemData[]>([]);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshTime, setRefreshTime] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -238,7 +237,7 @@ export default function ShopScreen() {
         const userDocRef = doc(db, "Users", currentUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
-          const userData = userDoc.data() as User;
+          const userData = userDoc.data() as UserData;
           setUser(userData);
         } else {
           throw new Error("User data not found");
@@ -317,7 +316,7 @@ export default function ShopScreen() {
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
       //alert(result.message);
-      toast.show(item.name + ' Purchased!', {
+      toast.show(item.name + " Purchased!", {
         message: result.message,
         duration: 3000,
       });
@@ -332,7 +331,7 @@ export default function ShopScreen() {
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
       //alert(result.message);
-      toast.show(wallpaper.name + ' Purchased!', {
+      toast.show(wallpaper.name + " Purchased!", {
         message: result.message,
         duration: 3000,
       });
@@ -347,7 +346,7 @@ export default function ShopScreen() {
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
       //alert(result.message);
-      toast.show(shelfColor.name + ' Purchased!', {
+      toast.show(shelfColor.name + " Purchased!", {
         message: result.message,
         duration: 3000,
       });
@@ -362,7 +361,7 @@ export default function ShopScreen() {
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
       //alert(result.message);
-      toast.show('You earned 50 coins! Great job!', {
+      toast.show("You earned 50 coins! Great job!", {
         message: result.message,
         duration: 3000,
       });
@@ -377,7 +376,7 @@ export default function ShopScreen() {
     if (result.success && result.updatedUser) {
       setUser(result.updatedUser);
       //alert(result.message);
-      toast.show('You lost 50 coins! Great job!', {
+      toast.show("You lost 50 coins! Great job!", {
         message: result.message,
         duration: 3000,
       });

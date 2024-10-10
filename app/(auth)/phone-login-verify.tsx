@@ -129,7 +129,7 @@ export default function PhoneLoginVerifyScreen() {
                 firebaseConfig={auth.app.options}
                 {...recaptchaVerifierOptions}
             />
-            <Stack f={1} ai="center" jc="center">
+            <Stack f={1} ai="center" jc="flex-start" pt="$8">
                 <XStack
                     position="absolute"
                     top={0}

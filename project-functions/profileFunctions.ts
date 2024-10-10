@@ -1,5 +1,5 @@
 import { getFirestore, doc, runTransaction } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { auth} from 'firebaseConfig';
 
 
 // function to update user's "About Me" section of their profile page 
@@ -58,7 +58,7 @@ export const updateProfileIcon = async (updatedIcon: string): Promise<{ success:
       }
 
       transaction.update(profileRef, {
-        profilePic: updatedIcon,
+        profilePicture: updatedIcon,
       });
 
       return { success: true, message: 'Successfully user icon' };
