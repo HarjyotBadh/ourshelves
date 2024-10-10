@@ -85,6 +85,11 @@ const RoomScreen = () => {
     }[]
   >([]);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [roomInfo, setRoomInfo] = useState<{
+    name: string;
+    users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
+    description: string;
+  }>({ name: "", users: [], description: "" });
 
   const initializeShelves = async (roomId: string) => {
     const batch = writeBatch(db);
@@ -356,8 +361,13 @@ const RoomScreen = () => {
             setLoadingProgress(99);
           }
 
-          // Simulate loading delay (optional)
           await new Promise((resolve) => setTimeout(resolve, 500));
+
+          setRoomInfo({
+            name: roomData.name,
+            description: roomData.description || "",
+            users: combinedUsers,
+          });
         } else {
           console.error("Room not found");
         }
@@ -635,6 +645,7 @@ const RoomScreen = () => {
                       handleItemDataUpdate(shelf.id, position, newItemData)
                     }
                     users={users}
+                    roomInfo={roomInfo}
                   />
                 ))}
               </YStack>
@@ -659,4 +670,3 @@ const RoomScreen = () => {
 };
 
 export default RoomScreen;
-

@@ -26,6 +26,11 @@ interface ShelfItemSpotProps {
     newItemData: Record<string, any>
   ) => void;
   users: Record<string, any>;
+  roomInfo: {
+    name: string;
+    users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
+    description: string;
+  };
 }
 
 const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
@@ -36,6 +41,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   onItemRemove,
   onItemDataUpdate,
   users,
+  roomInfo,
 }) => {
   const [lockStatus, setLockStatus] = useState<{
     lockedBy: string | null;
@@ -178,6 +184,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
           }
           isActive={isItemActive}
           onClose={handleItemClose}
+          roomInfo={roomInfo}
         />
       );
     } else {

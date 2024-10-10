@@ -13,6 +13,11 @@ interface ShelfItemsProps {
     newItemData: Record<string, any>
   ) => void;
   users: Record<string, any>;
+  roomInfo: {
+    name: string;
+    users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
+    description: string;
+  };
 }
 
 const ShelfItems: React.FC<ShelfItemsProps> = ({
@@ -22,6 +27,7 @@ const ShelfItems: React.FC<ShelfItemsProps> = ({
   onItemRemove,
   onItemDataUpdate,
   users,
+  roomInfo,
 }) => {
   return (
     <XStack flex={1} justifyContent="space-between" alignItems="center">
@@ -35,6 +41,7 @@ const ShelfItems: React.FC<ShelfItemsProps> = ({
           onItemRemove={onItemRemove}
           onItemDataUpdate={onItemDataUpdate}
           users={users}
+          roomInfo={roomInfo}
         />
       ))}
     </XStack>
