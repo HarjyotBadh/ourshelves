@@ -78,11 +78,12 @@ export const purchaseItem = async (
         id: purchasedItemRef.id,
         userId: userRef.id,
         itemRef: doc(db, "Items", item.itemId),
+        itemId: item.itemId,
         purchaseDate: Timestamp.now(),
         name: item.name,
         cost: item.cost,
         imageUri: item.imageUri,
-        // Add any other relevant item data here
+        shouldLock: item.shouldLock || false,
       };
 
       transaction.set(purchasedItemRef, purchasedItemData);
@@ -147,9 +148,7 @@ export const purchaseWallpaper = async (
 
       // Check if the user already owns the wallpaper
       const wallpaperReference = doc(db, "Wallpapers", wallpaper.id);
-      if (
-        userData.wallpapers.some((ref) => ref.path === wallpaperReference.path)
-      ) {
+      if (userData.wallpapers.some((ref) => ref.path === wallpaperReference.path)) {
         return {
           success: false,
           message: `You already own the ${wallpaper.name} wallpaper!`,
@@ -218,11 +217,7 @@ export const purchaseShelfColor = async (
 
       // Check if the user already owns the shelf color
       const shelfColorReference = doc(db, "ShelfColors", shelfColor.id);
-      if (
-        userData.shelfColors.some(
-          (ref) => ref.path === shelfColorReference.path
-        )
-      ) {
+      if (userData.shelfColors.some((ref) => ref.path === shelfColorReference.path)) {
         return {
           success: false,
           message: `You already own the ${shelfColor.name} shelf color!`,

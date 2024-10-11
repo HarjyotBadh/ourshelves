@@ -13,10 +13,14 @@ import {
     Form,
     Text,
 } from "tamagui";
-import {SafeAreaView, Platform, StatusBar} from "react-native";
+import { SafeAreaView, Platform, StatusBar } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import validator from "validator";
-import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail} from "firebase/auth";
+import {
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail,
+    fetchSignInMethodsForEmail,
+} from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 
 export default function LoginScreen() {
@@ -50,13 +54,15 @@ export default function LoginScreen() {
 
         try {
             // Check if the email exists
-            const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-            
-            if (signInMethods.length === 0) {
-                // Email doesn't exist in Firebase
-                setGeneralError("No account found with this email address.");
-                return;
-            }
+            console.log(auth);
+            console.log(email);
+            // const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+
+            // if (signInMethods.length === 0) {
+            //     // Email doesn't exist in Firebase
+            //     setGeneralError("No account found with this email address.");
+            //     return;
+            // }
 
             // Email exists, send password reset email
             await sendPasswordResetEmail(auth, email);
@@ -103,7 +109,13 @@ export default function LoginScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background.get(), paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
+        <SafeAreaView
+            style={{
+                flex: 1,
+                backgroundColor: theme.background.get(),
+                paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+            }}
+        >
             <Stack f={1} ai="center" jc="center">
                 <YStack gap="$4" maxWidth={600} width="100%" px="$4" py="$8" ai="center">
                     <H1 ta="center" mb="$4">
@@ -160,13 +172,13 @@ export default function LoginScreen() {
                     </Form>
 
                     <Text
-                        onPress={handleForgotPassword} 
+                        onPress={handleForgotPassword}
                         style={{
-                        color: 'blue',
-                        textDecorationLine: 'underline', 
-                        fontSize: 14, 
-                        textAlign: 'center', 
-                        marginTop: 10, 
+                            color: "blue",
+                            textDecorationLine: "underline",
+                            fontSize: 14,
+                            textAlign: "center",
+                            marginTop: 10,
                         }}
                     >
                         Forgot Password?

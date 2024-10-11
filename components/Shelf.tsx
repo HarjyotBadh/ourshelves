@@ -14,6 +14,11 @@ interface ShelfProps {
     newItemData: Record<string, any>
   ) => void;
   users: Record<string, any>;
+  roomInfo: {
+    name: string;
+    users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
+    description: string;
+  };
 }
 
 const Shelf: React.FC<ShelfProps> = ({
@@ -24,6 +29,7 @@ const Shelf: React.FC<ShelfProps> = ({
   onItemRemove,
   onItemDataUpdate,
   users,
+  roomInfo,
 }) => {
   return (
     <YStack>
@@ -42,13 +48,12 @@ const Shelf: React.FC<ShelfProps> = ({
           onItemRemove={onItemRemove}
           onItemDataUpdate={onItemDataUpdate}
           users={users}
+          roomInfo={roomInfo}
         />
       </XStack>
       <XStack
         backgroundColor="#8B4513"
         height={20}
-        borderBottomLeftRadius="$2"
-        borderBottomRightRadius="$2"
         justifyContent="flex-end"
         paddingRight="$2"
       >

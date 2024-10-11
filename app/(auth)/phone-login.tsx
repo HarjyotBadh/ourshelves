@@ -128,10 +128,7 @@ export default function PhoneLoginScreen() {
                                 codeTextStyle={{
                                     color: theme.color.get(),
                                 }}
-                                flagButtonStyle={{
-                                    borderRightWidth: 1,
-                                    borderRightColor: theme.borderColor.get(),
-                                }}
+                                flagButtonStyle={{}}
                             />
                             {error ? (
                                 <Text color="$red10" ta="center">

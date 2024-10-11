@@ -1,10 +1,20 @@
-import React from 'react';
-import { Dialog, Accordion, YStack, Button, Text, XStack, styled, ScrollView, Avatar } from 'tamagui';
-import { Settings, Users, Shield, ChevronDown, ChevronUp, X, Info } from '@tamagui/lucide-icons';
+import React from "react";
+import {
+    Dialog,
+    Accordion,
+    YStack,
+    Button,
+    Text,
+    XStack,
+    styled,
+    ScrollView,
+    Avatar,
+} from "tamagui";
+import { Settings, Users, Shield, ChevronDown, ChevronUp, X, Info } from "@tamagui/lucide-icons";
 
-const BACKGROUND_COLOR = '$yellow2Light';
-const HEADER_BACKGROUND = '#8B4513';
-const USER_ITEM_BACKGROUND = '#DEB887';
+const BACKGROUND_COLOR = "$yellow2Light";
+const HEADER_BACKGROUND = "#8B4513";
+const USER_ITEM_BACKGROUND = "#DEB887";
 
 interface User {
     id: string;
@@ -21,57 +31,60 @@ interface RoomSettingsDialogProps {
 }
 
 const StyledAccordionItem = styled(Accordion.Item, {
-    backgroundColor: '$backgroundStrong',
-    marginBottom: '$2',
-    borderRadius: '$4',
-    overflow: 'hidden',
-})
+    backgroundColor: "$backgroundStrong",
+    marginBottom: "$2",
+    borderRadius: "$4",
+    overflow: "hidden",
+});
 
 const StyledAccordionTrigger = styled(Accordion.Trigger, {
-    padding: '$3',
+    padding: "$3",
     backgroundColor: HEADER_BACKGROUND,
-    borderBottomWidth: 1,
-    borderBottomColor: '$borderColor',
-})
+});
 
 const StyledAccordionContent = styled(Accordion.Content, {
-    padding: '$3',
+    padding: "$3",
     backgroundColor: BACKGROUND_COLOR,
-})
+});
 
 const IconWrapper = styled(XStack, {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: 32,
     height: 32,
     borderRadius: 16,
-    marginRight: '$2',
-})
+    marginRight: "$2",
+});
 
 const UserItem = styled(XStack, {
-    alignItems: 'center',
-    paddingVertical: '$2',
-    paddingHorizontal: '$3',
-    borderRadius: '$2',
-    marginBottom: '$1',
+    alignItems: "center",
+    paddingVertical: "$2",
+    paddingHorizontal: "$3",
+    borderRadius: "$2",
+    marginBottom: "$1",
     backgroundColor: USER_ITEM_BACKGROUND,
-})
+});
 
 const Header = styled(XStack, {
     height: 60,
     backgroundColor: HEADER_BACKGROUND,
-    alignItems: 'center',
-    paddingHorizontal: '$4',
+    alignItems: "center",
+    paddingHorizontal: "$4",
 });
 
 const HeaderButton = styled(Button, {
     width: 50,
     height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
 });
 
-const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenChange, users, roomDescription }) => {
+const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
+    open,
+    onOpenChange,
+    users,
+    roomDescription,
+}) => {
     const renderUserList = () => (
         <YStack gap="$2">
             {users.map((user) => (
@@ -80,11 +93,19 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                         {user.profilePicture ? (
                             <Avatar.Image source={{ uri: user.profilePicture }} />
                         ) : (
-                            <Avatar.Image source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=random` }} />
+                            <Avatar.Image
+                                source={{
+                                    uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                        user.displayName
+                                    )}&background=random`,
+                                }}
+                            />
                         )}
                         <Avatar.Fallback bc="$blue5" />
                     </Avatar>
-                    <Text flex={1} color="black">{user.displayName}</Text>
+                    <Text flex={1} color="black">
+                        {user.displayName}
+                    </Text>
                     {user.isAdmin && (
                         <IconWrapper backgroundColor="$blue8">
                             <Shield color="$blue11" size={16} />
@@ -93,7 +114,7 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                 </UserItem>
             ))}
         </YStack>
-    )
+    );
 
     return (
         <Dialog modal open={open} onOpenChange={onOpenChange}>
@@ -110,7 +131,7 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                     elevate
                     key="content"
                     animation={[
-                        'quick',
+                        "quick",
                         {
                             opacity: {
                                 overshootClamping: true,
@@ -129,12 +150,18 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                 >
                     <YStack flex={1}>
                         <Header>
-                            <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
+                            <Text
+                                fontSize={18}
+                                fontWeight="bold"
+                                flex={1}
+                                textAlign="center"
+                                color="white"
+                            >
                                 Room Settings
                             </Text>
                             <Dialog.Close asChild>
                                 <HeaderButton unstyled>
-                                    <X color="white" size={24}/>
+                                    <X color="white" size={24} />
                                 </HeaderButton>
                             </Dialog.Close>
                         </Header>
@@ -148,13 +175,26 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                                                     <IconWrapper backgroundColor="$blue8">
                                                         <Info color="white" />
                                                     </IconWrapper>
-                                                    <Text flex={1} fontSize="$5" fontWeight="600" color="white">Room Description</Text>
-                                                    {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
+                                                    <Text
+                                                        flex={1}
+                                                        fontSize="$5"
+                                                        fontWeight="600"
+                                                        color="white"
+                                                    >
+                                                        Room Description
+                                                    </Text>
+                                                    {open ? (
+                                                        <ChevronUp color="white" />
+                                                    ) : (
+                                                        <ChevronDown color="white" />
+                                                    )}
                                                 </XStack>
                                             )}
                                         </StyledAccordionTrigger>
                                         <StyledAccordionContent>
-                                            <Text color="black">{roomDescription || 'No description available.'}</Text>
+                                            <Text color="black">
+                                                {roomDescription || "No description available."}
+                                            </Text>
                                         </StyledAccordionContent>
                                     </StyledAccordionItem>
 
@@ -165,8 +205,19 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                                                     <IconWrapper backgroundColor="$green8">
                                                         <Users color="white" />
                                                     </IconWrapper>
-                                                    <Text flex={1} fontSize="$5" fontWeight="600" color="white">Users</Text>
-                                                    {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
+                                                    <Text
+                                                        flex={1}
+                                                        fontSize="$5"
+                                                        fontWeight="600"
+                                                        color="white"
+                                                    >
+                                                        Users
+                                                    </Text>
+                                                    {open ? (
+                                                        <ChevronUp color="white" />
+                                                    ) : (
+                                                        <ChevronDown color="white" />
+                                                    )}
                                                 </XStack>
                                             )}
                                         </StyledAccordionTrigger>
@@ -182,8 +233,19 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({ open, onOpenCha
                                                     <IconWrapper backgroundColor="$orange8">
                                                         <Settings color="white" />
                                                     </IconWrapper>
-                                                    <Text flex={1} fontSize="$5" fontWeight="600" color="white">General Settings</Text>
-                                                    {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
+                                                    <Text
+                                                        flex={1}
+                                                        fontSize="$5"
+                                                        fontWeight="600"
+                                                        color="white"
+                                                    >
+                                                        General Settings
+                                                    </Text>
+                                                    {open ? (
+                                                        <ChevronUp color="white" />
+                                                    ) : (
+                                                        <ChevronDown color="white" />
+                                                    )}
                                                 </XStack>
                                             )}
                                         </StyledAccordionTrigger>
