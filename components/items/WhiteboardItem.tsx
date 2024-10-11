@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { View, styled, YStack, Image, Dialog, XStack, Button } from "tamagui";
-
-import { SketchCanvas } from "@terrylinla/react-native-sketch-canvas";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { View, styled, YStack, XStack, Button, Sheet, Image } from "tamagui";
+import { Canvas, Path, useCanvasRef, Rect } from "@shopify/react-native-skia";
+import { PanResponder, GestureResponderEvent, Dimensions } from "react-native";
 
 interface WhiteboardItemProps {
   itemData: {
-    name: string; // name of the item (do not change)
-    imageUri: string; // picture uri of the item (do not change)
-    [key: string]: any; // any other properties (do not change)
-
-    // add custom properties below ------
-
-    // ---------------------------------
+    name: string;
+    imageUri: string;
+    [key: string]: any;
+    paths: string[];
   };
-  onDataUpdate: (newItemData: Record<string, any>) => void; // updates item data when called (do not change)
-  isActive: boolean; // whether item is active/clicked (do not change)
-  onClose: () => void; // called when dialog is closed (important, as it will unlock the item) (do not change)
+  onDataUpdate: (newItemData: Record<string, any>) => void;
+  isActive: boolean;
+  onClose: () => void;
   roomInfo: {
     name: string;
     users: {
@@ -25,12 +22,23 @@ interface WhiteboardItemProps {
       isAdmin: boolean;
     }[];
     description: string;
-  }; // various room info (do not change)
+  };
 }
 
 interface WhiteboardItemComponent extends React.FC<WhiteboardItemProps> {
-  getInitialData: () => {};
+  getInitialData: () => { paths: string[] };
 }
+
+
+const WhiteboardView = styled(View, {
+  width: "100%",
+  height: "100%",
+  borderRadius: "$2",
+});
+
+const { width: screenWidth } = Dimensions.get("window");
+const WHITEBOARD_WIDTH = screenWidth - 40;
+const WHITEBOARD_HEIGHT = WHITEBOARD_WIDTH * 0.6;
 
 const WhiteboardItem: WhiteboardItemComponent = ({
   itemData,
@@ -39,72 +47,125 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   onClose,
   roomInfo,
 }) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [paths, setPaths] = useState<string[]>(itemData.paths || []);
+  const canvasRef = useCanvasRef();
+  const isDrawing = useRef(false);
+  const currentPathRef = useRef("");
 
-  // Custom properties (remove these)
+  const handleDialogClose = useCallback(() => {
+      onClose();
+  }, [onClose]);
 
-  // Opens dialog when item is active/clicked
-  useEffect(() => {
-    if (isActive && !dialogOpen) {
-      setDialogOpen(true);
-    }
-  }, [isActive]);
+  const updateItemData = useCallback((newPaths: string[]) => {
+      onDataUpdate({ ...itemData, paths: newPaths });
+  }, [itemData, onDataUpdate]);
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
-  };
+  const canvasPanResponder = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (event: GestureResponderEvent) => {
+          const { locationX, locationY } = event.nativeEvent;
+          currentPathRef.current = `M${locationX} ${locationY}`;
+          isDrawing.current = true;
+      },
+      onPanResponderMove: (event: GestureResponderEvent) => {
+          if (isDrawing.current) {
+              const { locationX, locationY } = event.nativeEvent;
+              currentPathRef.current += ` L${locationX} ${locationY}`;
+              setPaths([...paths]); // Force re-render
+          }
+      },
+      onPanResponderRelease: () => {
+          if (isDrawing.current) {
+              const newPaths = [...paths, currentPathRef.current];
+              setPaths(newPaths);
+              updateItemData(newPaths);
+              currentPathRef.current = "";
+              isDrawing.current = false;
+              console.log("Paths updated:", newPaths);
+          }
+      },
+  });
 
-  // Renders item when not active/clicked
-  // (default state of item on shelf)
+  const handleClear = useCallback(() => {
+      setPaths([]);
+      updateItemData([]);
+  }, [updateItemData]);
+
   if (!isActive) {
-    return (
-      <YStack flex={1}>
-        <Image source={{ uri: itemData.imageUri }} width="80%" height="80%" />
-      </YStack>
-    );
+      return (
+          <YStack flex={1} justifyContent="center" alignItems="center">
+              <Image
+                  source={{ uri: itemData.imageUri }}
+                  width="80%"
+                  height="80%"
+                  resizeMode="contain"
+              />
+          </YStack>
+      );
   }
 
-  // Renders item when active/clicked
-  // (item is clicked and dialog is open, feel free to change this return)
   return (
-    <YStack flex={1}>
-      <Dialog modal open={dialogOpen} onOpenChange={setDialogOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay key="overlay" />
-          <Dialog.Content
-            bordered
-            elevate
-            key="content"
-            animation={[
-              "quick",
-              {
-                opacity: {
-                  overshootClamping: true,
-                },
-              },
-            ]}
+      <YStack flex={1}>
+          <WhiteboardView />
+          <Sheet
+              modal
+              open={isActive}
+              snapPoints={[90]}
+              dismissOnSnapToBottom
+              disableDrag={true}
           >
-            <Dialog.Title>Draw on the Whiteboard</Dialog.Title>
-            <YStack padding="$4" gap="$4">
-              <SketchCanvas
-                strokeColor={"red"}
-                strokeWidth={7}
-              />
-            </YStack>
-            <Dialog.Close displayWhenAdapted asChild>
-              <Button theme="alt1" aria-label="Close">
-                Close
-              </Button>
-            </Dialog.Close>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog>
-    </YStack>
+              <Sheet.Overlay />
+              <Sheet.Frame padding="$4">
+                  <Sheet.Handle />
+                  <YStack f={1} jc="center" ai="center" space="$4">
+                      <View
+                          style={{
+                              width: WHITEBOARD_WIDTH,
+                              height: WHITEBOARD_HEIGHT,
+                              borderWidth: 2,
+                              borderColor: "#ccc",
+                              borderRadius: 8,
+                              overflow: "hidden",
+                          }}
+                          {...canvasPanResponder.panHandlers}
+                      >
+                          <Canvas style={{ flex: 1 }} ref={canvasRef}>
+                              <Rect x={0} y={0} width={WHITEBOARD_WIDTH} height={WHITEBOARD_HEIGHT} color="white" />
+                              {paths.map((path, index) => (
+                                  <Path
+                                      key={index}
+                                      path={path}
+                                      color="black"
+                                      style="stroke"
+                                      strokeWidth={2}
+                                  />
+                              ))}
+                              {currentPathRef.current && (
+                                  <Path
+                                      path={currentPathRef.current}
+                                      color="black"
+                                      style="stroke"
+                                      strokeWidth={2}
+                                  />
+                              )}
+                          </Canvas>
+                      </View>
+                      <XStack space="$4">
+                          <Button onPress={handleClear} backgroundColor="$red10" color="white">
+                              Clear
+                          </Button>
+                          <Button onPress={handleDialogClose} backgroundColor="$blue10" color="white">
+                              Close
+                          </Button>
+                      </XStack>
+                  </YStack>
+              </Sheet.Frame>
+          </Sheet>
+      </YStack>
   );
 };
 
-// Initializes item data (default values)
-WhiteboardItem.getInitialData = () => ({ color: "red", clickCount: 0 });
+WhiteboardItem.getInitialData = () => ({ paths: [] });
 
-export default WhiteboardItem; // do not remove the export (but change the name of the Item to match the name of the file)
+export default WhiteboardItem;
