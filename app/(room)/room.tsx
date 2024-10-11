@@ -38,6 +38,7 @@ import RoomSettingsDialog from "../../components/RoomSettingsDialog";
 import items from "../../components/items";
 import { PlacedItemData, ItemData, ShelfData } from "../../models/RoomData";
 import { UserData } from "../../models/UserData";
+import { PurchasedItem } from "models/PurchasedItem";
 import {
   BACKGROUND_COLOR,
   HEADER_BACKGROUND,
@@ -62,9 +63,7 @@ const RoomScreen = () => {
   const router = useRouter();
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const [roomName, setRoomName] = useState<string>("");
-  const [roomDescription, setRoomDescription] = useState<string | undefined>(
-    undefined
-  );
+  const [roomDescription, setRoomDescription] = useState<string | undefined>(undefined);
   const [shelves, setShelves] = useState<ShelfData[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -246,7 +245,10 @@ const RoomScreen = () => {
                   setShelves((prevShelves) =>
                     prevShelves.map((prevShelf) =>
                       prevShelf.id === docSnapshot.id
-                        ? ({ ...prevShelf, ...docSnapshot.data() } as ShelfData)
+                        ? ({
+                            ...prevShelf,
+                            ...docSnapshot.data(),
+                          } as ShelfData)
                         : prevShelf
                     )
                   );
@@ -258,9 +260,7 @@ const RoomScreen = () => {
             setLoadingProgress(75);
           } else {
             // Fetch existing shelves using their references
-            const shelvesSnapshot = await Promise.all(
-              shelfRefs.map((ref) => getDoc(ref))
-            );
+            const shelvesSnapshot = await Promise.all(shelfRefs.map((ref) => getDoc(ref)));
 
             setLoadingProgress(60);
 
@@ -305,19 +305,19 @@ const RoomScreen = () => {
 
             setShelves((prevShelves) => {
               if (!prevShelves) return prevShelves;
-            
+
               const shelvesMap = new Map<string, ShelfData>();
               for (const shelf of prevShelves) {
                 shelvesMap.set(shelf.id, { ...shelf, placedItems: [] });
               }
-            
+
               for (const item of placedItems) {
                 const shelf = shelvesMap.get(item.shelfId);
                 if (shelf && shelf.placedItems) {
                   shelf.placedItems.push(item);
                 }
               }
-            
+
               return Array.from(shelvesMap.values());
             });
           });
@@ -343,16 +343,19 @@ const RoomScreen = () => {
           if (inventoryRefs.length === 0) {
             setAvailableItems([]);
           } else {
-            const itemDocs = await Promise.all(
-              inventoryRefs.map((ref) => getDoc(ref))
-            );
-            const itemsList: ItemData[] = itemDocs
+            const purchasedItemDocs = await Promise.all(inventoryRefs.map((ref) => getDoc(ref)));
+            const itemsList: ItemData[] = purchasedItemDocs
               .filter((docSnap) => docSnap.exists())
-              .map((docSnap) => ({
-                // @ts-ignore
-                itemId: docSnap.id,
-                ...(docSnap.data() as ItemData),
-              }));
+              .map((docSnap) => {
+                const purchasedItemData = docSnap.data() as PurchasedItem;
+                return {
+                  itemId: purchasedItemData.itemId,
+                  name: purchasedItemData.name,
+                  imageUri: purchasedItemData.imageUri,
+                  cost: purchasedItemData.cost,
+                  shouldLock: purchasedItemData.shouldLock || false,
+                };
+              });
 
             setAvailableItems(itemsList);
 
@@ -390,13 +393,15 @@ const RoomScreen = () => {
   const handleItemSelect = async (item: ItemData) => {
     if (selectedSpot) {
       const { shelfId, position } = selectedSpot;
-  
+
       const ItemComponent = items[item.itemId];
       let initialItemData = {};
       if (ItemComponent && ItemComponent.getInitialData) {
         initialItemData = ItemComponent.getInitialData();
       }
-  
+
+      console.log(item.itemId);
+
       const newPlacedItem: Omit<PlacedItemData, "id"> = {
         roomId,
         shelfId,
@@ -411,15 +416,15 @@ const RoomScreen = () => {
           imageUri: item.imageUri,
         },
       };
-  
+
       const docRef = await addDoc(collection(db, "PlacedItems"), newPlacedItem);
-  
+
       // Update the shelf's itemList in Firestore
       await updateDoc(doc(db, "Shelves", shelfId), {
         itemList: arrayUnion(docRef),
         updatedAt: new Date(),
       });
-  
+
       // Close the item selection sheet
       setIsSheetOpen(false);
       setSelectedSpot(null);
@@ -429,13 +434,11 @@ const RoomScreen = () => {
   const handleItemRemove = async (shelfId: string, position: number) => {
     const shelf = shelves.find((shelf) => shelf.id === shelfId);
     if (!shelf) return;
-  
-    const itemToRemove = shelf.placedItems?.find(
-      (item) => item.position === position
-    );
+
+    const itemToRemove = shelf.placedItems?.find((item) => item.position === position);
     if (itemToRemove) {
       await deleteDoc(doc(db, "PlacedItems", itemToRemove.id));
-  
+
       // Update the shelf's itemList in Firestore
       await updateDoc(doc(db, "Shelves", shelfId), {
         itemList: arrayRemove(doc(db, "PlacedItems", itemToRemove.id)),
@@ -453,9 +456,7 @@ const RoomScreen = () => {
     if (shelfIndex === -1) return;
 
     const shelf = shelves[shelfIndex];
-    const placedItem = shelf.placedItems?.find(
-      (item) => item.position === position
-    );
+    const placedItem = shelf.placedItems?.find((item) => item.position === position);
     if (placedItem) {
       const updatedShelves = [...shelves];
       const updatedPlacedItem = {
@@ -463,9 +464,7 @@ const RoomScreen = () => {
         itemData: { ...placedItem.itemData, ...newItemData },
         updatedAt: new Date(),
       };
-      updatedShelves[shelfIndex].placedItems = updatedShelves[
-        shelfIndex
-      ].placedItems?.map((item) =>
+      updatedShelves[shelfIndex].placedItems = updatedShelves[shelfIndex].placedItems?.map((item) =>
         item.id === placedItem.id ? updatedPlacedItem : item
       );
 
@@ -518,15 +517,8 @@ const RoomScreen = () => {
               <Text fontSize="$4" color={HEADER_BACKGROUND} textAlign="center">
                 Please wait while we prepare your room...
               </Text>
-              <Progress
-                value={loadingProgress}
-                width={250}
-                backgroundColor="white"
-              >
-                <Progress.Indicator
-                  animation="bouncy"
-                  backgroundColor={HEADER_BACKGROUND}
-                />
+              <Progress value={loadingProgress} width={250} backgroundColor="white">
+                <Progress.Indicator animation="bouncy" backgroundColor={HEADER_BACKGROUND} />
               </Progress>
               <Text fontSize="$3" color={HEADER_BACKGROUND}>
                 {Math.round(loadingProgress)}% Complete
@@ -541,12 +533,7 @@ const RoomScreen = () => {
   if (isAuthorized === false) {
     return (
       <SafeAreaWrapper>
-        <YStack
-          f={1}
-          ai="center"
-          jc="center"
-          backgroundColor={BACKGROUND_COLOR}
-        >
+        <YStack f={1} ai="center" jc="center" backgroundColor={BACKGROUND_COLOR}>
           <Card
             elevate
             size="$4"
@@ -563,19 +550,10 @@ const RoomScreen = () => {
             <Card.Footer padded>
               <YStack gap="$4" alignItems="center">
                 <Feather name="lock" size={48} color={HEADER_BACKGROUND} />
-                <Text
-                  fontSize="$4"
-                  color={HEADER_BACKGROUND}
-                  textAlign="center"
-                >
+                <Text fontSize="$4" color={HEADER_BACKGROUND} textAlign="center">
                   You have not been invited to the room:
                 </Text>
-                <Text
-                  fontSize="$5"
-                  fontWeight="bold"
-                  color={HEADER_BACKGROUND}
-                  textAlign="center"
-                >
+                <Text fontSize="$5" fontWeight="bold" color={HEADER_BACKGROUND} textAlign="center">
                   {roomName}
                 </Text>
                 <Button
@@ -600,13 +578,7 @@ const RoomScreen = () => {
           <HeaderButton unstyled onPress={handleGoBack}>
             <ArrowLeft color="white" size={24} />
           </HeaderButton>
-          <Text
-            fontSize={18}
-            fontWeight="bold"
-            flex={1}
-            textAlign="center"
-            color="white"
-          >
+          <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
             {roomName}
           </Text>
           {isEditMode ? (
@@ -638,9 +610,7 @@ const RoomScreen = () => {
                       setSelectedSpot({ shelfId: shelf.id, position });
                       setIsSheetOpen(true);
                     }}
-                    onItemRemove={(position) =>
-                      handleItemRemove(shelf.id, position)
-                    }
+                    onItemRemove={(position) => handleItemRemove(shelf.id, position)}
                     onItemDataUpdate={(position, newItemData) =>
                       handleItemDataUpdate(shelf.id, position, newItemData)
                     }

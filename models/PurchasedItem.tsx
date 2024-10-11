@@ -4,9 +4,10 @@ export interface PurchasedItem {
   id: string;
   userId: string;
   itemRef: DocumentReference;
+  itemId: string;
   purchaseDate: Timestamp;
   name: string;
   cost: number;
   imageUri: string;
-  // Add any other relevant item data here
+  shouldLock: boolean;
 }
