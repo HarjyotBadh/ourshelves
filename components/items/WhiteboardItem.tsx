@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, styled, YStack, XStack, Button, Sheet, Image } from "tamagui";
 import { Canvas, Path, useCanvasRef, Rect } from "@shopify/react-native-skia";
-import { PanResponder, GestureResponderEvent, Dimensions } from "react-native";
+import { PanResponder, GestureResponderEvent, Dimensions, Modal } from "react-native";
 
 interface WhiteboardItemProps {
   itemData: {
@@ -36,7 +36,7 @@ const WhiteboardView = styled(View, {
   borderRadius: "$2",
 });
 
-const { width: screenWidth } = Dimensions.get("window");
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const WHITEBOARD_WIDTH = screenWidth - 40;
 const WHITEBOARD_HEIGHT = WHITEBOARD_WIDTH * 0.6;
 
@@ -51,10 +51,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const canvasRef = useCanvasRef();
   const isDrawing = useRef(false);
   const currentPathRef = useRef("");
-
-  const handleDialogClose = useCallback(() => {
-      onClose();
-  }, [onClose]);
 
   const updateItemData = useCallback((newPaths: string[]) => {
       onDataUpdate({ ...itemData, paths: newPaths });
@@ -82,7 +78,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
               updateItemData(newPaths);
               currentPathRef.current = "";
               isDrawing.current = false;
-              console.log("Paths updated:", newPaths);
           }
       },
   });
@@ -106,63 +101,66 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   }
 
   return (
-      <YStack flex={1}>
-          <WhiteboardView />
-          <Sheet
-              modal
-              open={isActive}
-              snapPoints={[90]}
-              dismissOnSnapToBottom
-              disableDrag={true}
+      <Modal
+          visible={isActive}
+          transparent={true}
+          animationType="fade"
+      >
+          <YStack 
+              flex={1} 
+              backgroundColor="rgba(0,0,0,0.5)" 
+              justifyContent="center" 
+              alignItems="center"
           >
-              <Sheet.Overlay />
-              <Sheet.Frame padding="$4">
-                  <Sheet.Handle />
-                  <YStack f={1} jc="center" ai="center" space="$4">
-                      <View
-                          style={{
-                              width: WHITEBOARD_WIDTH,
-                              height: WHITEBOARD_HEIGHT,
-                              borderWidth: 2,
-                              borderColor: "#ccc",
-                              borderRadius: 8,
-                              overflow: "hidden",
-                          }}
-                          {...canvasPanResponder.panHandlers}
-                      >
-                          <Canvas style={{ flex: 1 }} ref={canvasRef}>
-                              <Rect x={0} y={0} width={WHITEBOARD_WIDTH} height={WHITEBOARD_HEIGHT} color="white" />
-                              {paths.map((path, index) => (
-                                  <Path
-                                      key={index}
-                                      path={path}
-                                      color="black"
-                                      style="stroke"
-                                      strokeWidth={2}
-                                  />
-                              ))}
-                              {currentPathRef.current && (
-                                  <Path
-                                      path={currentPathRef.current}
-                                      color="black"
-                                      style="stroke"
-                                      strokeWidth={2}
-                                  />
-                              )}
-                          </Canvas>
-                      </View>
-                      <XStack space="$4">
-                          <Button onPress={handleClear} backgroundColor="$red10" color="white">
-                              Clear
-                          </Button>
-                          <Button onPress={handleDialogClose} backgroundColor="$blue10" color="white">
-                              Close
-                          </Button>
-                      </XStack>
-                  </YStack>
-              </Sheet.Frame>
-          </Sheet>
-      </YStack>
+              <WhiteboardView 
+                  backgroundColor="white"
+                  padding="$4"
+                  width={WHITEBOARD_WIDTH + 40}
+                  height={WHITEBOARD_HEIGHT + 100}
+              >
+                  <View
+                      style={{
+                          width: WHITEBOARD_WIDTH,
+                          height: WHITEBOARD_HEIGHT,
+                          borderWidth: 2,
+                          borderColor: "#ccc",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                      }}
+                      {...canvasPanResponder.panHandlers}
+                  >
+                      <Canvas style={{ flex: 1 }} ref={canvasRef}>
+                          <Rect x={0} y={0} width={WHITEBOARD_WIDTH} height={WHITEBOARD_HEIGHT} color="white" />
+                          {paths.map((path, index) => (
+                              <Path
+                                  key={index}
+                                  path={path}
+                                  color="black"
+                                  style="stroke"
+                                  strokeWidth={2}
+                              />
+                          ))}
+                          {currentPathRef.current && (
+                              <Path
+                                  path={currentPathRef.current}
+                                  color="black"
+                                  style="stroke"
+                                  strokeWidth={2}
+                              />
+                          )}
+                      </Canvas>
+                  </View>
+                  <XStack space="$4" marginTop="$4" justifyContent="center">
+                      <Button onPress={handleClear} backgroundColor="$red10" color="white">
+                          Clear
+                      </Button>
+                      <Button onPress={onClose} backgroundColor="$blue10" color="white">
+                          Close
+                      </Button>
+                  </XStack>
+              </WhiteboardView>
+          </YStack>
+      </Modal>
   );
 };
 
