@@ -1,4 +1,4 @@
-import { doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc, arrayRemove } from 'firebase/firestore';
 import { db, auth } from 'firebaseConfig';
 
 interface Room {
@@ -253,3 +253,23 @@ export const deleteRoom = async (roomId: string): Promise<{ success: boolean; me
 
     return { success: false, message: 'Something went wrong in homeFunctions/deleteRoom. Yell at Jack' };
 }
+
+export const removeUserFromRoom = async (roomId: string, userId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+        const roomRef = doc(db, 'Rooms', roomId);
+        const userRef = doc(db, 'Users', userId);
+
+        await updateDoc(roomRef, {
+            users: arrayRemove(userRef)
+        });
+
+        await updateDoc(userRef, {
+            rooms: arrayRemove(roomRef)
+        });
+
+        return { success: true, message: 'User removed from room successfully' };
+    } catch (error) {
+        console.error("Error removing user from room: ", error);
+        return { success: false, message: 'Failed to remove user from room' };
+    }
+};

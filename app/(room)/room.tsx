@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Pressable } from "react-native";
+import { Pressable, Alert } from "react-native";
 import {
   YStack,
   XStack,
@@ -39,6 +39,7 @@ import items from "../../components/items";
 import { PlacedItemData, ItemData, ShelfData } from "../../models/RoomData";
 import { UserData } from "../../models/UserData";
 import { PurchasedItem } from "models/PurchasedItem";
+import { removeUserFromRoom } from "project-functions/homeFunctions";
 import {
   BACKGROUND_COLOR,
   HEADER_BACKGROUND,
@@ -493,6 +494,18 @@ const RoomScreen = () => {
     }
   };
 
+  const handleRemoveUser = async (userId: string) => {
+    if (!roomId) return;
+
+    const result = await removeUserFromRoom(roomId, userId);
+    if (result.success) {
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+      Alert.alert("Success", "User removed from room successfully");
+    } else {
+      Alert.alert("Error", result.message);
+    }
+  };
+
   if (isLoading) {
     return (
       <YStack f={1} ai="center" jc="center" backgroundColor={BACKGROUND_COLOR}>
@@ -633,6 +646,8 @@ const RoomScreen = () => {
           onOpenChange={setIsSettingsOpen}
           users={users}
           roomDescription={roomDescription}
+          onRemoveUser={handleRemoveUser}
+          currentUserId={auth.currentUser?.uid || ""}
         />
       </Container>
     </SafeAreaWrapper>
