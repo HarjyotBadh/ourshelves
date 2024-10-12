@@ -1,124 +1,222 @@
-import React, { useState, useEffect } from 'react';
-import { Alert } from 'react-native';
-import { Dialog, Button, Text, YStack, XStack, ScrollView, Spinner } from 'tamagui';
-import { X } from '@tamagui/lucide-icons';
-import { getAdminRooms } from '../project-functions/profileFunctions';
-import { auth, db } from '../firebaseConfig';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import React, { useState, useEffect } from "react";
+import { Alert } from "react-native";
+import {
+  Dialog,
+  Button,
+  Text,
+  YStack,
+  XStack,
+  ScrollView,
+  Spinner,
+  styled,
+  useTheme,
+  Input,
+  Card,
+} from "tamagui";
+import { X, UserPlus, Search } from "@tamagui/lucide-icons";
+import { getAdminRooms } from "../project-functions/profileFunctions";
+import { auth, db } from "firebaseConfig";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 
 interface Room {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
 }
 
 interface AddUserToRoomDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    userId: string;
-    userName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  userId: string;
+  userName: string;
 }
 
-const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({ open, onOpenChange, userId, userName }) => {
-    const [adminRooms, setAdminRooms] = useState<Room[]>([]);
-    const [loading, setLoading] = useState(true);
+const StyledDialogContent = styled(Dialog.Content, {
+  width: "90%",
+  maxWidth: 500,
+  height: "80%",
+  maxHeight: 600,
+  padding: "$4",
+  backgroundColor: "$background",
+  borderRadius: "$4",
+});
 
-    useEffect(() => {
-        const fetchAdminRooms = async () => {
-            if (auth.currentUser) {
-                const rooms = await getAdminRooms(auth.currentUser.uid);
-                setAdminRooms(rooms);
-                setLoading(false);
-            }
-        };
+const DialogTitle = styled(Text, {
+  fontSize: "$6",
+  fontWeight: "bold",
+  color: "$color",
+});
 
-        fetchAdminRooms();
-    }, []);
+const StyledButton = styled(Button, {
+  animation: "quick",
+  pressStyle: { scale: 0.97 },
+});
 
-    const handleAddUserToRoom = async (roomId: string, roomName: string) => {
-        try {
-            const userRef = doc(db, 'Users', userId);
-            const roomRef = doc(db, 'Rooms', roomId);
+const RoomCard = styled(Card, {
+  marginBottom: "$2",
+  padding: "$3",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+});
 
-            await updateDoc(userRef, {
-                rooms: arrayUnion(roomRef)
-            });
+const CancelButton = styled(StyledButton, {
+  backgroundColor: "$gray5",
+  color: "$gray11",
+});
 
-            await updateDoc(roomRef, {
-                users: arrayUnion(userRef)
-            });
+const CloseButton = styled(StyledButton, {
+  position: "absolute",
+  top: "$3",
+  right: "$3",
+  size: "$3",
+  circular: true,
+  icon: X,
+  backgroundColor: "transparent",
+  color: "$gray11",
+});
 
-            Alert.alert('Success', `${userName} has been added to ${roomName}`);
-            onOpenChange(false);
-        } catch (error) {
-            console.error('Error adding user to room:', error);
-            Alert.alert('Error', 'Failed to add user to room. Please try again.');
-        }
+const LoadingContainer = styled(YStack, {
+  alignItems: "center",
+  justifyContent: "center",
+  flex: 1,
+});
+
+const NoRoomsText = styled(Text, {
+  fontSize: "$4",
+  textAlign: "center",
+  color: "$gray11",
+});
+
+const SearchInput = styled(Input, {
+  marginBottom: "$3",
+});
+
+const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
+  open,
+  onOpenChange,
+  userId,
+  userName,
+}) => {
+  const theme = useTheme();
+  const [adminRooms, setAdminRooms] = useState<Room[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const fetchAdminRooms = async () => {
+      if (auth.currentUser) {
+        const rooms = await getAdminRooms(auth.currentUser.uid);
+        setAdminRooms(rooms);
+        setFilteredRooms(rooms);
+        setLoading(false);
+      }
     };
 
-    return (
-        <Dialog modal open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Overlay
-                    key="overlay"
-                    animation="quick"
-                    opacity={0.5}
-                    enterStyle={{ opacity: 0 }}
-                    exitStyle={{ opacity: 0 }}
-                />
-                <Dialog.Content
-                    bordered
-                    elevate
-                    key="content"
-                    animation={[
-                        'quick',
-                        {
-                            opacity: {
-                                overshootClamping: true,
-                            },
-                        },
-                    ]}
-                    enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-                    exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-                    x={0}
-                    y={0}
-                    opacity={1}
-                    scale={1}
-                    width="80%"
-                    height="80%"
-                >
-                    <YStack gap="$2">
-                        <Dialog.Title>Add {userName} to Room</Dialog.Title>
-                        {loading ? (
-                            <Spinner size="large" />
-                        ) : adminRooms.length > 0 ? (
-                            <ScrollView>
-                                <YStack gap="$2">
-                                    {adminRooms.map((room) => (
-                                        <Button
-                                            key={room.id}
-                                            onPress={() => handleAddUserToRoom(room.id, room.name)}
-                                        >
-                                            {room.name}
-                                        </Button>
-                                    ))}
-                                </YStack>
-                            </ScrollView>
-                        ) : (
-                            <Text>You are not an admin of any rooms.</Text>
-                        )}
-                        <XStack gap="$2" justifyContent="flex-end">
-                            <Dialog.Close asChild>
-                                <Button>Cancel</Button>
-                            </Dialog.Close>
-                        </XStack>
-                    </YStack>
-                    <Dialog.Close asChild>
-                        <Button position="absolute" top="$3" right="$3" size="$2" circular icon={X} />
-                    </Dialog.Close>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog>
+    fetchAdminRooms();
+  }, []);
+
+  useEffect(() => {
+    const filtered = adminRooms.filter((room) =>
+      room.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    setFilteredRooms(filtered);
+  }, [searchQuery, adminRooms]);
+
+  const handleAddUserToRoom = async (roomId: string, roomName: string) => {
+    try {
+      const userRef = doc(db, "Users", userId);
+      const roomRef = doc(db, "Rooms", roomId);
+
+      await updateDoc(userRef, {
+        rooms: arrayUnion(roomRef),
+      });
+
+      await updateDoc(roomRef, {
+        users: arrayUnion(userRef),
+      });
+
+      Alert.alert("Success", `${userName} has been added to ${roomName}`);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error adding user to room:", error);
+      Alert.alert("Error", "Failed to add user to room. Please try again.");
+    }
+  };
+
+  return (
+    <Dialog modal open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+        <StyledDialogContent
+          bordered
+          elevate
+          key="content"
+          animation={[
+            "quick",
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+        >
+          <YStack space="$4">
+            <Dialog.Title>
+              <DialogTitle>Add {userName} to Room</DialogTitle>
+            </Dialog.Title>
+            <SearchInput
+              placeholder="Search rooms..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {loading ? (
+              <LoadingContainer>
+                <Spinner size="large" color="$blue10" />
+              </LoadingContainer>
+            ) : filteredRooms.length > 0 ? (
+              <ScrollView>
+                <YStack space="$2">
+                  {filteredRooms.map((room) => (
+                    <RoomCard key={room.id} elevate>
+                      <Text fontSize="$4" color="$color">
+                        {room.name}
+                      </Text>
+                      <StyledButton
+                        onPress={() => handleAddUserToRoom(room.id, room.name)}
+                        icon={UserPlus}
+                        size="$3"
+                        circular
+                        theme="active"
+                      />
+                    </RoomCard>
+                  ))}
+                </YStack>
+              </ScrollView>
+            ) : (
+              <NoRoomsText>No rooms found.</NoRoomsText>
+            )}
+            <XStack space="$2" justifyContent="flex-end">
+              <Dialog.Close asChild>
+                <CancelButton>Cancel</CancelButton>
+              </Dialog.Close>
+            </XStack>
+          </YStack>
+          <Dialog.Close asChild>
+            <CloseButton />
+          </Dialog.Close>
+        </StyledDialogContent>
+      </Dialog.Portal>
+    </Dialog>
+  );
 };
 
 export default AddUserToRoomDialog;
