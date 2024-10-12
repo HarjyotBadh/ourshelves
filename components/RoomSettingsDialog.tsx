@@ -1,17 +1,5 @@
 import React, { useState } from "react";
-import {
-  Dialog,
-  Accordion,
-  YStack,
-  Button,
-  Text,
-  XStack,
-  styled,
-  ScrollView,
-  Avatar,
-  Input,
-  AlertDialog,
-} from "tamagui";
+import { Dialog, Accordion, YStack, Text, XStack, ScrollView, Avatar, AlertDialog } from "tamagui";
 import {
   Settings,
   Users,
@@ -20,13 +8,24 @@ import {
   ChevronUp,
   X,
   Info,
-  Search,
   AlertTriangle,
 } from "@tamagui/lucide-icons";
-
-const BACKGROUND_COLOR = "$yellow2Light";
-const HEADER_BACKGROUND = "#8B4513";
-const USER_ITEM_BACKGROUND = "#DEB887";
+import {
+  StyledAccordionItem,
+  StyledAccordionTrigger,
+  StyledAccordionContent,
+  IconWrapper,
+  UserItem,
+  Header,
+  HeaderButton,
+  SearchInput,
+  StyledAlertDialogContent,
+  StyledAlertDialogTitle,
+  StyledAlertDialogDescription,
+  StyledAlertDialogButton,
+  BACKGROUND_COLOR,
+  HEADER_BACKGROUND,
+} from "../styles/RoomSettingsStyles";
 
 interface User {
   id: string;
@@ -43,91 +42,6 @@ interface RoomSettingsDialogProps {
   onRemoveUser: (userId: string) => void;
   currentUserId: string;
 }
-
-const StyledAccordionItem = styled(Accordion.Item, {
-  backgroundColor: "$backgroundStrong",
-  marginBottom: "$2",
-  borderRadius: "$4",
-  overflow: "hidden",
-});
-
-const StyledAccordionTrigger = styled(Accordion.Trigger, {
-  padding: "$3",
-  backgroundColor: HEADER_BACKGROUND,
-});
-
-const StyledAccordionContent = styled(Accordion.Content, {
-  padding: "$3",
-  backgroundColor: BACKGROUND_COLOR,
-});
-
-const IconWrapper = styled(XStack, {
-  alignItems: "center",
-  justifyContent: "center",
-  width: 32,
-  height: 32,
-  borderRadius: 16,
-  marginRight: "$2",
-});
-
-const UserItem = styled(XStack, {
-  alignItems: "center",
-  paddingVertical: "$2",
-  paddingHorizontal: "$3",
-  borderRadius: "$2",
-  marginBottom: "$2",
-  backgroundColor: USER_ITEM_BACKGROUND,
-});
-
-const Header = styled(XStack, {
-  height: 60,
-  backgroundColor: HEADER_BACKGROUND,
-  alignItems: "center",
-  paddingHorizontal: "$4",
-});
-
-const HeaderButton = styled(Button, {
-  width: 50,
-  height: 50,
-  justifyContent: "center",
-  alignItems: "center",
-});
-
-const SearchInput = styled(Input, {
-  marginBottom: "$3",
-  backgroundColor: "white",
-});
-
-const StyledAlertDialogContent = styled(AlertDialog.Content, {
-  backgroundColor: BACKGROUND_COLOR,
-  borderRadius: 10,
-  borderColor: HEADER_BACKGROUND,
-  borderWidth: 2,
-  padding: 20,
-  maxWidth: 340,
-});
-
-const StyledAlertDialogTitle = styled(AlertDialog.Title, {
-  color: HEADER_BACKGROUND,
-  fontSize: 20,
-  fontWeight: "bold",
-  marginBottom: 10,
-});
-
-const StyledAlertDialogDescription = styled(AlertDialog.Description, {
-  color: "#5D4037",
-  fontSize: 16,
-  marginBottom: 20,
-});
-
-const StyledAlertDialogButton = styled(Button, {
-  backgroundColor: HEADER_BACKGROUND,
-  color: "white",
-  fontSize: 16,
-  paddingVertical: 10,
-  paddingHorizontal: 20,
-  borderRadius: 5,
-});
 
 const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   open,

@@ -254,6 +254,21 @@ export const deleteRoom = async (roomId: string): Promise<{ success: boolean; me
     return { success: false, message: 'Something went wrong in homeFunctions/deleteRoom. Yell at Jack' };
 }
 
+/**
+ * Removes a user from a specified room.
+ * 
+ * This function updates both the room document and the user document in Firestore.
+ * It removes the user reference from the room's users array and the room reference
+ * from the user's rooms array.
+ *
+ * @param roomId - The ID of the room from which the user should be removed.
+ * @param userId - The ID of the user to be removed from the room.
+ * @returns A promise that resolves to an object containing:
+ *          - success: A boolean indicating whether the operation was successful.
+ *          - message: A string providing information about the result of the operation.
+ * 
+ * @throws Will throw an error if there's a problem accessing Firestore or updating documents.
+ */
 export const removeUserFromRoom = async (roomId: string, userId: string): Promise<{ success: boolean; message: string }> => {
     try {
         const roomRef = doc(db, 'Rooms', roomId);

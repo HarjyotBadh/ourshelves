@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Alert } from "react-native";
-import {
-  Dialog,
-  Button,
-  Text,
-  YStack,
-  XStack,
-  ScrollView,
-  Spinner,
-  styled,
-  useTheme,
-  Input,
-  Card,
-} from "tamagui";
-import { X, UserPlus, Search } from "@tamagui/lucide-icons";
+import { Dialog, Text, YStack, XStack, ScrollView, Spinner, useTheme } from "tamagui";
+import { UserPlus } from "@tamagui/lucide-icons";
 import { getAdminRooms } from "../project-functions/profileFunctions";
 import { auth, db } from "firebaseConfig";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import {
+  StyledDialogContent,
+  DialogTitle,
+  StyledButton,
+  RoomCard,
+  CancelButton,
+  CloseButton,
+  LoadingContainer,
+  NoRoomsText,
+  SearchInput,
+} from "../styles/AddUserToRoomDialogStyles";
 
 interface Room {
   id: string;
@@ -30,74 +29,12 @@ interface AddUserToRoomDialogProps {
   userName: string;
 }
 
-const StyledDialogContent = styled(Dialog.Content, {
-  width: "90%",
-  maxWidth: 500,
-  height: "80%",
-  maxHeight: 600,
-  padding: "$4",
-  backgroundColor: "$background",
-  borderRadius: "$4",
-});
-
-const DialogTitle = styled(Text, {
-  fontSize: "$6",
-  fontWeight: "bold",
-  color: "$color",
-});
-
-const StyledButton = styled(Button, {
-  animation: "quick",
-  pressStyle: { scale: 0.97 },
-});
-
-const RoomCard = styled(Card, {
-  marginBottom: "$2",
-  padding: "$3",
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-});
-
-const CancelButton = styled(StyledButton, {
-  backgroundColor: "$gray5",
-  color: "$gray11",
-});
-
-const CloseButton = styled(StyledButton, {
-  position: "absolute",
-  top: "$3",
-  right: "$3",
-  size: "$3",
-  circular: true,
-  icon: X,
-  backgroundColor: "transparent",
-  color: "$gray11",
-});
-
-const LoadingContainer = styled(YStack, {
-  alignItems: "center",
-  justifyContent: "center",
-  flex: 1,
-});
-
-const NoRoomsText = styled(Text, {
-  fontSize: "$4",
-  textAlign: "center",
-  color: "$gray11",
-});
-
-const SearchInput = styled(Input, {
-  marginBottom: "$3",
-});
-
 const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
   open,
   onOpenChange,
   userId,
   userName,
 }) => {
-  const theme = useTheme();
   const [adminRooms, setAdminRooms] = useState<Room[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
