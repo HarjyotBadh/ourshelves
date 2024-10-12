@@ -17,6 +17,7 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "@tamagui/lucide-icons";
+import AddUserToRoomDialog from "../components/AddUserToRoomDialog";
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -42,6 +43,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const { profileId } = useLocalSearchParams<{ profileId: string }>();
   const router = useRouter();
+  const [isAddToRoomDialogOpen, setIsAddToRoomDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,9 +73,7 @@ export default function ProfilePage() {
           throw new Error("Profile ID is missing");
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
         setLoading(false);
       }
@@ -113,13 +113,7 @@ export default function ProfilePage() {
           </Avatar>
 
           <H4>About Me:</H4>
-          <TextArea
-            height={170}
-            width={300}
-            value={aboutMeText}
-            editable={false}
-            borderWidth={2}
-          />
+          <TextArea height={170} width={300} value={aboutMeText} editable={false} borderWidth={2} />
 
           <XStack gap="$2" px="$2" pt="$5">
             <H4>Number Of Rooms I'm In:</H4>
@@ -131,16 +125,20 @@ export default function ProfilePage() {
           <Button
             size="$7"
             circular
-            onPress={() => {
-              alert("User added to room!");
-            }}
+            onPress={() => setIsAddToRoomDialogOpen(true)}
             color="$white"
             borderRadius="50%"
             justifyContent="center"
             alignItems="center"
             display="flex"
             icon={<Plus size="$4" />}
-          ></Button>
+          />
+          <AddUserToRoomDialog
+            open={isAddToRoomDialogOpen}
+            onOpenChange={setIsAddToRoomDialogOpen}
+            userId={profileId}
+            userName={profilePage?.displayName || ""}
+          />
         </YStack>
       </SafeAreaView>
     </>
