@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   Accordion,
@@ -9,8 +9,18 @@ import {
   styled,
   ScrollView,
   Avatar,
+  Input,
 } from "tamagui";
-import { Settings, Users, Shield, ChevronDown, ChevronUp, X, Info } from "@tamagui/lucide-icons";
+import {
+  Settings,
+  Users,
+  Shield,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Info,
+  Search,
+} from "@tamagui/lucide-icons";
 
 const BACKGROUND_COLOR = "$yellow2Light";
 const HEADER_BACKGROUND = "#8B4513";
@@ -63,7 +73,7 @@ const UserItem = styled(XStack, {
   paddingVertical: "$2",
   paddingHorizontal: "$3",
   borderRadius: "$2",
-  marginBottom: "$1",
+  marginBottom: "$2",
   backgroundColor: USER_ITEM_BACKGROUND,
 });
 
@@ -81,6 +91,11 @@ const HeaderButton = styled(Button, {
   alignItems: "center",
 });
 
+const SearchInput = styled(Input, {
+  marginBottom: "$3",
+  backgroundColor: "white",
+});
+
 const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   open,
   onOpenChange,
@@ -89,30 +104,38 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   onRemoveUser,
   currentUserId,
 }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredUsers = users.filter((user) =>
+    user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const renderUserList = () => (
     <YStack gap="$2">
-      {users.map((user) => (
+      <SearchInput
+        placeholder="Search users..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      {filteredUsers.map((user) => (
         <UserItem key={user.id}>
-          <Avatar circular size="$3" mr="$3">
+          <Avatar circular size="$4" mr="$3">
             {user.profilePicture ? (
               <Avatar.Image source={{ uri: user.profilePicture }} />
             ) : (
-              <Avatar.Image
-                source={{
-                  uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    user.displayName
-                  )}&background=random`,
-                }}
-              />
+              <Avatar.Fallback delayMs={600}>
+                <Text fontSize="$2" color="white">
+                  {user.displayName.charAt(0).toUpperCase()}
+                </Text>
+              </Avatar.Fallback>
             )}
-            <Avatar.Fallback bc="$blue5" />
           </Avatar>
-          <Text flex={1} color="black">
+          <Text flex={1} fontSize="$4" fontWeight="500" color="black">
             {user.displayName}
           </Text>
           {user.isAdmin ? (
             <IconWrapper backgroundColor="$blue8">
-              <Shield color="$blue11" size={16} />
+              <Shield color="white" size={16} />
             </IconWrapper>
           ) : (
             <IconWrapper
@@ -156,13 +179,14 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
           y={0}
           opacity={1}
           scale={1}
-          width="80%"
+          width="90%"
+          maxWidth={500}
           height="80%"
           backgroundColor={BACKGROUND_COLOR}
         >
           <YStack flex={1}>
             <Header>
-              <Text fontSize={18} fontWeight="bold" flex={1} textAlign="center" color="white">
+              <Text fontSize={20} fontWeight="bold" flex={1} textAlign="center" color="white">
                 Room Settings
               </Text>
               <Dialog.Close asChild>

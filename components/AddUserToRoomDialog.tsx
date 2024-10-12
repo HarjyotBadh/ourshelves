@@ -169,7 +169,7 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
           enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
           exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
         >
-          <YStack space="$4">
+          <YStack gap="$4">
             <Dialog.Title>
               <DialogTitle>Add {userName} to Room</DialogTitle>
             </Dialog.Title>
@@ -204,7 +204,7 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
             ) : (
               <NoRoomsText>No rooms found.</NoRoomsText>
             )}
-            <XStack space="$2" justifyContent="flex-end">
+            <XStack gap="$2" justifyContent="flex-end">
               <Dialog.Close asChild>
                 <CancelButton>Cancel</CancelButton>
               </Dialog.Close>
