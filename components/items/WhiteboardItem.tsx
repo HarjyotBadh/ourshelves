@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, styled, YStack, XStack, Button, Sheet, Image } from "tamagui";
 import { Canvas, Path, useCanvasRef, Rect } from "@shopify/react-native-skia";
 import { PanResponder, GestureResponderEvent, Dimensions, Modal } from "react-native";
+import { ref, onValue, push, set, remove } from "firebase/database";
+import { rtdb, auth } from "firebaseConfig";
 
 interface WhiteboardItemProps {
   itemData: {
     name: string;
     imageUri: string;
     [key: string]: any;
+    id: string;
     paths: string[];
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
@@ -51,10 +54,27 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const canvasRef = useCanvasRef();
   const isDrawing = useRef(false);
   const currentPathRef = useRef("");
+  const whiteboardRef = useRef(ref(rtdb, `whiteboards/${itemData.id}`));
 
-  const updateItemData = useCallback((newPaths: string[]) => {
-      onDataUpdate({ ...itemData, paths: newPaths });
-  }, [itemData, onDataUpdate]);
+  useEffect(() => {
+    const unsubscribe = onValue(whiteboardRef.current, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setPaths(Object.values(data));
+      } else {
+        setPaths([]);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [itemData.id]);
+
+  const addPathToRealtimeDB = useCallback((path: string) => {
+    console.log("addPathToRealtimeDB", path);
+    push(whiteboardRef.current, path);
+  }, []);
 
   const canvasPanResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -68,24 +88,35 @@ const WhiteboardItem: WhiteboardItemComponent = ({
           if (isDrawing.current) {
               const { locationX, locationY } = event.nativeEvent;
               currentPathRef.current += ` L${locationX} ${locationY}`;
-              setPaths([...paths]); // Force re-render
+              // setPaths([...paths]); // Force re-render
+              setPaths((prevPaths) => [...prevPaths, currentPathRef.current]);
           }
       },
       onPanResponderRelease: () => {
           if (isDrawing.current) {
-              const newPaths = [...paths, currentPathRef.current];
-              setPaths(newPaths);
-              updateItemData(newPaths);
+              // const newPaths = [...paths, currentPathRef.current];
+              // setPaths(newPaths);
+              // updateItemData(newPaths);
+              addPathToRealtimeDB(currentPathRef.current);
               currentPathRef.current = "";
               isDrawing.current = false;
           }
       },
   });
 
+  // const handleClear = useCallback(() => {
+  //     setPaths([]);
+  //     updateItemData([]);
+  // }, [updateItemData]);
   const handleClear = useCallback(() => {
-      setPaths([]);
-      updateItemData([]);
-  }, [updateItemData]);
+    set(whiteboardRef.current, null);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    onDataUpdate({ ...itemData, paths });
+    remove(whiteboardRef.current);
+    onClose();
+  }, [itemData, paths, onDataUpdate, onClose]);
 
   if (!isActive) {
       return (
@@ -140,14 +171,14 @@ const WhiteboardItem: WhiteboardItemComponent = ({
                                   strokeWidth={2}
                               />
                           ))}
-                          {currentPathRef.current && (
+                          {/* {currentPathRef.current && (
                               <Path
                                   path={currentPathRef.current}
                                   color="black"
                                   style="stroke"
                                   strokeWidth={2}
                               />
-                          )}
+                          )} */}
                       </Canvas>
                   </View>
                   <XStack space="$4" marginTop="$4" justifyContent="center">
