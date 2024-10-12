@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Alert } from "react-native";
-import { Dialog, Text, YStack, XStack, ScrollView, Spinner, useTheme } from "tamagui";
-import { UserPlus } from "@tamagui/lucide-icons";
+import { Dialog, Text, YStack, XStack, ScrollView, Spinner, AlertDialog } from "tamagui";
+import { AlertTriangle, UserPlus } from "@tamagui/lucide-icons";
 import { getAdminRooms } from "../project-functions/profileFunctions";
 import { auth, db } from "firebaseConfig";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
@@ -15,6 +15,12 @@ import {
   LoadingContainer,
   NoRoomsText,
   SearchInput,
+  StyledAlertDialogContent,
+  StyledAlertDialogTitle,
+  StyledAlertDialogDescription,
+  AlertDialogIconContainer,
+  AlertDialogButtonContainer,
+  AlertDialogButton,
 } from "../styles/AddUserToRoomDialogStyles";
 
 interface Room {
@@ -39,6 +45,8 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [roomToAdd, setRoomToAdd] = useState<Room | null>(null);
 
   useEffect(() => {
     const fetchAdminRooms = async () => {
@@ -60,10 +68,17 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
     setFilteredRooms(filtered);
   }, [searchQuery, adminRooms]);
 
-  const handleAddUserToRoom = async (roomId: string, roomName: string) => {
+  const handleAddUserToRoom = async (room: Room) => {
+    setRoomToAdd(room);
+    setConfirmationOpen(true);
+  };
+
+  const confirmAddUserToRoom = async () => {
+    if (!roomToAdd) return;
+
     try {
       const userRef = doc(db, "Users", userId);
-      const roomRef = doc(db, "Rooms", roomId);
+      const roomRef = doc(db, "Rooms", roomToAdd.id);
 
       await updateDoc(userRef, {
         rooms: arrayUnion(roomRef),
@@ -73,86 +88,145 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
         users: arrayUnion(userRef),
       });
 
-      Alert.alert("Success", `${userName} has been added to ${roomName}`);
+      Alert.alert("Success", `${userName} has been added to ${roomToAdd.name}`);
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding user to room:", error);
       Alert.alert("Error", "Failed to add user to room. Please try again.");
+    } finally {
+      setConfirmationOpen(false);
+      setRoomToAdd(null);
     }
   };
 
   return (
-    <Dialog modal open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay
-          key="overlay"
-          animation="quick"
-          opacity={0.5}
-          enterStyle={{ opacity: 0 }}
-          exitStyle={{ opacity: 0 }}
-        />
-        <StyledDialogContent
-          bordered
-          elevate
-          key="content"
-          animation={[
-            "quick",
-            {
-              opacity: {
-                overshootClamping: true,
+    <>
+      <Dialog modal open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <StyledDialogContent
+            bordered
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
               },
-            },
-          ]}
-          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-        >
-          <YStack gap="$4">
-            <Dialog.Title>
-              <DialogTitle>Add {userName} to Room</DialogTitle>
-            </Dialog.Title>
-            <SearchInput
-              placeholder="Search rooms..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {loading ? (
-              <LoadingContainer>
-                <Spinner size="large" color="$blue10" />
-              </LoadingContainer>
-            ) : filteredRooms.length > 0 ? (
-              <ScrollView>
-                <YStack space="$2">
-                  {filteredRooms.map((room) => (
-                    <RoomCard key={room.id} elevate>
-                      <Text fontSize="$4" color="$color">
-                        {room.name}
-                      </Text>
-                      <StyledButton
-                        onPress={() => handleAddUserToRoom(room.id, room.name)}
-                        icon={UserPlus}
-                        size="$3"
-                        circular
-                        theme="active"
-                      />
-                    </RoomCard>
-                  ))}
-                </YStack>
-              </ScrollView>
-            ) : (
-              <NoRoomsText>No rooms found.</NoRoomsText>
-            )}
-            <XStack gap="$2" justifyContent="flex-end">
-              <Dialog.Close asChild>
-                <CancelButton>Cancel</CancelButton>
-              </Dialog.Close>
-            </XStack>
-          </YStack>
-          <Dialog.Close asChild>
-            <CloseButton />
-          </Dialog.Close>
-        </StyledDialogContent>
-      </Dialog.Portal>
-    </Dialog>
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          >
+            <YStack gap="$4">
+              <Dialog.Title>
+                <DialogTitle>Add {userName} to Room</DialogTitle>
+              </Dialog.Title>
+              <SearchInput
+                placeholder="Search rooms..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {loading ? (
+                <LoadingContainer>
+                  <Spinner size="large" color="$blue10" />
+                </LoadingContainer>
+              ) : filteredRooms.length > 0 ? (
+                <ScrollView>
+                  <YStack gap="$2">
+                    {filteredRooms.map((room) => (
+                      <RoomCard key={room.id} elevate>
+                        <Text fontSize="$4" color="$color">
+                          {room.name}
+                        </Text>
+                        <StyledButton
+                          onPress={() => handleAddUserToRoom(room)}
+                          icon={UserPlus}
+                          size="$3"
+                          circular
+                          theme="active"
+                        />
+                      </RoomCard>
+                    ))}
+                  </YStack>
+                </ScrollView>
+              ) : (
+                <NoRoomsText>No rooms found.</NoRoomsText>
+              )}
+              <XStack gap="$2" justifyContent="flex-end">
+                <Dialog.Close asChild>
+                  <CancelButton>Cancel</CancelButton>
+                </Dialog.Close>
+              </XStack>
+            </YStack>
+            <Dialog.Close asChild>
+              <CloseButton />
+            </Dialog.Close>
+          </StyledDialogContent>
+        </Dialog.Portal>
+      </Dialog>
+
+      <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <StyledAlertDialogContent
+            bordered
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          >
+            <YStack gap="$4" alignItems="center">
+              <AlertDialogIconContainer>
+                <AlertTriangle color="$orange10" size={40} />
+              </AlertDialogIconContainer>
+              <StyledAlertDialogTitle>Confirm Add User to Room</StyledAlertDialogTitle>
+              <StyledAlertDialogDescription>
+                Are you sure you want to add {userName} to {roomToAdd?.name}?
+              </StyledAlertDialogDescription>
+
+              <AlertDialogButtonContainer>
+                <AlertDialog.Cancel asChild>
+                  <AlertDialogButton theme="alt1" aria-label="Cancel">
+                    Cancel
+                  </AlertDialogButton>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action asChild>
+                  <AlertDialogButton
+                    theme="active"
+                    aria-label="Add User"
+                    onPress={confirmAddUserToRoom}
+                  >
+                    Add User
+                  </AlertDialogButton>
+                </AlertDialog.Action>
+              </AlertDialogButtonContainer>
+            </YStack>
+          </StyledAlertDialogContent>
+        </AlertDialog.Portal>
+      </AlertDialog>
+    </>
   );
 };
 
