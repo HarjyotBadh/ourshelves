@@ -167,21 +167,11 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
 
     const ItemComponent = items[item.itemId];
     if (ItemComponent) {
-      const getMillis = (date) => {
-        if (date instanceof Date) return date.getTime();
-        if (date && typeof date.toMillis === "function") return date.toMillis();
-        return new Date().getTime();
-      };
-
-      const updatedAtKey = getMillis(item.updatedAt);
-
       return (
         <ItemComponent
-          key={updatedAtKey}
+          key={item.id}
           itemData={item.itemData}
-          onDataUpdate={(newItemData) =>
-            onItemDataUpdate(position, newItemData)
-          }
+          onDataUpdate={(newItemData) => onItemDataUpdate(position, newItemData)}
           isActive={isItemActive}
           onClose={handleItemClose}
           roomInfo={roomInfo}
