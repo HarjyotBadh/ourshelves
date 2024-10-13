@@ -1,60 +1,28 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, styled, YStack, XStack, Button, Sheet, Image } from "tamagui";
+import { View, YStack, XStack, Button, Image } from "tamagui";
 import { Canvas, Path, useCanvasRef, Rect } from "@shopify/react-native-skia";
-import { PanResponder, GestureResponderEvent, Dimensions, Modal } from "react-native";
-import { ref, onValue, push, set, remove, off, onDisconnect } from "firebase/database";
-import { rtdb, auth, db } from "firebaseConfig";
-import { doc, updateDoc } from "firebase/firestore";
+import {
+  PanResponder,
+  GestureResponderEvent,
+  Dimensions,
+  Modal,
+} from "react-native";
+import {
+  ref,
+  onValue,
+  push,
+  set,
+  remove,
+  off,
+  onDisconnect,
+} from "firebase/database";
+import { rtdb } from "firebaseConfig";
+import { WhiteboardItemComponent, PathData } from "models/WhiteboardModel";
+import { colors, ColorButton, WhiteboardView } from "styles/WhiteboardStyles";
 
-interface PathData {
-  path: string;
-  color: string;
-}
-
-interface WhiteboardItemProps {
-  itemData: {
-    name: string;
-    imageUri: string;
-    id: string;
-    paths: PathData[];
-  };
-  onDataUpdate: (newItemData: Record<string, any>) => void;
-  isActive: boolean;
-  onClose: () => void;
-  roomInfo: {
-    name: string;
-    users: {
-      id: string;
-      displayName: string;
-      profilePicture?: string;
-      isAdmin: boolean;
-    }[];
-    description: string;
-  };
-}
-
-interface WhiteboardItemComponent extends React.FC<WhiteboardItemProps> {
-  getInitialData: () => { paths: PathData[] };
-}
-
-const WhiteboardView = styled(View, {
-  width: "100%",
-  height: "100%",
-  borderRadius: "$2",
-});
-
-const ColorButton = styled(Button, {
-  width: 30,
-  height: 30,
-  borderRadius: 15,
-  marginHorizontal: 5,
-});
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+const { width: screenWidth } = Dimensions.get("window");
 const WHITEBOARD_WIDTH = screenWidth - 40;
 const WHITEBOARD_HEIGHT = WHITEBOARD_WIDTH * 0.6;
-
-const colors = ['black', 'red', 'blue', 'green', 'purple', 'yellow'];
 
 const WhiteboardItem: WhiteboardItemComponent = ({
   itemData,
@@ -65,6 +33,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
 }) => {
   const [paths, setPaths] = useState<PathData[]>(itemData.paths || []);
   const [currentColor, setCurrentColor] = useState(colors[0]);
+  const [hasChanges, setHasChanges] = useState(false);
   const canvasRef = useCanvasRef();
   const isDrawing = useRef(false);
   const currentPathRef = useRef("");
@@ -75,10 +44,8 @@ const WhiteboardItem: WhiteboardItemComponent = ({
     if (isActive) {
       const initializeWhiteboard = async () => {
         try {
-          // Initialize the Realtime Database with the paths from itemData
           await set(whiteboardRef.current, itemData.paths || []);
 
-          // Set up listener for Realtime Database updates
           const unsubscribe = onValue(whiteboardRef.current, (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -88,7 +55,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
             }
           });
 
-          // Set up disconnect handler
           disconnectRef.current = onDisconnect(whiteboardRef.current);
           disconnectRef.current.remove();
 
@@ -110,9 +76,31 @@ const WhiteboardItem: WhiteboardItemComponent = ({
 
   const addPathToRealtimeDB = useCallback((pathData: PathData) => {
     push(whiteboardRef.current, pathData);
+    setHasChanges(true);
   }, []);
 
-  const canvasPanResponder = PanResponder.create({
+  const handleClear = useCallback(async () => {
+    await set(whiteboardRef.current, []);
+    setHasChanges(true);
+  }, []);
+
+  const handleClose = useCallback(async () => {
+    try {
+      if (hasChanges) {
+        onDataUpdate({ ...itemData, paths });
+      }
+      onClose();
+
+      if (disconnectRef.current) {
+        await disconnectRef.current.cancel();
+      }
+      await remove(whiteboardRef.current);
+    } catch (error) {
+      console.error("Error closing whiteboard:", error);
+    }
+  }, [itemData, paths, onDataUpdate, onClose, hasChanges]);
+
+  const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (event: GestureResponderEvent) => {
@@ -124,7 +112,10 @@ const WhiteboardItem: WhiteboardItemComponent = ({
       if (isDrawing.current) {
         const { locationX, locationY } = event.nativeEvent;
         currentPathRef.current += ` L${locationX} ${locationY}`;
-        addPathToRealtimeDB({ path: currentPathRef.current, color: currentColor });
+        addPathToRealtimeDB({
+          path: currentPathRef.current,
+          color: currentColor,
+        });
       }
     },
     onPanResponderRelease: () => {
@@ -134,30 +125,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
       }
     },
   });
-
-  const handleClear = useCallback(async () => {
-    await set(whiteboardRef.current, []);
-  }, []);
-
-  const handleClose = useCallback(async () => {
-    try {
-      // Call the onDataUpdate prop with the latest paths
-      onDataUpdate({ ...itemData, paths });
-
-      // Remove the disconnect handler
-      if (disconnectRef.current) {
-        await disconnectRef.current.cancel();
-      }
-
-      // Remove the Realtime Database node
-      await remove(whiteboardRef.current);
-
-      // Call the onClose prop
-      onClose();
-    } catch (error) {
-      console.error("Error closing whiteboard:", error);
-    }
-  }, [itemData, paths, onDataUpdate, onClose]);
 
   if (!isActive) {
     return (
@@ -179,13 +146,13 @@ const WhiteboardItem: WhiteboardItemComponent = ({
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <YStack 
-        flex={1} 
-        backgroundColor="rgba(0,0,0,0.5)" 
-        justifyContent="center" 
+      <YStack
+        flex={1}
+        backgroundColor="rgba(0,0,0,0.5)"
+        justifyContent="center"
         alignItems="center"
       >
-        <WhiteboardView 
+        <WhiteboardView
           backgroundColor="white"
           padding="$4"
           width={WHITEBOARD_WIDTH + 40}
@@ -200,10 +167,16 @@ const WhiteboardItem: WhiteboardItemComponent = ({
               borderRadius: 8,
               overflow: "hidden",
             }}
-            {...canvasPanResponder.panHandlers}
+            {...panResponder.panHandlers}
           >
             <Canvas style={{ flex: 1 }} ref={canvasRef}>
-              <Rect x={0} y={0} width={WHITEBOARD_WIDTH} height={WHITEBOARD_HEIGHT} color="white" />
+              <Rect
+                x={0}
+                y={0}
+                width={WHITEBOARD_WIDTH}
+                height={WHITEBOARD_HEIGHT}
+                color="white"
+              />
               {paths.map((pathData, index) => (
                 <Path
                   key={index}
@@ -227,10 +200,18 @@ const WhiteboardItem: WhiteboardItemComponent = ({
             ))}
           </XStack>
           <XStack space="$4" marginTop="$4" justifyContent="center">
-            <Button onPress={handleClear} backgroundColor="$red10" color="white">
+            <Button
+              onPress={handleClear}
+              backgroundColor="$red10"
+              color="white"
+            >
               Clear
             </Button>
-            <Button onPress={handleClose} backgroundColor="$blue10" color="white">
+            <Button
+              onPress={handleClose}
+              backgroundColor="$blue10"
+              color="white"
+            >
               Close
             </Button>
           </XStack>
