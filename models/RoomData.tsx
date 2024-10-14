@@ -21,6 +21,7 @@ export interface PlacedItemData {
   updatedAt: Date;
   shouldLock: boolean;
   itemData: Record<string, any>;
+  placedUserId: string;
 }
 
 export interface ItemData {

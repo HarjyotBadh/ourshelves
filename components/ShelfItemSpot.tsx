@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Stack, Text, XStack, YStack, Avatar, Circle } from "tamagui";
 import { Pressable } from "react-native";
-import {
-  ref as dbRef,
-  onValue,
-  remove,
-  runTransaction,
-  onDisconnect,
-} from "firebase/database";
+import { ref as dbRef, onValue, remove, runTransaction, onDisconnect } from "firebase/database";
 import { auth, rtdb } from "firebaseConfig";
 import { PlacedItemData } from "../models/RoomData";
 import { Plus, X, Lock } from "@tamagui/lucide-icons";
@@ -21,10 +15,7 @@ interface ShelfItemSpotProps {
   showPlusSigns: boolean;
   onSpotPress: (position: number) => void;
   onItemRemove: (position: number) => void;
-  onItemDataUpdate: (
-    position: number,
-    newItemData: Record<string, any>
-  ) => void;
+  onItemDataUpdate: (position: number, newItemData: Record<string, any>) => void;
   users: Record<string, any>;
   roomInfo: {
     name: string;
@@ -60,14 +51,11 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
       const listener = onValue(lockRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-          const lockingUser = Object.values(users).find(
-            (user) => user.id === data.userId
-          );
+          const lockingUser = Object.values(users).find((user) => user.id === data.userId);
 
           setLockStatus({
             lockedBy: data.userId,
-            userName:
-              lockingUser?.displayName || data.userName || "Unknown User",
+            userName: lockingUser?.displayName || data.userName || "Unknown User",
             userProfilePicture: lockingUser?.profilePicture || null,
           });
         } else {
@@ -87,7 +75,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
 
   /**
    * Handles the press event on an item in the shelf.
-   * 
+   *
    * This function performs the following actions:
    * 1. If the item requires locking:
    *    a. Attempts to acquire a lock on the item in the real-time database.
@@ -95,7 +83,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
    *    c. Updates the local state to reflect that the user has the lock and the item is active.
    * 2. If the item doesn't require locking:
    *    a. Simply sets the item as active in the local state.
-   * 
+   *
    * @async
    * @throws Will log an error to the console if acquiring the lock fails.
    */
@@ -139,14 +127,14 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
 
   /**
    * Handles the closing of an active item.
-   * 
+   *
    * This function performs the following actions:
    * 1. If the item requires locking and the user has the lock:
    *    a. Attempts to remove the lock from the real-time database.
    *    b. If successful, updates the local state to reflect that the user no longer has the lock and the item is inactive.
    * 2. If the item doesn't require locking:
    *    a. Simply sets the item as inactive in the local state.
-   * 
+   *
    * @async
    * @throws Will log an error to the console if releasing the lock fails.
    */
@@ -191,11 +179,11 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
 
   /**
    * Renders the item component for a given placed item.
-   * 
+   *
    * @param item - The PlacedItemData object representing the item to be rendered, or null if no item.
    * @param position - The position of the item on the shelf.
    * @returns A React element representing the rendered item, or null if no item or unknown item type.
-   * 
+   *
    * This function performs the following actions:
    * 1. If the item is null, it returns null (no rendering).
    * 2. Retrieves the appropriate ItemComponent based on the item's ID.
@@ -203,7 +191,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
    *    a. Generates a unique key based on the item's last update timestamp.
    *    b. Renders the ItemComponent with necessary props including item data, update handlers, and room info.
    * 4. If no valid ItemComponent is found, it renders a fallback "Unknown Item" text.
-   * 
+   *
    * The function handles different date formats for the updatedAt field, ensuring a consistent key generation.
    */
   const renderItem = (item: PlacedItemData | null, position: number) => {
@@ -214,7 +202,12 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
       return (
         <ItemComponent
           key={item.id}
-          itemData={item.itemData}
+          itemData={{
+            ...item.itemData,
+            itemId: item.itemId,
+            placedUserId: item.placedUserId,
+            id: item.id,
+          }}
           onDataUpdate={(newItemData) => onItemDataUpdate(position, newItemData)}
           isActive={isItemActive}
           onClose={handleItemClose}
@@ -293,11 +286,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   } else {
     return (
       <Stack key={position} width="30%" height="100%" position="relative">
-        <Pressable
-          onPress={handleItemPress}
-          disabled={isLockedByAnotherUser}
-          style={{ flex: 1 }}
-        >
+        <Pressable onPress={handleItemPress} disabled={isLockedByAnotherUser} style={{ flex: 1 }}>
           {renderItem(item, position)}
         </Pressable>
         {isLockedByAnotherUser && <LockOverlay />}
