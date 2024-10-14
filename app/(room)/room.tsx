@@ -446,8 +446,6 @@ const RoomScreen = () => {
         initialItemData = ItemComponent.getInitialData();
       }
 
-      console.log(item.itemId);
-
       const newPlacedItem: Omit<PlacedItemData, "id"> = {
         roomId,
         shelfId,
@@ -461,6 +459,7 @@ const RoomScreen = () => {
           name: item.name,
           imageUri: item.imageUri,
         },
+        placedUserId: auth.currentUser?.uid || "",
       };
 
       const docRef = await addDoc(collection(db, "PlacedItems"), newPlacedItem);
