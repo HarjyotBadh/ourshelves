@@ -1210,6 +1210,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@egjs/hammerjs@npm:^2.0.17":
+  version: 2.0.17
+  resolution: "@egjs/hammerjs@npm:2.0.17"
+  dependencies:
+    "@types/hammerjs": "npm:^2.0.36"
+  checksum: f695129d45edfcfd6c5f2d1d36186da36ffade013991972ce23721a6b7ad7f214ce282abc4023e3f6b63062620852a63e897b523f247804afc7acd188fee9d9d
+  languageName: node
+  linkType: hard
+
 "@esbuild/aix-ppc64@npm:0.23.1":
   version: 0.23.1
   resolution: "@esbuild/aix-ppc64@npm:0.23.1"
@@ -4528,6 +4537,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@shopify/react-native-skia@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "@shopify/react-native-skia@npm:1.4.2"
+  dependencies:
+    canvaskit-wasm: "npm:0.39.1"
+    react-reconciler: "npm:0.27.0"
+  peerDependencies:
+    react: ">=18.0"
+    react-native: ">=0.64"
+    react-native-reanimated: ">=2.0.0"
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+    react-native-reanimated:
+      optional: true
+  bin:
+    setup-skia-web: ./scripts/setup-canvaskit.js
+  checksum: 018ed569bb2523ed49b088d32b251c0f7307c459cf5d11bcc71c35f73f38a050bbb027744623d561e854aa0102275e850ec372f672c72f1f0c911b30df305be1
+  languageName: node
+  linkType: hard
+
 "@sideway/address@npm:^4.1.5":
   version: 4.1.5
   resolution: "@sideway/address@npm:4.1.5"
@@ -6349,6 +6379,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@terrylinla/react-native-sketch-canvas@npm:^0.8.0":
+  version: 0.8.0
+  resolution: "@terrylinla/react-native-sketch-canvas@npm:0.8.0"
+  checksum: 669c847690885b1f0b923c9961be57b2718db3506dd1c79129dfc4937ca451e444724b63f129310b78f289c1ed7a63e836c49f80c2aed15e4fba1515365889f7
+  languageName: node
+  linkType: hard
+
 "@types/cookie@npm:^0.6.0":
   version: 0.6.0
   resolution: "@types/cookie@npm:0.6.0"
@@ -6371,6 +6408,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: ac545e377248039c596ef27d9f277b813507ebdd95d05f32fe7e9c67eb1ed567dafb4ba59f5fdcb6601dd7fd396ff9ba24f8c122e89cef096cdc17987c50a7fa
+  languageName: node
+  linkType: hard
+
+"@types/hammerjs@npm:^2.0.36":
+  version: 2.0.46
+  resolution: "@types/hammerjs@npm:2.0.46"
+  checksum: 1b6502d668f45ca49fb488c01f7938d3aa75e989d70c64801c8feded7d659ca1a118f745c1b604d220efe344c93231767d5cc68c05e00e069c14539b6143cfd9
   languageName: node
   linkType: hard
 
@@ -6454,6 +6498,16 @@ __metadata:
   version: 15.7.12
   resolution: "@types/prop-types@npm:15.7.12"
   checksum: ac16cc3d0a84431ffa5cfdf89579ad1e2269549f32ce0c769321fdd078f84db4fbe1b461ed5a1a496caf09e637c0e367d600c541435716a55b1d9713f5035dfe
+  languageName: node
+  linkType: hard
+
+"@types/react-native-canvas@npm:^0":
+  version: 0.1.13
+  resolution: "@types/react-native-canvas@npm:0.1.13"
+  dependencies:
+    "@types/react": "npm:*"
+    react-native: "npm:*"
+  checksum: bd8011a7f5f214e9bd58be9cdcab90b9a39529f9d39b39356bb55bad47d764c5919ad1fb2d358f1acf276dc88ed75fd2ac5cf6a6a6eb1176cec2580f21babfe0
   languageName: node
   linkType: hard
 
@@ -6563,6 +6617,13 @@ __metadata:
   version: 1.0.0
   resolution: "@web3-storage/multipart-parser@npm:1.0.0"
   checksum: 20d7a4330392d83f727586477fc6e709f8fca3b3664365b0d9d3041abe2aeb13f53030a3997a28a39cc74930863ebb625878b8c90789e5c990e4b64d9f22a93d
+  languageName: node
+  linkType: hard
+
+"@webgpu/types@npm:0.1.21":
+  version: 0.1.21
+  resolution: "@webgpu/types@npm:0.1.21"
+  checksum: 73fc5f2bebb1abf084b146c26c237c6450747b8119cdf3733643ff90968f6e7790d0ae0ad6aa6dc7b0783a502571d348a76d22c8e8466b3b7f7c9ee956da7e5b
   languageName: node
   linkType: hard
 
@@ -7374,6 +7435,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"canvaskit-wasm@npm:0.39.1":
+  version: 0.39.1
+  resolution: "canvaskit-wasm@npm:0.39.1"
+  dependencies:
+    "@webgpu/types": "npm:0.1.21"
+  checksum: 962f0ec74717eabd7de196a3397215f34fd6b8e9cfc1781c00d0f61695cc7521a77e7c80db061ec9cd6e92774db835edb7f6bed9ea69457ef7cceb08caad8aac
+  languageName: node
+  linkType: hard
+
 "chalk@npm:^2.0.1, chalk@npm:^2.4.2":
   version: 2.4.2
   resolution: "chalk@npm:2.4.2"
@@ -7931,6 +8001,13 @@ __metadata:
   version: 3.1.3
   resolution: "csstype@npm:3.1.3"
   checksum: f593cce41ff5ade23f44e77521e3a1bcc2c64107041e1bf6c3c32adc5187d0d60983292fda326154d20b01079e24931aa5b08e4467cc488b60bb1e7f6d478ade
+  languageName: node
+  linkType: hard
+
+"ctx-polyfill@npm:^1.1.4":
+  version: 1.1.4
+  resolution: "ctx-polyfill@npm:1.1.4"
+  checksum: 04dbbc0edb2da2d33285ed176f67390c73b25c0e753be266f2277bb605b08fbf00c36a4783183eaa196f334087ce4222ca8f26a4e94195a1e48f886423439ed8
   languageName: node
   linkType: hard
 
@@ -8951,6 +9028,15 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 639602e4aa8e134ef367a672d36d28c7188ddaa1170fd112c1c221c7bdea4782a01035fde50c17420cbb9c43c61da4a80ea38696eb8daf8dcfa028e30bdf4063
+  languageName: node
+  linkType: hard
+
+"expo-image@npm:^1.13.0":
+  version: 1.13.0
+  resolution: "expo-image@npm:1.13.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 108abb4a4f42c78e50a56d9699e941aadc4677063899332b51e0edda220dc100cb5ccb501b5ae27f952bc53f9914ce8316cf0f82f9506b1b15e9bf87b6644cbb
   languageName: node
   linkType: hard
 
@@ -12540,6 +12626,7 @@ __metadata:
     "@react-native-firebase/firestore": "npm:^20.5.0"
     "@react-native-firebase/storage": "npm:^20.5.0"
     "@react-navigation/native": "npm:^6.1.17"
+    "@shopify/react-native-skia": "npm:^1.4.2"
     "@tamagui/babel-plugin": "npm:^1.110.3"
     "@tamagui/config": "npm:^1.110.5"
     "@tamagui/core": "npm:^1.110.5"
@@ -12551,9 +12638,11 @@ __metadata:
     "@tamagui/theme-base": "npm:^1.110.5"
     "@tamagui/themes": "npm:^1.110.5"
     "@tamagui/toast": "npm:^1.110.5"
+    "@terrylinla/react-native-sketch-canvas": "npm:^0.8.0"
     "@types/expo": "npm:^33.0.1"
     "@types/react": "npm:~18.2.79"
     "@types/react-native": "npm:^0.73.0"
+    "@types/react-native-canvas": "npm:^0"
     "@types/validator": "npm:^13"
     babel-plugin-transform-inline-environment-variables: "npm:^0.4.4"
     babel-preset-expo: "npm:^11.0.6"
@@ -12568,6 +12657,7 @@ __metadata:
     expo-firebase-core: "npm:^6.0.0"
     expo-firebase-recaptcha: "npm:2.3.1"
     expo-font: "npm:^12.0.10"
+    expo-image: "npm:^1.13.0"
     expo-linear-gradient: "npm:^13.0.2"
     expo-linking: "npm:~6.3.1"
     expo-router: "npm:~3.5.15"
@@ -12580,15 +12670,19 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-native: "npm:0.74.5"
+    react-native-canvas: "npm:^0.1.40"
     react-native-country-picker-modal: "npm:^2.0.0"
+    react-native-gesture-handler: "npm:^2.20.0"
     react-native-phone-number-input: "npm:^2.1.0"
     react-native-reanimated: "npm:~3.10.1"
     react-native-safe-area-context: "npm:4.10.5"
     react-native-screens: "npm:~3.31.1"
-    react-native-svg: "npm:15.2.0"
+    react-native-signature-canvas: "npm:^4.7.2"
+    react-native-svg: "npm:^15.7.1"
     react-native-toast-message: "npm:^2.2.1"
     react-native-web: "npm:^0.19.12"
     react-native-webview: "npm:13.8.6"
+    react-sketch-canvas: "npm:^6.2.0"
     tamagui: "npm:^1.110.5"
     typescript: "npm:~5.3.3"
     validator: "npm:^13.12.0"
@@ -13005,7 +13099,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.8.1":
+"prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -13207,6 +13301,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-canvas@npm:^0.1.40":
+  version: 0.1.40
+  resolution: "react-native-canvas@npm:0.1.40"
+  dependencies:
+    ctx-polyfill: "npm:^1.1.4"
+  peerDependencies:
+    react-native-webview: ">=5.10.0 || >=6.1.0"
+  checksum: 4ccb4e858d18afdfcb1667007c329576f8d0a4b4b3f0f1f7f8b44aaef91738d5d8d4bcce0fd574f9c18c4bbbed93332fa7ab699bcdcaff807d20c1b382008554
+  languageName: node
+  linkType: hard
+
 "react-native-country-picker-modal@npm:^2.0.0":
   version: 2.0.0
   resolution: "react-native-country-picker-modal@npm:2.0.0"
@@ -13246,6 +13351,21 @@ __metadata:
     react-native-svg:
       optional: true
   checksum: 5d99c7bfe0ef7b75032b60b162c3991fa162d200d3c5f64935e6a31c888173532bf06e6a551286b18ad20f419926af8fb64aa6884feccd76f38aacae517acbf5
+  languageName: node
+  linkType: hard
+
+"react-native-gesture-handler@npm:^2.20.0":
+  version: 2.20.0
+  resolution: "react-native-gesture-handler@npm:2.20.0"
+  dependencies:
+    "@egjs/hammerjs": "npm:^2.0.17"
+    hoist-non-react-statics: "npm:^3.3.0"
+    invariant: "npm:^2.2.4"
+    prop-types: "npm:^15.7.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 2b0d638e739534c862eefe4429d634e14f97872fbcd8d6069a1a6af8d6ba65c22f6b00298b3ed6b636f5ab376c23c40e719566313fe7aca304af29b3198a2190
   languageName: node
   linkType: hard
 
@@ -13318,16 +13438,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-svg@npm:15.2.0":
-  version: 15.2.0
-  resolution: "react-native-svg@npm:15.2.0"
+"react-native-signature-canvas@npm:^4.7.2":
+  version: 4.7.2
+  resolution: "react-native-signature-canvas@npm:4.7.2"
+  peerDependencies:
+    react-native-webview: ">=13"
+  checksum: 21c883fe89f5ef3ce94fc6016832059c4310129100ddde8a87aa991393ade10da71ead4907d35d7574e4ad3a3937ef190118bf93b5251fcb5e4e30ca243d0f5f
+  languageName: node
+  linkType: hard
+
+"react-native-svg@npm:^15.7.1":
+  version: 15.7.1
+  resolution: "react-native-svg@npm:15.7.1"
   dependencies:
     css-select: "npm:^5.1.0"
     css-tree: "npm:^1.1.3"
+    warn-once: "npm:0.1.1"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 5042e1377b9d66679898ce812760691d01602efac27a32eed0914b518652c66d575dc7eb1493d3315a7db043d4974796d9107fe17f4b331b6bbbff16906016e9
+  checksum: 343d2603b0bd54d24303a09c37698612e208b83e449c92d108aaa6d7826a7ac39fe2bad0b439bff789a24d5f54280e3eb218202006658b8a7e117b2d1d8ccfeb
   languageName: node
   linkType: hard
 
@@ -13511,6 +13641,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-reconciler@npm:0.27.0":
+  version: 0.27.0
+  resolution: "react-reconciler@npm:0.27.0"
+  dependencies:
+    loose-envify: "npm:^1.1.0"
+    scheduler: "npm:^0.21.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 7c4bfd76b0ba7802fefaa0fc8b93610eae20044693af85e8a1d605faad4d82fa47b8ffe4af409c67d45d0c9d93a8f0ed407ae506163fc5e4ab3145bdec0d5602
+  languageName: node
+  linkType: hard
+
 "react-refresh@npm:^0.14.0, react-refresh@npm:^0.14.2":
   version: 0.14.2
   resolution: "react-refresh@npm:0.14.2"
@@ -13562,6 +13704,15 @@ __metadata:
   peerDependencies:
     react: ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 06457fe5bcaa44aeca998905b6849304742ea1cc2d3841e4a0964c745ff392bc4dec07f8c779f317faacce3a0bf6f84e15020ac0fa81adb931067dbb0baf707b
+  languageName: node
+  linkType: hard
+
+"react-sketch-canvas@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "react-sketch-canvas@npm:6.2.0"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 43a6acfe862c0443a7bed0e8f45555989815a13b2dff36d0947221f6b98e06e5065f511e030bc63d494d5b3f4bac5c8ed58efa4d2e33754b72d920f63ac1cc78
   languageName: node
   linkType: hard
 
@@ -13975,6 +14126,15 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.1.0"
   checksum: 862881c8d3ece854331516cc048e26a86af461e896ab412506a5b1ffcc82990a08445e0127545ab524df15f88c2a691d8505fc2226a9bddf99bf8a8425bdcc0e
+  languageName: node
+  linkType: hard
+
+"scheduler@npm:^0.21.0":
+  version: 0.21.0
+  resolution: "scheduler@npm:0.21.0"
+  dependencies:
+    loose-envify: "npm:^1.1.0"
+  checksum: 216dbe36490f8c3133eee8352061803c377de6eb80d4a8f7f290819a721a21135aba145db28ad3e34056115f1a8c0d7e1cd477cebd3d01f6d98e28cc31fc702a
   languageName: node
   linkType: hard
 
@@ -15574,7 +15734,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"warn-once@npm:^0.1.0":
+"warn-once@npm:0.1.1, warn-once@npm:^0.1.0":
   version: 0.1.1
   resolution: "warn-once@npm:0.1.1"
   checksum: e6a5a1f5a8dba7744399743d3cfb571db4c3947897875d4962a7c5b1bf2195ab4518c838cb4cea652e71729f21bba2e98dc75686f5fccde0fabbd894e2ed0c0d
