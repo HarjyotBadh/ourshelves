@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, YStack, XStack, Button, Image } from "tamagui";
-import { Canvas, Path, useCanvasRef, Rect } from "@shopify/react-native-skia";
+import { Canvas, Path, useCanvasRef, Rect, Circle} from "@shopify/react-native-skia";
 import {
   PanResponder,
   GestureResponderEvent,
@@ -17,12 +17,15 @@ import {
   onDisconnect,
 } from "firebase/database";
 import { rtdb } from "firebaseConfig";
-import { WhiteboardItemComponent, PathData } from "models/WhiteboardModel";
-import { colors, ColorButton, WhiteboardView } from "styles/WhiteboardStyles";
+import { WhiteboardItemComponent, PathData, EraserIcon } from "models/WhiteboardModel";
+import { colors, ColorButton, WhiteboardView, ButtonContainer, CanvasContainer } from "styles/WhiteboardStyles";
 
 const { width: screenWidth } = Dimensions.get("window");
 const WHITEBOARD_WIDTH = screenWidth - 40;
 const WHITEBOARD_HEIGHT = WHITEBOARD_WIDTH * 0.6;
+const NORMAL_STROKE_WIDTH = 2;
+const ERASER_STROKE_WIDTH = 20;
+const ERASER_COLOR = "white";
 
 const WhiteboardItem: WhiteboardItemComponent = ({
   itemData,
@@ -34,6 +37,8 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const [paths, setPaths] = useState<PathData[]>(itemData.paths || []);
   const [currentColor, setCurrentColor] = useState(colors[0]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isErasing, setIsErasing] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState({ x: 0, y: 0 });
   const canvasRef = useCanvasRef();
   const isDrawing = useRef(false);
   const currentPathRef = useRef("");
@@ -84,6 +89,11 @@ const WhiteboardItem: WhiteboardItemComponent = ({
     setHasChanges(true);
   }, []);
 
+  const toggleEraser = useCallback(() => {
+    setIsErasing((prev) => !prev);
+    setCurrentColor(isErasing ? colors[0] : ERASER_COLOR);
+  }, [isErasing]);
+
   const handleClose = useCallback(async () => {
     try {
       if (hasChanges) {
@@ -112,9 +122,11 @@ const WhiteboardItem: WhiteboardItemComponent = ({
       if (isDrawing.current) {
         const { locationX, locationY } = event.nativeEvent;
         currentPathRef.current += ` L${locationX} ${locationY}`;
+        setCurrentPosition({ x: locationX, y: locationY });
         addPathToRealtimeDB({
           path: currentPathRef.current,
           color: currentColor,
+          strokeWidth: isErasing ? ERASER_STROKE_WIDTH : NORMAL_STROKE_WIDTH,
         });
       }
     },
@@ -153,20 +165,13 @@ const WhiteboardItem: WhiteboardItemComponent = ({
         alignItems="center"
       >
         <WhiteboardView
-          backgroundColor="white"
           padding="$4"
           width={WHITEBOARD_WIDTH + 40}
           height={WHITEBOARD_HEIGHT + 150}
         >
-          <View
-            style={{
-              width: WHITEBOARD_WIDTH,
-              height: WHITEBOARD_HEIGHT,
-              borderWidth: 2,
-              borderColor: "#ccc",
-              borderRadius: 8,
-              overflow: "hidden",
-            }}
+          <CanvasContainer
+            width={WHITEBOARD_WIDTH}
+            height={WHITEBOARD_HEIGHT}
             {...panResponder.panHandlers}
           >
             <Canvas style={{ flex: 1 }} ref={canvasRef}>
@@ -183,23 +188,40 @@ const WhiteboardItem: WhiteboardItemComponent = ({
                   path={pathData.path}
                   color={pathData.color}
                   style="stroke"
-                  strokeWidth={2}
+                  strokeWidth={pathData.strokeWidth || NORMAL_STROKE_WIDTH}
                 />
               ))}
+              {isErasing && (
+                <Circle
+                  cx={currentPosition.x}
+                  cy={currentPosition.y}
+                  r={ERASER_STROKE_WIDTH / 2}
+                  color="rgba(0, 0, 0, 0.1)"
+                />
+              )}
             </Canvas>
-          </View>
-          <XStack space="$4" marginTop="$4" justifyContent="center">
+          </CanvasContainer>
+          <ButtonContainer>
             {colors.map((color) => (
               <ColorButton
                 key={color}
                 backgroundColor={color}
-                onPress={() => setCurrentColor(color)}
-                borderWidth={2}
-                borderColor={color === currentColor ? "black" : "transparent"}
+                onPress={() => {
+                  setCurrentColor(color);
+                  setIsErasing(false);
+                }}
+                selected={color === currentColor && !isErasing}
               />
             ))}
-          </XStack>
-          <XStack space="$4" marginTop="$4" justifyContent="center">
+            <ColorButton
+              backgroundColor="white"
+              onPress={toggleEraser}
+              selected={isErasing}
+            >
+              <EraserIcon />
+            </ColorButton>
+          </ButtonContainer>
+          <ButtonContainer>
             <Button
               onPress={handleClear}
               backgroundColor="$red10"
@@ -211,10 +233,11 @@ const WhiteboardItem: WhiteboardItemComponent = ({
               onPress={handleClose}
               backgroundColor="$blue10"
               color="white"
+              marginLeft="$4"
             >
               Close
             </Button>
-          </XStack>
+          </ButtonContainer>
         </WhiteboardView>
       </YStack>
     </Modal>
