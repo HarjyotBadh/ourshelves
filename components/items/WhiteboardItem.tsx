@@ -19,6 +19,9 @@ import {
 import { rtdb } from "firebaseConfig";
 import { WhiteboardItemComponent, PathData, EraserIcon } from "models/WhiteboardModel";
 import { colors, ColorButton, WhiteboardView, ButtonContainer, CanvasContainer } from "styles/WhiteboardStyles";
+import { auth, db } from "firebaseConfig";
+import { doc, increment, updateDoc } from "firebase/firestore";
+import { ToastViewport, useToastController } from "@tamagui/toast";
 
 const { width: screenWidth } = Dimensions.get("window");
 const WHITEBOARD_WIDTH = screenWidth - 40;
@@ -44,6 +47,8 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const currentPathRef = useRef("");
   const whiteboardRef = useRef(ref(rtdb, `whiteboards/${itemData.id}`));
   const disconnectRef = useRef<ReturnType<typeof onDisconnect>>();
+
+  const toast = useToastController();
 
   useEffect(() => {
     if (isActive) {
@@ -97,8 +102,19 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const handleClose = useCallback(async () => {
     try {
       if (hasChanges) {
-        onDataUpdate({ ...itemData, paths });
+        const userDocRef = doc(db, "Users", auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          coins: increment(10)
+        });
+        toast.show("You earned 10 coins for your drawing!", {
+          message: "Coins earned",
+          duration: 3000,
+        });
+        setHasChanges(false);
       }
+      //if (hasChanges) {
+        onDataUpdate({ ...itemData, paths });
+      //}
       onClose();
 
       if (disconnectRef.current) {
@@ -239,6 +255,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
             </Button>
           </ButtonContainer>
         </WhiteboardView>
+        <ToastViewport name="whiteboard" />
       </YStack>
     </Modal>
   );
