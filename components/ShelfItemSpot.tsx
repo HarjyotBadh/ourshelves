@@ -85,6 +85,20 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
     }
   }, [item, users]);
 
+  /**
+   * Handles the press event on an item in the shelf.
+   * 
+   * This function performs the following actions:
+   * 1. If the item requires locking:
+   *    a. Attempts to acquire a lock on the item in the real-time database.
+   *    b. If successful, sets up an onDisconnect handler to release the lock when the user disconnects.
+   *    c. Updates the local state to reflect that the user has the lock and the item is active.
+   * 2. If the item doesn't require locking:
+   *    a. Simply sets the item as active in the local state.
+   * 
+   * @async
+   * @throws Will log an error to the console if acquiring the lock fails.
+   */
   const handleItemPress = async () => {
     if (item && item.shouldLock) {
       const lockRef = dbRef(rtdb, `locks/${item.id}`);
@@ -123,6 +137,19 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
     }
   };
 
+  /**
+   * Handles the closing of an active item.
+   * 
+   * This function performs the following actions:
+   * 1. If the item requires locking and the user has the lock:
+   *    a. Attempts to remove the lock from the real-time database.
+   *    b. If successful, updates the local state to reflect that the user no longer has the lock and the item is inactive.
+   * 2. If the item doesn't require locking:
+   *    a. Simply sets the item as inactive in the local state.
+   * 
+   * @async
+   * @throws Will log an error to the console if releasing the lock fails.
+   */
   const handleItemClose = async () => {
     if (item && item.shouldLock && hasLock) {
       const lockRef = dbRef(rtdb, `locks/${item.id}`);
@@ -162,6 +189,23 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
     setRemoveAlertOpen(false);
   };
 
+  /**
+   * Renders the item component for a given placed item.
+   * 
+   * @param item - The PlacedItemData object representing the item to be rendered, or null if no item.
+   * @param position - The position of the item on the shelf.
+   * @returns A React element representing the rendered item, or null if no item or unknown item type.
+   * 
+   * This function performs the following actions:
+   * 1. If the item is null, it returns null (no rendering).
+   * 2. Retrieves the appropriate ItemComponent based on the item's ID.
+   * 3. If a valid ItemComponent is found:
+   *    a. Generates a unique key based on the item's last update timestamp.
+   *    b. Renders the ItemComponent with necessary props including item data, update handlers, and room info.
+   * 4. If no valid ItemComponent is found, it renders a fallback "Unknown Item" text.
+   * 
+   * The function handles different date formats for the updatedAt field, ensuring a consistent key generation.
+   */
   const renderItem = (item: PlacedItemData | null, position: number) => {
     if (!item) return null;
 

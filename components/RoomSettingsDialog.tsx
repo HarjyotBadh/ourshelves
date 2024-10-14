@@ -1,268 +1,283 @@
-import React from "react";
+import React, { useState } from "react";
+import { Dialog, Accordion, YStack, Text, XStack, ScrollView, Avatar, AlertDialog } from "tamagui";
 import {
-    Dialog,
-    Accordion,
-    YStack,
-    Button,
-    Text,
-    XStack,
-    styled,
-    ScrollView,
-    Avatar,
-} from "tamagui";
-import { Settings, Users, Shield, ChevronDown, ChevronUp, X, Info } from "@tamagui/lucide-icons";
-
-const BACKGROUND_COLOR = "$yellow2Light";
-const HEADER_BACKGROUND = "#8B4513";
-const USER_ITEM_BACKGROUND = "#DEB887";
+  Settings,
+  Users,
+  Shield,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Info,
+  AlertTriangle,
+} from "@tamagui/lucide-icons";
+import {
+  StyledAccordionItem,
+  StyledAccordionTrigger,
+  StyledAccordionContent,
+  IconWrapper,
+  UserItem,
+  Header,
+  HeaderButton,
+  SearchInput,
+  StyledAlertDialogContent,
+  StyledAlertDialogTitle,
+  StyledAlertDialogDescription,
+  StyledAlertDialogButton,
+  BACKGROUND_COLOR,
+  HEADER_BACKGROUND,
+} from "../styles/RoomSettingsStyles";
 
 interface User {
-    id: string;
-    displayName: string;
-    profilePicture?: string;
-    isAdmin: boolean;
+  id: string;
+  displayName: string;
+  profilePicture?: string;
+  isAdmin: boolean;
 }
 
 interface RoomSettingsDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    users: User[];
-    roomDescription?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  users: User[];
+  roomDescription?: string;
+  onRemoveUser: (userId: string) => void;
+  currentUserId: string;
 }
 
-const StyledAccordionItem = styled(Accordion.Item, {
-    backgroundColor: "$backgroundStrong",
-    marginBottom: "$2",
-    borderRadius: "$4",
-    overflow: "hidden",
-});
-
-const StyledAccordionTrigger = styled(Accordion.Trigger, {
-    padding: "$3",
-    backgroundColor: HEADER_BACKGROUND,
-});
-
-const StyledAccordionContent = styled(Accordion.Content, {
-    padding: "$3",
-    backgroundColor: BACKGROUND_COLOR,
-});
-
-const IconWrapper = styled(XStack, {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: "$2",
-});
-
-const UserItem = styled(XStack, {
-    alignItems: "center",
-    paddingVertical: "$2",
-    paddingHorizontal: "$3",
-    borderRadius: "$2",
-    marginBottom: "$1",
-    backgroundColor: USER_ITEM_BACKGROUND,
-});
-
-const Header = styled(XStack, {
-    height: 60,
-    backgroundColor: HEADER_BACKGROUND,
-    alignItems: "center",
-    paddingHorizontal: "$4",
-});
-
-const HeaderButton = styled(Button, {
-    width: 50,
-    height: 50,
-    justifyContent: "center",
-    alignItems: "center",
-});
-
 const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
-    open,
-    onOpenChange,
-    users,
-    roomDescription,
+  open,
+  onOpenChange,
+  users,
+  roomDescription,
+  onRemoveUser,
+  currentUserId,
 }) => {
-    const renderUserList = () => (
-        <YStack gap="$2">
-            {users.map((user) => (
-                <UserItem key={user.id}>
-                    <Avatar circular size="$3" mr="$3">
-                        {user.profilePicture ? (
-                            <Avatar.Image source={{ uri: user.profilePicture }} />
-                        ) : (
-                            <Avatar.Image
-                                source={{
-                                    uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                        user.displayName
-                                    )}&background=random`,
-                                }}
-                            />
-                        )}
-                        <Avatar.Fallback bc="$blue5" />
-                    </Avatar>
-                    <Text flex={1} color="black">
-                        {user.displayName}
-                    </Text>
-                    {user.isAdmin && (
-                        <IconWrapper backgroundColor="$blue8">
-                            <Shield color="$blue11" size={16} />
-                        </IconWrapper>
-                    )}
-                </UserItem>
-            ))}
-        </YStack>
-    );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<User | null>(null);
 
-    return (
-        <Dialog modal open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Overlay
-                    key="overlay"
-                    animation="quick"
-                    opacity={0.5}
-                    enterStyle={{ opacity: 0 }}
-                    exitStyle={{ opacity: 0 }}
-                />
-                <Dialog.Content
-                    bordered
-                    elevate
-                    key="content"
-                    animation={[
-                        "quick",
-                        {
-                            opacity: {
-                                overshootClamping: true,
-                            },
-                        },
-                    ]}
-                    enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-                    exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-                    x={0}
-                    y={0}
-                    opacity={1}
-                    scale={1}
-                    width="80%"
-                    height="80%"
-                    backgroundColor={BACKGROUND_COLOR}
-                >
-                    <YStack flex={1}>
-                        <Header>
-                            <Text
-                                fontSize={18}
-                                fontWeight="bold"
-                                flex={1}
-                                textAlign="center"
-                                color="white"
-                            >
-                                Room Settings
+  const filteredUsers = users.filter((user) =>
+    user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleRemoveUser = (user: User) => {
+    setUserToRemove(user);
+    setConfirmationOpen(true);
+  };
+
+  const confirmRemoveUser = () => {
+    if (userToRemove) {
+      onRemoveUser(userToRemove.id);
+    }
+    setConfirmationOpen(false);
+    setUserToRemove(null);
+  };
+
+  const renderUserList = () => (
+    <YStack gap="$2">
+      <SearchInput
+        placeholder="Search users..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      {filteredUsers.map((user) => (
+        <UserItem key={user.id}>
+          <Avatar circular size="$4" mr="$3">
+            {user.profilePicture ? (
+              <Avatar.Image source={{ uri: user.profilePicture }} />
+            ) : (
+              <Avatar.Fallback delayMs={600}>
+                <Text fontSize="$2" color="white">
+                  {user.displayName.charAt(0).toUpperCase()}
+                </Text>
+              </Avatar.Fallback>
+            )}
+          </Avatar>
+          <Text flex={1} fontSize="$4" fontWeight="500" color="black">
+            {user.displayName}
+          </Text>
+          {user.isAdmin ? (
+            <IconWrapper backgroundColor="$blue8">
+              <Shield color="white" size={16} />
+            </IconWrapper>
+          ) : (
+            <IconWrapper
+              backgroundColor="$red8"
+              onPress={() => handleRemoveUser(user)}
+              disabled={currentUserId === user.id}
+            >
+              <X color="white" size={16} />
+            </IconWrapper>
+          )}
+        </UserItem>
+      ))}
+    </YStack>
+  );
+
+  return (
+    <>
+      <Dialog modal open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            y={0}
+            opacity={1}
+            scale={1}
+            width="90%"
+            maxWidth={500}
+            height="80%"
+            backgroundColor={BACKGROUND_COLOR}
+          >
+            <YStack flex={1}>
+              <Header>
+                <Text fontSize={20} fontWeight="bold" flex={1} textAlign="center" color="white">
+                  Room Settings
+                </Text>
+                <Dialog.Close asChild>
+                  <HeaderButton unstyled>
+                    <X color="white" size={24} />
+                  </HeaderButton>
+                </Dialog.Close>
+              </Header>
+              <ScrollView flex={1}>
+                <YStack padding="$4" gap="$4">
+                  <Accordion type="multiple" overflow="hidden" width="100%">
+                    <StyledAccordionItem value="description">
+                      <StyledAccordionTrigger>
+                        {({ open }) => (
+                          <XStack alignItems="center">
+                            <IconWrapper backgroundColor="$blue8">
+                              <Info color="white" />
+                            </IconWrapper>
+                            <Text flex={1} fontSize="$5" fontWeight="600" color="white">
+                              Room Description
                             </Text>
-                            <Dialog.Close asChild>
-                                <HeaderButton unstyled>
-                                    <X color="white" size={24} />
-                                </HeaderButton>
-                            </Dialog.Close>
-                        </Header>
-                        <ScrollView flex={1}>
-                            <YStack padding="$4" gap="$4">
-                                <Accordion type="multiple" overflow="hidden" width="100%">
-                                    <StyledAccordionItem value="description">
-                                        <StyledAccordionTrigger>
-                                            {({ open }) => (
-                                                <XStack alignItems="center">
-                                                    <IconWrapper backgroundColor="$blue8">
-                                                        <Info color="white" />
-                                                    </IconWrapper>
-                                                    <Text
-                                                        flex={1}
-                                                        fontSize="$5"
-                                                        fontWeight="600"
-                                                        color="white"
-                                                    >
-                                                        Room Description
-                                                    </Text>
-                                                    {open ? (
-                                                        <ChevronUp color="white" />
-                                                    ) : (
-                                                        <ChevronDown color="white" />
-                                                    )}
-                                                </XStack>
-                                            )}
-                                        </StyledAccordionTrigger>
-                                        <StyledAccordionContent>
-                                            <Text color="black">
-                                                {roomDescription || "No description available."}
-                                            </Text>
-                                        </StyledAccordionContent>
-                                    </StyledAccordionItem>
+                            {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
+                          </XStack>
+                        )}
+                      </StyledAccordionTrigger>
+                      <StyledAccordionContent>
+                        <Text color="black">{roomDescription || "No description available."}</Text>
+                      </StyledAccordionContent>
+                    </StyledAccordionItem>
 
-                                    <StyledAccordionItem value="users">
-                                        <StyledAccordionTrigger>
-                                            {({ open }) => (
-                                                <XStack alignItems="center">
-                                                    <IconWrapper backgroundColor="$green8">
-                                                        <Users color="white" />
-                                                    </IconWrapper>
-                                                    <Text
-                                                        flex={1}
-                                                        fontSize="$5"
-                                                        fontWeight="600"
-                                                        color="white"
-                                                    >
-                                                        Users
-                                                    </Text>
-                                                    {open ? (
-                                                        <ChevronUp color="white" />
-                                                    ) : (
-                                                        <ChevronDown color="white" />
-                                                    )}
-                                                </XStack>
-                                            )}
-                                        </StyledAccordionTrigger>
-                                        <StyledAccordionContent>
-                                            {renderUserList()}
-                                        </StyledAccordionContent>
-                                    </StyledAccordionItem>
+                    <StyledAccordionItem value="users">
+                      <StyledAccordionTrigger>
+                        {({ open }) => (
+                          <XStack alignItems="center">
+                            <IconWrapper backgroundColor="$green8">
+                              <Users color="white" />
+                            </IconWrapper>
+                            <Text flex={1} fontSize="$5" fontWeight="600" color="white">
+                              Users
+                            </Text>
+                            {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
+                          </XStack>
+                        )}
+                      </StyledAccordionTrigger>
+                      <StyledAccordionContent>{renderUserList()}</StyledAccordionContent>
+                    </StyledAccordionItem>
 
-                                    <StyledAccordionItem value="settings">
-                                        <StyledAccordionTrigger>
-                                            {({ open }) => (
-                                                <XStack alignItems="center">
-                                                    <IconWrapper backgroundColor="$orange8">
-                                                        <Settings color="white" />
-                                                    </IconWrapper>
-                                                    <Text
-                                                        flex={1}
-                                                        fontSize="$5"
-                                                        fontWeight="600"
-                                                        color="white"
-                                                    >
-                                                        General Settings
-                                                    </Text>
-                                                    {open ? (
-                                                        <ChevronUp color="white" />
-                                                    ) : (
-                                                        <ChevronDown color="white" />
-                                                    )}
-                                                </XStack>
-                                            )}
-                                        </StyledAccordionTrigger>
-                                        <StyledAccordionContent>
-                                            <Text color="black">Setting 1: Value</Text>
-                                            <Text color="black">Setting 2: Value</Text>
-                                            <Text color="black">Setting 3: Value</Text>
-                                        </StyledAccordionContent>
-                                    </StyledAccordionItem>
-                                </Accordion>
-                            </YStack>
-                        </ScrollView>
-                    </YStack>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog>
-    );
+                    <StyledAccordionItem value="settings">
+                      <StyledAccordionTrigger>
+                        {({ open }) => (
+                          <XStack alignItems="center">
+                            <IconWrapper backgroundColor="$orange8">
+                              <Settings color="white" />
+                            </IconWrapper>
+                            <Text flex={1} fontSize="$5" fontWeight="600" color="white">
+                              General Settings
+                            </Text>
+                            {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
+                          </XStack>
+                        )}
+                      </StyledAccordionTrigger>
+                      <StyledAccordionContent>
+                        <Text color="black">Setting 1: Value</Text>
+                        <Text color="black">Setting 2: Value</Text>
+                        <Text color="black">Setting 3: Value</Text>
+                      </StyledAccordionContent>
+                    </StyledAccordionItem>
+                  </Accordion>
+                </YStack>
+              </ScrollView>
+            </YStack>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
+
+      <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <StyledAlertDialogContent
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          >
+            <YStack gap="$4" alignItems="center">
+              <AlertTriangle color={HEADER_BACKGROUND} size={40} />
+              <StyledAlertDialogTitle>Confirm User Removal</StyledAlertDialogTitle>
+              <StyledAlertDialogDescription>
+                Are you sure you want to remove {userToRemove?.displayName} from this room? This
+                action cannot be undone.
+              </StyledAlertDialogDescription>
+
+              <XStack gap="$3" justifyContent="center" width="100%">
+                <AlertDialog.Cancel asChild>
+                  <StyledAlertDialogButton theme="alt1" aria-label="Cancel">
+                    Cancel
+                  </StyledAlertDialogButton>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action asChild>
+                  <StyledAlertDialogButton
+                    theme="active"
+                    aria-label="Remove User"
+                    onPress={confirmRemoveUser}
+                  >
+                    Remove User
+                  </StyledAlertDialogButton>
+                </AlertDialog.Action>
+              </XStack>
+            </YStack>
+          </StyledAlertDialogContent>
+        </AlertDialog.Portal>
+      </AlertDialog>
+    </>
+  );
 };
 
 export default RoomSettingsDialog;
