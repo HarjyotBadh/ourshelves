@@ -47,6 +47,7 @@ import { auth, db } from "firebaseConfig";
 import { doc, increment, updateDoc } from "firebase/firestore";
 import { ToastViewport, useToastController } from "@tamagui/toast";
 import ColorPickerModal from "components/ColorPickerModal";
+import { PlusCircle } from "@tamagui/lucide-icons";
 
 const { width: screenWidth } = Dimensions.get("window");
 const WHITEBOARD_WIDTH = screenWidth - 40;
@@ -307,11 +308,14 @@ const WhiteboardItem: WhiteboardItemComponent = ({
                 selected={color === currentColor && !isErasing}
               />
             ))}
-            <ColorButton
+            <Button
               backgroundColor={customColor}
               onPress={() => setIsColorPickerVisible(true)}
-              selected={customColor === currentColor && !isErasing}
-            ></ColorButton>
+              style={styles.buttonStyle}
+              borderColor={currentColor===customColor ? "black" : customColor}
+              borderWidth={2}
+              icon={PlusCircle}
+            ></Button>
             <ColorButton
               backgroundColor="white"
               onPress={toggleEraser}
