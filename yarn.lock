@@ -6586,6 +6586,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@unimodules/core@npm:7.1.2":
+  version: 7.1.2
+  resolution: "@unimodules/core@npm:7.1.2"
+  dependencies:
+    compare-versions: "npm:^3.4.0"
+  checksum: 16a91115f8191b9dee7ae8575345888114e3b0f1bea11f3baecac12f62944eabb0d96cfe59a9a3d3825788d64c5faca680a54e5151778f600931a53b4190ef44
+  languageName: node
+  linkType: hard
+
 "@urql/core@npm:2.3.6":
   version: 2.3.6
   resolution: "@urql/core@npm:2.3.6"
@@ -7519,6 +7528,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chroma-js@npm:^2.1.0":
+  version: 2.6.0
+  resolution: "chroma-js@npm:2.6.0"
+  checksum: 245f0a0b1da7c4cedf30e490db9ab4e9e71fde207cbe1ca05e25ef5ba517df2509b96b29d2c168786237c8162a03dccea38721c4927249cd1d5c5fe0184fc13c
+  languageName: node
+  linkType: hard
+
 "chrome-launcher@npm:^0.15.2":
   version: 0.15.2
   resolution: "chrome-launcher@npm:0.15.2"
@@ -7773,6 +7789,13 @@ __metadata:
   version: 1.0.1
   resolution: "commondir@npm:1.0.1"
   checksum: 4620bc4936a4ef12ce7dfcd272bb23a99f2ad68889a4e4ad766c9f8ad21af982511934d6f7050d4a8bde90011b1c15d56e61a1b4576d9913efbf697a20172d6c
+  languageName: node
+  linkType: hard
+
+"compare-versions@npm:^3.4.0":
+  version: 3.6.0
+  resolution: "compare-versions@npm:3.6.0"
+  checksum: 7492a50cdaa2c27f5254eee7c4b38856e1c164991bab3d98d7fd067fe4b570d47123ecb92523b78338be86aa221668fd3868bfe8caa5587dc3ebbe1a03d52b5d
   languageName: node
   linkType: hard
 
@@ -8999,6 +9022,16 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 2e05592bd9b3f156f0c5912a5cc152e80e930495d049382e4deec3103601ccc90b2e7cb5c208b51aa9d60386c5b762d40cc74cb2d1256a4605012e03d27be72a
+  languageName: node
+  linkType: hard
+
+"expo-linear-gradient@npm:^8.0.0":
+  version: 8.4.0
+  resolution: "expo-linear-gradient@npm:8.4.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: fa00744e18c4412cd7ba213ceaeaf5ad44cc5505dfeaaed2530138ed98e7ce7f3ab4ef8ba88896db9c783de2161853aca381e0d94f97e62d9bde092e69269e47
   languageName: node
   linkType: hard
 
@@ -12561,6 +12594,7 @@ __metadata:
     "@types/react-native": "npm:^0.73.0"
     "@types/react-native-canvas": "npm:^0"
     "@types/validator": "npm:^13"
+    "@unimodules/core": "npm:7.1.2"
     babel-plugin-transform-inline-environment-variables: "npm:^0.4.4"
     babel-preset-expo: "npm:^11.0.6"
     burnt: "npm:^0.12.2"
@@ -12590,6 +12624,7 @@ __metadata:
     react-native-color-picker: "npm:^0.6.0"
     react-native-country-picker-modal: "npm:^2.0.0"
     react-native-gesture-handler: "npm:^2.20.0"
+    react-native-hsv-color-picker: "npm:^1.0.2"
     react-native-phone-number-input: "npm:^2.1.0"
     react-native-reanimated: "npm:~3.10.1"
     react-native-safe-area-context: "npm:4.10.5"
@@ -12604,6 +12639,7 @@ __metadata:
     reanimated-color-picker: "npm:^3.0.4"
     tamagui: "npm:^1.110.5"
     typescript: "npm:~5.3.3"
+    unimodules: "npm:^1.0.0"
     validator: "npm:^13.12.0"
   languageName: unknown
   linkType: soft
@@ -13315,6 +13351,18 @@ __metadata:
   peerDependencies:
     react: ^16.6.0 || ^17.0.0 || ^18.0.0
   checksum: 217bd0eaa61d426a512634369c70c44ce8b92127ec626dc40c65b72b1be1534ed3ed00ba2dd1a9ad77d1716ce8fd1e6db3f7209534303a652d9932a962d2c830
+  languageName: node
+  linkType: hard
+
+"react-native-hsv-color-picker@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "react-native-hsv-color-picker@npm:1.0.2"
+  dependencies:
+    chroma-js: "npm:^2.1.0"
+    expo-linear-gradient: "npm:^8.0.0"
+  peerDependencies:
+    prop-types: ^15.7.2
+  checksum: 9bb26749a65d3eae2de74f51334a611a92f5fd4e6224e91cd9a925473e9cf60c096664a619fae7301874ad5c63d3e6c9d3fd130a14a4a06c791e2224067343da
   languageName: node
   linkType: hard
 
@@ -15449,6 +15497,13 @@ __metadata:
   version: 2.1.0
   resolution: "unicode-property-aliases-ecmascript@npm:2.1.0"
   checksum: 243524431893649b62cc674d877bd64ef292d6071dd2fd01ab4d5ad26efbc104ffcd064f93f8a06b7e4ec54c172bf03f6417921a0d8c3a9994161fe1f88f815b
+  languageName: node
+  linkType: hard
+
+"unimodules@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "unimodules@npm:1.0.0"
+  checksum: a50592b0bf5cef226e590d1d02d157d951801e34ce8eeabe9fa570a7eec525a1064d7903ee1c8a3c78ba3eee12f2056562b539b9a2d4b7e04e6b0a06de6ff990
   languageName: node
   linkType: hard
 

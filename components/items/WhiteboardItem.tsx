@@ -46,17 +46,7 @@ import {
 import { auth, db } from "firebaseConfig";
 import { doc, increment, updateDoc } from "firebase/firestore";
 import { ToastViewport, useToastController } from "@tamagui/toast";
-import ColorPicker, {
-  Preview,
-  OpacitySlider,
-  BrightnessSlider,
-  HueSlider,
-  SaturationSlider,
-  Panel1,
-  Panel3,
-  Panel4,
-  HueCircular,
-} from "reanimated-color-picker";
+import ColorPickerModal from "components/ColorPickerModal";
 
 const { width: screenWidth } = Dimensions.get("window");
 const WHITEBOARD_WIDTH = screenWidth - 40;
@@ -83,6 +73,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const [isErasing, setIsErasing] = useState(false);
   const [currentPosition, setCurrentPosition] = useState({ x: 0, y: 0 });
   const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
+  const [customColor, setCustomColor] = useState("#000000");
   const canvasRef = useCanvasRef();
   const isDrawing = useRef(false);
   const currentPathRef = useRef("");
@@ -236,14 +227,12 @@ const WhiteboardItem: WhiteboardItemComponent = ({
     </View>
   );
 
-  const onSelectColor = ({ hex }) => {
-    setCurrentColor(hex);
+  
+  const handleCustomColorSelect = (color: string) => {
+    console.log(color);
+    setCustomColor(color);
+    setCurrentColor(color);
     setIsErasing(false);
-    //setIsColorPickerVisible(false);
-  };
-
-  const toggleColorPicker = () => {
-    setIsColorPickerVisible(!isColorPickerVisible);
   };
 
   if (!isActive) {
@@ -254,7 +243,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
     );
   }
 
-  // Removed incorrect Slider declaration
 
   return (
     <Modal
@@ -320,26 +308,16 @@ const WhiteboardItem: WhiteboardItemComponent = ({
               />
             ))}
             <ColorButton
+              backgroundColor={customColor}
+              onPress={() => setIsColorPickerVisible(true)}
+              selected={customColor === currentColor && !isErasing}
+            ></ColorButton>
+            <ColorButton
               backgroundColor="white"
               onPress={toggleEraser}
               selected={isErasing}
             >
               <EraserIcon />
-            </ColorButton>
-            <ColorButton
-              backgroundColor={currentColor}
-              onPress={toggleColorPicker}
-              selected={false}
-            >
-              <Text
-                style={{
-                  color: currentColor === "white" ? "black" : "white",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                +
-              </Text>
             </ColorButton>
           </ButtonContainer>
           <ButtonContainer>
@@ -361,53 +339,12 @@ const WhiteboardItem: WhiteboardItemComponent = ({
           </ButtonContainer>
           <BottomBar />
         </WhiteboardView>
-        <Modal
-          visible={isColorPickerVisible}
-          onRequestClose={() => setIsColorPickerVisible(false)}
-          animationType="slide"
-          transparent={true} // Make the modal not take up the entire screen
-        >
-          <YStack
-            flex={1}
-            justifyContent="center" // Center the modal vertically
-            alignItems="center" // Center the modal horizontally
-            // backgroundColor="rgba(0,0,0,0.5)" // Add a semi-transparent background for overlay effect
-          >
-            <YStack
-              width="90%" // Control the modal width
-              padding="$4"
-              backgroundColor="#e8e8e8"
-              borderRadius={15} // Rounded corners for the modal
-            >
-              <ColorPicker
-                style={{ width: "100%" }}
-                value={currentColor}
-                onComplete={onSelectColor}
-                sliderThickness={30}
-                thumbSize={40}
-                thumbShape="pill"
-                
-              >
-                <Preview
-                  style={[styles.previewStyle, styles.shadow]}
-                  textStyle={{ fontSize: 18 }}
-                />
-                <HueSlider adaptSpectrum={true} style={[styles.sliderStyle]} />
-                <BrightnessSlider style={[styles.sliderStyle, styles.shadow]} />
-                <SaturationSlider style={[styles.sliderStyle, styles.shadow]} />
-                <OpacitySlider style={[styles.sliderStyle, styles.shadow]} />
-              </ColorPicker>
-              <Button
-                onPress={() => setIsColorPickerVisible(false)}
-                backgroundColor="$blue10"
-                color="white"
-                marginTop="$4"
-              >
-                Done
-              </Button>
-            </YStack>
-          </YStack>
-        </Modal>
+        <ColorPickerModal
+          isVisible={isColorPickerVisible}
+          onClose={() => setIsColorPickerVisible(false)}
+          onColorSelected={handleCustomColorSelect}
+          initialColor={customColor}
+        />
 
         <ToastViewport name="whiteboard" />
       </YStack>
