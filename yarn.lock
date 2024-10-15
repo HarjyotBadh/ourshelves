@@ -3871,6 +3871,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/slider@npm:^4.5.4":
+  version: 4.5.4
+  resolution: "@react-native-community/slider@npm:4.5.4"
+  checksum: 4c5962a7f349020f8600d1fb385526f7e7376bc9e44ca7328bf1d415f8457ac8fb3a475a89cd88dfe3d85a60c084167b06c87ebccd51eea30c743b7024e51776
+  languageName: node
+  linkType: hard
+
 "@react-native-firebase/app@npm:^20.5.0":
   version: 20.5.0
   resolution: "@react-native-firebase/app@npm:20.5.0"
@@ -12531,6 +12538,7 @@ __metadata:
     "@expo/metro-config": "npm:~0.18.4"
     "@expo/metro-runtime": "npm:~3.2.1"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
+    "@react-native-community/slider": "npm:^4.5.4"
     "@react-native-firebase/app": "npm:^20.5.0"
     "@react-native-firebase/firestore": "npm:^20.5.0"
     "@react-native-firebase/storage": "npm:^20.5.0"
@@ -12579,6 +12587,7 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-native: "npm:0.74.5"
     react-native-canvas: "npm:^0.1.40"
+    react-native-color-picker: "npm:^0.6.0"
     react-native-country-picker-modal: "npm:^2.0.0"
     react-native-gesture-handler: "npm:^2.20.0"
     react-native-phone-number-input: "npm:^2.1.0"
@@ -12590,7 +12599,9 @@ __metadata:
     react-native-toast-message: "npm:^2.2.1"
     react-native-web: "npm:^0.19.12"
     react-native-webview: "npm:13.8.6"
+    react-native-wheel-color-picker: "npm:^1.3.1"
     react-sketch-canvas: "npm:^6.2.0"
+    reanimated-color-picker: "npm:^3.0.4"
     tamagui: "npm:^1.110.5"
     typescript: "npm:~5.3.3"
     validator: "npm:^13.12.0"
@@ -13007,7 +13018,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.5.10, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -13220,6 +13231,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-color-picker@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "react-native-color-picker@npm:0.6.0"
+  dependencies:
+    prop-types: "npm:^15.5.10"
+    tinycolor2: "npm:^1.4.1"
+  checksum: feaf63a7783f9ce64c48231377cbfdb879f3ce27144e2b115f60774d1f605e95619b93eb3436b5037eadd0bfde665469ebbd8420cb824091f07e09067092287d
+  languageName: node
+  linkType: hard
+
 "react-native-country-picker-modal@npm:^2.0.0":
   version: 2.0.0
   resolution: "react-native-country-picker-modal@npm:2.0.0"
@@ -13259,6 +13280,13 @@ __metadata:
     react-native-svg:
       optional: true
   checksum: 5d99c7bfe0ef7b75032b60b162c3991fa162d200d3c5f64935e6a31c888173532bf06e6a551286b18ad20f419926af8fb64aa6884feccd76f38aacae517acbf5
+  languageName: node
+  linkType: hard
+
+"react-native-elevation@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "react-native-elevation@npm:1.0.0"
+  checksum: 988edf86b441459e65f5121b0f916087c94dc0fb4bf7a36da4718b633644dbf10313054208cc4758302fbaa7e1d7b99d29004efc937466ecd7d66c2372f47129
   languageName: node
   linkType: hard
 
@@ -13438,6 +13466,15 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 9a510ce0c36e733e565f16b3fd44be29f40aac9518db3550a0213206ad578c41ee7fc71431849f2f72e178098241a8f9f0cd31ebfdf2223fd39d349d2f8b9cd0
+  languageName: node
+  linkType: hard
+
+"react-native-wheel-color-picker@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "react-native-wheel-color-picker@npm:1.3.1"
+  dependencies:
+    react-native-elevation: "npm:^1.0.0"
+  checksum: 12477f3f25d55429e0355918eb4c48798538d214a323465ae08969f012c49e05d1c508ca91007e4bb3dca6a9cf2e3324b9203b6eb276bb92b3a3e2d64cc0a9f4
   languageName: node
   linkType: hard
 
@@ -13698,6 +13735,22 @@ __metadata:
   version: 1.3.0
   resolution: "readline@npm:1.3.0"
   checksum: 2cb7c274333fe1ed55e1bd06c670a32bd9eae5324d8e1fafb9af5c128dfde85601d59defe47947788b0682d5e9efeae6b88ea5fe233d5236a02f382a0b0ad4c3
+  languageName: node
+  linkType: hard
+
+"reanimated-color-picker@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "reanimated-color-picker@npm:3.0.4"
+  peerDependencies:
+    expo: ">=44.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: ">=2.0.0"
+    react-native-reanimated: ^2.0.0 || ^3.0.0
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 589cdbd8dfe6131d4b60f4a7bb62d79f8e230c8715723f1438edca20f5aa26eba0a876c674124d70ee3e59c2da3d3ece7a0ea997a0c8c757e7a081a7ba74636e
   languageName: node
   linkType: hard
 
@@ -15065,6 +15118,13 @@ __metadata:
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: 5da78346f70139a7d213b65a0106f3c398d6bc5301f9248b5275f420abc2c4b1e77c2abc72d218dedc28c41efb2e7c312cb76a7730d04f9c2d37d247da3f4198
+  languageName: node
+  linkType: hard
+
+"tinycolor2@npm:^1.4.1":
+  version: 1.6.0
+  resolution: "tinycolor2@npm:1.6.0"
+  checksum: 066c3acf4f82b81c58a0d3ab85f49407efe95ba87afc3c7a16b1d77625193dfbe10dd46c26d0a263c1137361dd5a6a68bff2fb71def5fb9b9aec940fb030bcd4
   languageName: node
   linkType: hard
 
