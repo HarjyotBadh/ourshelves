@@ -10,12 +10,15 @@ import {
   collection,
   where,
   getDocs,
+  getDoc,
+  increment,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebaseConfig";
 import { ItemData, WallpaperData, ShelfColorData } from "../models/RoomData";
 import { PurchasedItem } from "models/PurchasedItem";
 import { UserData } from "../models/UserData";
+import { useToastController } from "@tamagui/toast";
 
 const getCurrentUserId = () => {
   const auth = getAuth();
@@ -251,64 +254,71 @@ export const purchaseShelfColor = async (
   }
 };
 
-export const handleEarnCoins = async (
-  user: UserData,
-  amount: number = 50
+export const earnCoins = async (
+  userId: string,
+  amount: number
 ): Promise<{
   success: boolean;
   message: string;
-  updatedUser: UserData | null;
+  newCoins: number | null;
 }> => {
   try {
-    // const userDocRef = doc(db, "Users", user.userId);
-    const userId = getCurrentUserId();
     const userDocRef = doc(db, "Users", userId);
-    const newCoins = user.coins + amount;
-    await updateDoc(userDocRef, { coins: newCoins });
+    
+    // Use increment to atomically update the coins field
+    await updateDoc(userDocRef, { coins: increment(amount) });
+    
+    // Fetch the updated user document to get the new coin amount
+    const updatedUserDoc = await getDoc(userDocRef);
+    const newCoins = updatedUserDoc.data()?.coins;
 
-    const updatedUser = { ...user, coins: newCoins };
     return {
       success: true,
       message: `You've earned ${amount} coins!`,
-      updatedUser,
+      newCoins,
     };
   } catch (error) {
     console.error("Error earning coins:", error);
     return {
       success: false,
       message: "Failed to earn coins. Please try again.",
-      updatedUser: null,
+      newCoins: null,
     };
   }
 };
 
-export const handleLoseCoins = async (
-  user: UserData,
-  amount: number = 50
+export const loseCoins = async (
+  userId: string,
+  amount: number
 ): Promise<{
   success: boolean;
   message: string;
-  updatedUser: UserData | null;
+  newCoins: number | null;
 }> => {
   try {
-    // const userDocRef = doc(db, "Users", user.userId);
-    const userId = getCurrentUserId();
     const userDocRef = doc(db, "Users", userId);
-    const newCoins = Math.max(0, user.coins - amount); // Ensure coins don't go below 0
+    
+    // First, get the current coin amount
+    const userDoc = await getDoc(userDocRef);
+    const currentCoins = userDoc.data()?.coins || 0;
+    
+    // Calculate new coin amount, ensuring it doesn't go below 0
+    const newCoins = Math.max(0, currentCoins - amount);
+    
+    // Update the user document with the new coin amount
     await updateDoc(userDocRef, { coins: newCoins });
 
-    const updatedUser = { ...user, coins: newCoins };
     return {
       success: true,
       message: `You've lost ${amount} coins.`,
-      updatedUser,
+      newCoins,
     };
   } catch (error) {
     console.error("Error losing coins:", error);
     return {
       success: false,
       message: "Failed to lose coins. Please try again.",
-      updatedUser: null,
+      newCoins: null,
     };
   }
 };
