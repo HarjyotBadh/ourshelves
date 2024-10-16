@@ -48,6 +48,7 @@ import { doc, increment, updateDoc } from "firebase/firestore";
 import { ToastViewport, useToastController } from "@tamagui/toast";
 import ColorPickerModal from "components/ColorPickerModal";
 import { PlusCircle } from "@tamagui/lucide-icons";
+import { earnCoins } from "project-functions/shopFunctions";
 
 const { width: screenWidth } = Dimensions.get("window");
 const WHITEBOARD_WIDTH = screenWidth - 40;
@@ -135,10 +136,12 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const handleClose = useCallback(async () => {
     try {
       if (hasChanges) {
-        const userDocRef = doc(db, "Users", auth.currentUser.uid);
-        await updateDoc(userDocRef, {
-          coins: increment(10),
-        });
+        // const userDocRef = doc(db, "Users", auth.currentUser.uid);
+        // await updateDoc(userDocRef, {
+        //   coins: increment(10),
+        // });
+        //
+        earnCoins(auth.currentUser.uid, 10);
         toast.show("You earned 10 coins for your drawing!", {
           duration: 3000,
         });
@@ -228,7 +231,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
     </View>
   );
 
-  
   const handleCustomColorSelect = (color: string) => {
     console.log(color);
     setCustomColor(color);
@@ -243,7 +245,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
       </YStack>
     );
   }
-
 
   return (
     <Modal
@@ -312,7 +313,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
               backgroundColor={customColor}
               onPress={() => setIsColorPickerVisible(true)}
               style={styles.buttonStyle}
-              borderColor={currentColor===customColor ? "black" : customColor}
+              borderColor={currentColor === customColor ? "black" : customColor}
               borderWidth={2}
               icon={PlusCircle}
             ></Button>
