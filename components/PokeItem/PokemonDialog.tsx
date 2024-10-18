@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Text,
-  YStack,
-  Image,
-  Dialog,
-  Button,
-} from "tamagui";
+import { Text, YStack, Image, Dialog, Button } from "tamagui";
 import { LinearGradient } from "tamagui/linear-gradient";
 import { Timestamp } from "firebase/firestore";
 
@@ -19,12 +13,19 @@ interface PokemonDialogProps {
     hatched: boolean;
     interactionCount: number;
     nextInteractionTime: Timestamp | Date;
+    pokemon?: {
+      pokemonId: number;
+      name: string;
+      imageUri: string;
+      types: string[];
+    };
     [key: string]: any;
   };
   onClose: () => void;
+  onDataUpdate: (data: any) => void;
 }
 
-const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose }) => {
+const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onDataUpdate }) => {
   return (
     <Dialog.Content
       bordered
@@ -64,20 +65,25 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose }) => {
                 textShadowRadius: 2,
               }}
             >
-              Hatched Pokémon
+              {itemData.pokemon?.name
+                ? itemData.pokemon.name.charAt(0).toUpperCase() + itemData.pokemon.name.slice(1)
+                : "Unknown Pokémon"}
             </Text>
           </Dialog.Title>
           <Image
-            source={{ uri: itemData.imageUri }}
+            source={{ uri: itemData.pokemon?.imageUri || itemData.imageUri }}
             width={220}
             height={220}
             objectFit="contain"
           />
-          <Text color="#FFFFFF" fontSize={20} fontWeight="bold" textAlign="center">
-            Congratulations! Your egg has hatched into a mysterious Pokémon!
+          <Text color="#FFFFFF" fontSize={24} fontWeight="bold" textAlign="center">
+            {itemData.pokemon?.name || "Unknown Pokémon"}
+          </Text>
+          <Text color="#FFFFFF" fontSize={18} textAlign="center">
+            Types: {itemData.pokemon?.types.join(", ") || "Unknown"}
           </Text>
           <Text color="#FFFFFF" fontSize={16} textAlign="center">
-            Pokémon ID: {itemData.id}
+            Pokémon ID: {itemData.pokemon?.pokemonId || "Unknown"}
           </Text>
           <Text color="#FFFFFF" fontSize={16} textAlign="center">
             Item ID: {itemData.itemId}

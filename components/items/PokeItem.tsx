@@ -15,6 +15,12 @@ interface PokeItemProps {
     interactionCount: number;
     nextInteractionTime: Timestamp | Date;
     [key: string]: any;
+    pokemon?: {
+      pokemonId: number;
+      name: string;
+      imageUri: string;
+      types: string[];
+    };
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
   isActive: boolean;
@@ -64,6 +70,9 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
   };
 
   const isInteractionAvailable = () => {
+    if (!itemData.nextInteractionTime) {
+      return true;
+    }
     const currentDate = Timestamp.now();
     const nextInteraction =
       itemData.nextInteractionTime instanceof Date
@@ -73,10 +82,30 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
   };
 
   if (!isActive) {
+    const containerSize = 90;
+    const eggSize = 80;
+    const pokemonSize = 200;
+
     return (
-      <YStack width={90} height={90} justifyContent="flex-end" alignItems="center">
-        <View position="relative">
-          <Image source={{ uri: itemData.imageUri }} width={80} height={80} objectFit="contain" />
+      <YStack
+        width={containerSize}
+        height={containerSize}
+        justifyContent="center"
+        alignItems="center"
+      >
+        <View
+          width={containerSize}
+          height={containerSize}
+          justifyContent="center"
+          alignItems="center"
+          overflow="hidden"
+        >
+          <Image
+            source={{ uri: itemData.hatched ? itemData.pokemon?.imageUri : itemData.imageUri }}
+            width={itemData.hatched ? pokemonSize : eggSize}
+            height={itemData.hatched ? pokemonSize : eggSize}
+            objectFit="contain"
+          />
           {isInteractionAvailable() && !itemData.hatched && (
             <View
               position="absolute"
@@ -118,7 +147,11 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
             onClose={handleDialogClose}
           />
         ) : (
-          <PokemonDialog itemData={itemData} onClose={handleDialogClose} />
+          <PokemonDialog
+            itemData={itemData}
+            onDataUpdate={onDataUpdate}
+            onClose={handleDialogClose}
+          />
         )}
       </Dialog.Portal>
     </Dialog>

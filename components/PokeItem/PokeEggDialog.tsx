@@ -10,6 +10,7 @@ import Animated, {
   withRepeat,
 } from "react-native-reanimated";
 import { Timestamp } from "firebase/firestore";
+import { Pokemon } from "../../models/PokemonModel";
 
 const ProgressIndicator = styled(View, {
   width: 24,
@@ -42,6 +43,12 @@ interface PokeEggDialogProps {
     interactionCount: number;
     nextInteractionTime: Timestamp | Date;
     [key: string]: any;
+    pokemon?: {
+      pokemonId: number;
+      name: string;
+      imageUri: string;
+      types: string[];
+    };
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
   onClose: () => void;
@@ -51,7 +58,25 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
 
-  const handleInteraction = () => {
+  const generatePokemon = async () => {
+    try {
+      const randomPokemonId = Math.floor(Math.random() * 898) + 1; // There are 898 Pokémon in total
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomPokemonId}`);
+      const data: Pokemon = await response.json();
+
+      return {
+        pokemonId: data.id,
+        name: data.name,
+        imageUri: data.sprites.front_default,
+        types: data.types.map((t) => t.type.name),
+      };
+    } catch (error) {
+      console.error("Error fetching Pokémon data:", error);
+      return null;
+    }
+  };
+
+  const handleInteraction = async () => {
     const currentDate = Timestamp.now();
     const nextInteraction =
       itemData.nextInteractionTime instanceof Date
@@ -70,6 +95,10 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
       };
       if (newInteractionCount >= 7) {
         newData.hatched = true;
+        const pokemon = await generatePokemon();
+        if (pokemon) {
+          newData.pokemon = pokemon;
+        }
       }
       onDataUpdate(newData);
 
