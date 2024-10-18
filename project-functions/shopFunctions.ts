@@ -271,7 +271,6 @@ export const earnCoins = async (
     // Fetch the updated user document to get the new coin amount
     const updatedUserDoc = await getDoc(userDocRef);
     const newCoins = updatedUserDoc.data()?.coins;
-    console.log(newCoins);
     return {
       success: true,
       message: `You've earned ${amount} coins!`,
