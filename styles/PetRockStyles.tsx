@@ -1,5 +1,7 @@
 import { Dimensions, StyleSheet } from "react-native";
 import { BOTTOM_BAR_HEIGHT } from "./WhiteboardStyles";
+import { Toast } from "@tamagui/toast";
+import { YStack, Text } from "tamagui";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const ROCK_SIZE = 100;
 const CANVAS_PADDING = 20;

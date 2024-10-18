@@ -33,4 +33,6 @@ export interface RockShopModalProps {
   ownedOutfits: string[];
   isVisible: boolean;
   onOutfitPurchased: (outfit: RockOutfit) => void;
+  userCoins: number;
+  onCoinUpdate: (newCoins: number) => void;
 }
