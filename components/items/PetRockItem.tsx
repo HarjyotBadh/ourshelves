@@ -28,7 +28,9 @@ import { doc, getDoc } from "firebase/firestore";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const ROCK_SIZE = 120;
-const CANVAS_PADDING = 20;
+const CANVAS_PADDING = 30;
+const EXTRA_RIGHT_PADDING = 40;
+const HEIGHT_PADDING = 45;
 const GRAVITY = 2000;
 const COIN_SIZE = 40;
 const SPAWN_DELAY = 1000; // 1 second cooldown
@@ -53,11 +55,11 @@ const PetRockItem: PetRockItemComponent = ({
   const isCollecting = useRef(false);
   const isMoving = useSharedValue(false);
 
-  const canvasWidth = SCREEN_WIDTH * 0.8 + CANVAS_PADDING;
+  const canvasWidth = SCREEN_WIDTH * 0.8 + CANVAS_PADDING * 2 + EXTRA_RIGHT_PADDING;
   const canvasHeight = SCREEN_HEIGHT * 0.6 + CANVAS_PADDING;
 
-  const playAreaWidth = canvasWidth - 2 * CANVAS_PADDING;
-  const playAreaHeight = canvasHeight - 2 * CANVAS_PADDING;
+  const playAreaWidth = canvasWidth - 4 * CANVAS_PADDING;
+  const playAreaHeight = canvasHeight - 4 * CANVAS_PADDING;
 
   const translateX = useSharedValue(canvasWidth / 2 - ROCK_SIZE / 2);
   const translateY = useSharedValue(canvasHeight / 2 - ROCK_SIZE / 2);
@@ -223,12 +225,12 @@ const PetRockItem: PetRockItemComponent = ({
 
       const newX = clamp(
         translateX.value + velocityX.value * dt,
-        CANVAS_PADDING,
-        canvasWidth - ROCK_SIZE - CANVAS_PADDING
+        CANVAS_PADDING - EXTRA_RIGHT_PADDING,
+        canvasWidth - ROCK_SIZE - CANVAS_PADDING - EXTRA_RIGHT_PADDING
       );
       const newY = clamp(
         translateY.value + velocityY.value * dt,
-        CANVAS_PADDING,
+        CANVAS_PADDING - HEIGHT_PADDING,
         canvasHeight - ROCK_SIZE - CANVAS_PADDING
       );
 
@@ -243,14 +245,14 @@ const PetRockItem: PetRockItemComponent = ({
       }
 
       if (
-        translateX.value <= CANVAS_PADDING ||
-        translateX.value >= canvasWidth - ROCK_SIZE - CANVAS_PADDING
+        translateX.value <= CANVAS_PADDING - EXTRA_RIGHT_PADDING||
+        translateX.value >= canvasWidth - ROCK_SIZE - CANVAS_PADDING - EXTRA_RIGHT_PADDING
       ) {
         velocityX.value *= -0.5;
       }
 
       if (
-        translateY.value <= CANVAS_PADDING ||
+        translateY.value <= CANVAS_PADDING - HEIGHT_PADDING ||
         translateY.value >= canvasHeight - ROCK_SIZE - CANVAS_PADDING
       ) {
         velocityY.value *= -0.5;
@@ -283,12 +285,12 @@ const PetRockItem: PetRockItemComponent = ({
       if (!isEditMode) {
         translateX.value = clamp(
           event.absoluteX - ROCK_SIZE / 2,
-          CANVAS_PADDING,
-          canvasWidth - ROCK_SIZE - CANVAS_PADDING
+          CANVAS_PADDING - EXTRA_RIGHT_PADDING,
+          canvasWidth - ROCK_SIZE - CANVAS_PADDING - EXTRA_RIGHT_PADDING
         );
         translateY.value = clamp(
           event.absoluteY - ROCK_SIZE / 2,
-          CANVAS_PADDING,
+          CANVAS_PADDING - HEIGHT_PADDING,
           canvasHeight - ROCK_SIZE - CANVAS_PADDING
         );
         runOnJS(checkCoinCollision)();
@@ -390,7 +392,7 @@ const PetRockItem: PetRockItemComponent = ({
                   >
                     Rock Shop
                   </Button>
-                  <Button backgroundColor="$red" onPress={handleCloseModal}>
+                  <Button backgroundColor="$red10" onPress={handleCloseModal}>
                     Close
                   </Button>
                 </XStack>
