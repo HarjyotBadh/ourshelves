@@ -59,16 +59,47 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
   const scale = useSharedValue(1);
 
   const generatePokemon = async () => {
+    const fetchPokemon = async () => {
+      const randomChainId = Math.floor(Math.random() * 500) + 1;
+
+      const chainDetailsResponse = await fetch(
+        `https://pokeapi.co/api/v2/evolution-chain/${randomChainId}`
+      );
+      const chainDetails = await chainDetailsResponse.json();
+
+      const firstPokemonSpecies = chainDetails.chain.species;
+
+      const pokemonResponse = await fetch(
+        `https://pokeapi.co/api/v2/pokemon/${firstPokemonSpecies.name}`
+      );
+      return await pokemonResponse.json();
+    };
+
     try {
-      const randomPokemonId = Math.floor(Math.random() * 898) + 1; // There are 898 Pokémon in total
-      const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomPokemonId}`);
-      const data: Pokemon = await response.json();
+      let pokemonData = await fetchPokemon();
+      let attempts = 0;
+      const maxAttempts = 5;
+
+      while (!pokemonData.sprites.front_default && attempts < maxAttempts) {
+        console.log(
+          `Attempt ${attempts + 1}: Pokémon ${
+            pokemonData.name
+          } has no front sprite. Trying another...`
+        );
+        pokemonData = await fetchPokemon();
+        attempts++;
+      }
+
+      if (attempts === maxAttempts) {
+        console.error("Failed to find a Pokémon with a front sprite after multiple attempts");
+        return null;
+      }
 
       return {
-        pokemonId: data.id,
-        name: data.name,
-        imageUri: data.sprites.front_default,
-        types: data.types.map((t) => t.type.name),
+        pokemonId: pokemonData.id,
+        name: pokemonData.name,
+        imageUri: pokemonData.sprites.front_default,
+        types: pokemonData.types.map((t) => t.type.name),
       };
     } catch (error) {
       console.error("Error fetching Pokémon data:", error);
@@ -152,6 +183,20 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
       true
     );
   }, []);
+
+  const handleQuickHatch = async () => {
+    const newData = {
+      ...itemData,
+      interactionCount: 7,
+      hatched: true,
+      nextInteractionTime: Timestamp.now().toDate(),
+    };
+    const pokemon = await generatePokemon();
+    if (pokemon) {
+      newData.pokemon = pokemon;
+    }
+    onDataUpdate(newData);
+  };
 
   return (
     <Dialog.Content
@@ -241,6 +286,18 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
                 {isInteractionAvailable() ? "Ready!" : getTimeUntilNextInteraction()}
               </Text>
             </YStack>
+          </Button>
+          <Button
+            onPress={handleQuickHatch}
+            backgroundColor="#FF6B6B"
+            color="#FFFFFF"
+            borderRadius="$4"
+            fontSize={16}
+            fontWeight="bold"
+            paddingHorizontal="$3"
+            marginTop="$2"
+          >
+            Quick Hatch (Test)
           </Button>
           <Dialog.Close asChild>
             <Button
