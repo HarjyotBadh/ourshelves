@@ -49,7 +49,6 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
       !itemData.hasOwnProperty("interactionCount") ||
       !itemData.hasOwnProperty("nextInteractionTime")
     ) {
-      console.log("Initializing data");
       const initialData = PokeItem.getInitialData();
       onDataUpdate({
         ...itemData,

@@ -7021,6 +7021,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios-cache-interceptor@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "axios-cache-interceptor@npm:1.6.1"
+  dependencies:
+    cache-parser: "npm:1.2.5"
+    fast-defer: "npm:1.1.8"
+    object-code: "npm:1.3.3"
+  peerDependencies:
+    axios: ^1
+  checksum: a9a31a2969cda71c603f39505559a2af2c8ace1ddfecd04f27a8c6e93470f9c479d2a73ab097c3cf0d9b834a15b709da10ad5047803c777dea53d27a204423ba
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.7.7":
+  version: 1.7.7
+  resolution: "axios@npm:1.7.7"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 7f875ea13b9298cd7b40fd09985209f7a38d38321f1118c701520939de2f113c4ba137832fe8e3f811f99a38e12c8225481011023209a77b0c0641270e20cde1
+  languageName: node
+  linkType: hard
+
 "babel-core@npm:^7.0.0-bridge.0":
   version: 7.0.0-bridge.0
   resolution: "babel-core@npm:7.0.0-bridge.0"
@@ -7370,6 +7394,13 @@ __metadata:
     tar: "npm:^6.1.11"
     unique-filename: "npm:^3.0.0"
   checksum: ca2f7b2d3003f84d362da9580b5561058ccaecd46cba661cbcff0375c90734b610520d46b472a339fd032d91597ad6ed12dde8af81571197f3c9772b5d35b104
+  languageName: node
+  linkType: hard
+
+"cache-parser@npm:1.2.5":
+  version: 1.2.5
+  resolution: "cache-parser@npm:1.2.5"
+  checksum: c6c1600433c70ce403b5f63d47463c0aac88b033ca4a7dae155b300e1246546fe68c840661762b6e1c3a16b8ba079fc16ca1eb834dfc929e06539db9af0be3cb
   languageName: node
   linkType: hard
 
@@ -9244,6 +9275,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-defer@npm:1.1.8":
+  version: 1.1.8
+  resolution: "fast-defer@npm:1.1.8"
+  checksum: 2fbdcf385929b53a2299c83cfb9c0ac4c0f0c4d1c268e791ed8a97dad9c25a7f459e1475e8270f268d29541be0a8b14a764d77f18cc7caea95c1863cf87c471b
+  languageName: node
+  linkType: hard
+
 "fast-glob@npm:^3.2.11, fast-glob@npm:^3.2.5, fast-glob@npm:^3.2.9, fast-glob@npm:^3.3.0, fast-glob@npm:^3.3.2":
   version: 3.3.2
   resolution: "fast-glob@npm:3.3.2"
@@ -9576,6 +9614,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"follow-redirects@npm:^1.15.6":
+  version: 1.15.9
+  resolution: "follow-redirects@npm:1.15.9"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: e3ab42d1097e90d28b913903841e6779eb969b62a64706a3eb983e894a5db000fbd89296f45f08885a0e54cd558ef62e81be1165da9be25a6c44920da10f424c
+  languageName: node
+  linkType: hard
+
 "fontfaceobserver@npm:^2.1.0":
   version: 2.3.0
   resolution: "fontfaceobserver@npm:2.3.0"
@@ -9633,6 +9681,17 @@ __metadata:
     combined-stream: "npm:^1.0.8"
     mime-types: "npm:^2.1.12"
   checksum: 944b40ff63b9cb1ca7a97e70f72104c548e0b0263e3e817e49919015a0d687453086259b93005389896dbffd3777cccea2e67c51f4e827590e5979b14ff91bf7
+  languageName: node
+  linkType: hard
+
+"form-data@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "form-data@npm:4.0.1"
+  dependencies:
+    asynckit: "npm:^0.4.0"
+    combined-stream: "npm:^1.0.8"
+    mime-types: "npm:^2.1.12"
+  checksum: 6adb1cff557328bc6eb8a68da205f9ae44ab0e88d4d9237aaf91eed591ffc64f77411efb9016af7d87f23d0a038c45a788aa1c6634e51175c4efa36c2bc53774
   languageName: node
   linkType: hard
 
@@ -12385,6 +12444,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"object-code@npm:1.3.3":
+  version: 1.3.3
+  resolution: "object-code@npm:1.3.3"
+  checksum: f6413d2097556a2f0643d145ce57ced10025e381927bb5688d32757424ef674463e3487bd17cfff45e2efe378419a30a364fc46f2f96c29ae3d9c8f6f573ca52
+  languageName: node
+  linkType: hard
+
 "object-inspect@npm:^1.13.1":
   version: 1.13.2
   resolution: "object-inspect@npm:1.13.2"
@@ -12595,6 +12661,8 @@ __metadata:
     "@types/react-native-canvas": "npm:^0"
     "@types/validator": "npm:^13"
     "@unimodules/core": "npm:7.1.2"
+    axios: "npm:^1.7.7"
+    axios-cache-interceptor: "npm:^1.6.1"
     babel-plugin-transform-inline-environment-variables: "npm:^0.4.4"
     babel-preset-expo: "npm:^11.0.6"
     burnt: "npm:^0.12.2"
@@ -13093,6 +13161,13 @@ __metadata:
     "@types/node": "npm:>=13.7.0"
     long: "npm:^5.0.0"
   checksum: 408423506610f70858d7593632f4a6aa4f05796c90fd632be9b9252457c795acc71aa6d3b54bb7f48a890141728fee4ca3906723ccea6c202ad71f21b3879b8b
+  languageName: node
+  linkType: hard
+
+"proxy-from-env@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "proxy-from-env@npm:1.1.0"
+  checksum: f0bb4a87cfd18f77bc2fba23ae49c3b378fb35143af16cc478171c623eebe181678f09439707ad80081d340d1593cd54a33a0113f3ccb3f4bc9451488780ee23
   languageName: node
   linkType: hard
 

@@ -10,7 +10,6 @@ import Animated, {
   withRepeat,
 } from "react-native-reanimated";
 import { Timestamp } from "firebase/firestore";
-import { Pokemon } from "../../models/PokemonModel";
 import { PokemonClient, EvolutionClient } from "pokenode-ts";
 
 const pokeAPI = new PokemonClient();
@@ -62,6 +61,15 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
 
+  // List of legendary Pokémon IDs
+  const legendaryPokemonIds = [
+    144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384,
+    385, 386, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 638, 639,
+    640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 716, 717, 718, 719, 720, 721, 785, 786, 787,
+    788, 789, 790, 791, 792, 793, 794, 795, 796, 797, 798, 799, 800, 801, 802, 807, 808, 809, 888,
+    889, 890, 891, 892, 893, 894, 895, 896, 897, 898,
+  ];
+
   const generatePokemon = async () => {
     try {
       const randomChainId = Math.floor(Math.random() * 549) + 1;
@@ -73,6 +81,13 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
       if (!pokemonData.sprites.front_default) {
         console.log(`Pokémon ${pokemonData.name} has no front sprite. Trying another...`);
         return generatePokemon();
+      }
+
+      if (legendaryPokemonIds.includes(pokemonData.id)) {
+        // 1% chance to keep the legendary Pokémon
+        if (Math.random() > 0.01) {
+          return generatePokemon();
+        }
       }
 
       return {

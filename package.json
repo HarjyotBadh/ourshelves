@@ -34,6 +34,8 @@
     "@tamagui/toast": "^1.110.5",
     "@terrylinla/react-native-sketch-canvas": "^0.8.0",
     "@unimodules/core": "7.1.2",
+    "axios": "^1.7.7",
+    "axios-cache-interceptor": "^1.6.1",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "babel-preset-expo": "^11.0.6",
     "burnt": "^0.12.2",
