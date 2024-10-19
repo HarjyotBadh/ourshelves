@@ -11,6 +11,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { TamaguiProvider } from "@tamagui/core";
 import { ToastProvider } from "@tamagui/toast";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AudioProvider } from "components/AudioContext";
 import config from "tamagui.config";
 
 LogBox.ignoreLogs([

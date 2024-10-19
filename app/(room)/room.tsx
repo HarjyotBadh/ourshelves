@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, Alert } from "react-native";
 import {
   YStack,
@@ -49,6 +49,8 @@ import {
   SafeAreaWrapper,
   Container,
 } from "../../styles/RoomStyles";
+import { Audio } from "expo-av";
+import { useAudio } from "../../components/AudioContext";
 
 // ==================================================== //
 
@@ -90,6 +92,35 @@ const RoomScreen = () => {
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
   }>({ name: "", users: [], description: "" });
+  const [backgroundMusic, setBackgroundMusic] = useState<Audio.Sound | null>(null);
+  const roomRef = useRef(doc(db, 'Rooms', roomId));
+  const { stop } = useAudio();
+
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   const unsubscribe = onSnapshot(roomRef.current, async (docSnapshot) => {
+  //     if (docSnapshot.exists() && isMounted) {
+  //       const roomData = docSnapshot.data();
+  //       const bgMusic = roomData.backgroundMusic;
+  
+  //       if (bgMusic && bgMusic.isPlaying) {
+  //         try {
+  //           await AudioManager.playAudio(bgMusic.trackUrl);
+  //         } catch (error) {
+  //           console.error('Error loading background music:', error);
+  //         }
+  //       } else {
+  //         await AudioManager.stopAudio();
+  //       }
+  //     }
+  //   });
+  
+  //   return () => {
+  //     isMounted = false;
+  //     unsubscribe();
+  //     AudioManager.stopAudio();
+  //   };
+  // }, [roomId]);
 
   /**
    * Initializes shelves for a new room.
@@ -560,7 +591,13 @@ const RoomScreen = () => {
     setIsEditMode(false);
   };
 
+  const handleLeaveMusic = async () => {
+    await stop();
+    // Add your existing leave room logic here
+  };
+
   const handleGoBack = () => {
+    handleLeaveMusic();
     if (router.canGoBack()) {
       router.back();
     } else {
