@@ -585,6 +585,23 @@ const RoomScreen = () => {
     }
   };
 
+  const handleShelfNameChange = async (shelfId: string, newName: string) => {
+    try {
+      await updateDoc(doc(db, "Shelves", shelfId), {
+        name: newName,
+        updatedAt: new Date(),
+      });
+
+      setShelves((prevShelves) =>
+        prevShelves.map((shelf) =>
+          shelf.id === shelfId ? { ...shelf, name: newName } : shelf
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update shelf name:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <YStack f={1} ai="center" jc="center" backgroundColor={BACKGROUND_COLOR}>
@@ -690,7 +707,9 @@ const RoomScreen = () => {
                 {shelves.map((shelf, index) => (
                   <Shelf
                     key={shelf.id}
+                    shelfId={shelf.id}
                     shelfNumber={index + 1}
+                    shelfName={shelf.name}
                     items={[0, 1, 2].map((position) => {
                       const placedItem = shelf.placedItems?.find(
                         (item) => item.position === position
@@ -706,6 +725,7 @@ const RoomScreen = () => {
                     onItemDataUpdate={(position, newItemData) =>
                       handleItemDataUpdate(shelf.id, position, newItemData)
                     }
+                    onShelfNameChange={handleShelfNameChange}
                     users={users}
                     roomInfo={roomInfo}
                   />
