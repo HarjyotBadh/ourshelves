@@ -12617,6 +12617,7 @@ __metadata:
     expo-web-browser: "npm:~13.0.3"
     firebase: "npm:^10.13.1"
     install: "npm:^0.13.0"
+    pokenode-ts: "npm:^1.20.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-native: "npm:0.74.5"
@@ -12910,6 +12911,16 @@ __metadata:
   version: 3.4.0
   resolution: "pngjs@npm:3.4.0"
   checksum: 0e9227a413ce4b4f5ebae4465b366efc9ca545c74304f3cc30ba2075159eb12f01a6a821c4f61f2b048bd85356abbe6d2109df7052a9030ef4d7a42d99760af6
+  languageName: node
+  linkType: hard
+
+"pokenode-ts@npm:^1.20.0":
+  version: 1.20.0
+  resolution: "pokenode-ts@npm:1.20.0"
+  peerDependencies:
+    axios: ^1.4.0
+    axios-cache-interceptor: ^1.2.0
+  checksum: 5640a8a938cbc5b688a81bc078a57ed6ecff10bec80b8be6bd7b1777ef4caf8dbf8b7d5583a1b345d18676acd6caf508ceeb3d8b53dd644ca82c46a7fd58989b
   languageName: node
   linkType: hard
 

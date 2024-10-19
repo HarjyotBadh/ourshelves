@@ -84,7 +84,7 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
   if (!isActive) {
     const containerSize = 90;
     const eggSize = 80;
-    const pokemonSize = 200;
+    const pokemonSize = 130;
 
     return (
       <YStack
@@ -98,7 +98,6 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
           height={containerSize}
           justifyContent="center"
           alignItems="center"
-          overflow="hidden"
         >
           <Image
             source={{ uri: itemData.hatched ? itemData.pokemon?.imageUri : itemData.imageUri }}

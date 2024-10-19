@@ -17,8 +17,7 @@ import { Heart, Dumbbell, Sparkles } from "@tamagui/lucide-icons";
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 const AnimatedText = Animated.createAnimatedComponent(Text);
 
-// Add this new component definition
-const Star = ({ delay, style, color }: { delay: number; style: any; color: string }) => {
+const Star = ({ style, color }: { style: any; color: string }) => {
   const opacity = useSharedValue(0);
 
   useEffect(() => {
@@ -59,7 +58,6 @@ const StarryBackground = ({ color }: { color: string }) => {
       {stars.map((star) => (
         <Star
           key={star.id}
-          delay={star.delay}
           style={{ top: star.top, left: star.left }}
           color={color}
         />
@@ -141,7 +139,7 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
       steel: ["#B8B8D0", "#787887"],
       fairy: ["#EE99AC", "#9B6470"],
     };
-    return typeColors[type.toLowerCase()] || ["#68A090", "#4A685A"]; // Default color if type not found
+    return typeColors[type.toLowerCase()] || ["#68A090", "#4A685A"];
   };
 
   const primaryType = itemData.pokemon?.types[0]?.toLowerCase() || "normal";

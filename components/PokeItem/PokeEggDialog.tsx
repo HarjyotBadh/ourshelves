@@ -11,6 +11,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { Timestamp } from "firebase/firestore";
 import { Pokemon } from "../../models/PokemonModel";
+import { PokemonClient, EvolutionClient } from "pokenode-ts";
+
+const pokeAPI = new PokemonClient();
+const evolutionAPI = new EvolutionClient();
 
 const ProgressIndicator = styled(View, {
   width: 24,
@@ -59,40 +63,16 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
   const scale = useSharedValue(1);
 
   const generatePokemon = async () => {
-    const fetchPokemon = async () => {
-      const randomChainId = Math.floor(Math.random() * 500) + 1;
-
-      const chainDetailsResponse = await fetch(
-        `https://pokeapi.co/api/v2/evolution-chain/${randomChainId}`
-      );
-      const chainDetails = await chainDetailsResponse.json();
+    try {
+      const randomChainId = Math.floor(Math.random() * 549) + 1;
+      const chainDetails = await evolutionAPI.getEvolutionChainById(randomChainId);
 
       const firstPokemonSpecies = chainDetails.chain.species;
+      const pokemonData = await pokeAPI.getPokemonByName(firstPokemonSpecies.name);
 
-      const pokemonResponse = await fetch(
-        `https://pokeapi.co/api/v2/pokemon/${firstPokemonSpecies.name}`
-      );
-      return await pokemonResponse.json();
-    };
-
-    try {
-      let pokemonData = await fetchPokemon();
-      let attempts = 0;
-      const maxAttempts = 5;
-
-      while (!pokemonData.sprites.front_default && attempts < maxAttempts) {
-        console.log(
-          `Attempt ${attempts + 1}: Pokémon ${
-            pokemonData.name
-          } has no front sprite. Trying another...`
-        );
-        pokemonData = await fetchPokemon();
-        attempts++;
-      }
-
-      if (attempts === maxAttempts) {
-        console.error("Failed to find a Pokémon with a front sprite after multiple attempts");
-        return null;
+      if (!pokemonData.sprites.front_default) {
+        console.log(`Pokémon ${pokemonData.name} has no front sprite. Trying another...`);
+        return generatePokemon();
       }
 
       return {
