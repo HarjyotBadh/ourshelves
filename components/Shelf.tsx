@@ -21,6 +21,7 @@ interface ShelfProps {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
+    roomId: string;
   };
 }
 

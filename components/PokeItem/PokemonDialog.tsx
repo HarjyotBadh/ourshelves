@@ -95,10 +95,6 @@ interface PokemonDialogProps {
   onDataUpdate: (data: any) => void;
 }
 
-interface EvolutionSpecies {
-  name: string;
-}
-
 const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onDataUpdate }) => {
   const scale = useSharedValue(0.8);
   const rotation = useSharedValue(0);
@@ -244,20 +240,20 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
         console.error("No Pokémon data found");
         return;
       }
-  
+
       const species = await pokeAPI.getPokemonSpeciesByName(itemData.pokemon.name);
       const evolutionChainId = species.evolution_chain.url.split("/").filter(Boolean).pop();
-  
+
       if (!evolutionChainId) {
         console.error("Failed to extract evolution chain ID");
         return;
       }
-  
+
       const evolutionChain = await evolutionAPI.getEvolutionChainById(parseInt(evolutionChainId));
-  
+
       let nextEvolution: string | null = null;
       let hasNextEvolution = false;
-  
+
       const findNextEvolution = (chain: any) => {
         if (chain.species.name === itemData.pokemon?.name) {
           if (chain.evolves_to.length > 0) {
@@ -269,14 +265,14 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
         chain.evolves_to.forEach(findNextEvolution);
       };
       findNextEvolution(evolutionChain.chain);
-  
+
       if (!nextEvolution) {
         console.error("No evolution found");
         return;
       }
-  
+
       const evolvedPokemon = await pokeAPI.getPokemonByName(nextEvolution);
-  
+
       const newData = {
         ...itemData,
         pokemon: {
@@ -293,9 +289,9 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
         nextTrainingTime: Timestamp.now().toDate(),
         nextFunTime: Timestamp.now().toDate(),
       };
-  
+
       onDataUpdate(newData);
-  
+
       if (toast) {
         toast.show("Evolution successful!", {
           message: `Your ${itemData.pokemon.name} evolved into ${newData.pokemon.name}!`,
@@ -342,11 +338,7 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
       gap="$1"
       opacity={0.9}
     >
-      {canEvolve ? (
-        <Zap size={12} color="#FFD700" />
-      ) : (
-        <Sparkles size={12} color="#FFD700" />
-      )}
+      {canEvolve ? <Zap size={12} color="#FFD700" /> : <Sparkles size={12} color="#FFD700" />}
       <Text color="#FFFFFF" fontSize={12} fontWeight="bold">
         {canEvolve ? "Can Evolve" : "Final Form"}
       </Text>

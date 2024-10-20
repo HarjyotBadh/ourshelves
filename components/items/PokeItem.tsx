@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, YStack, Image, Dialog, Text } from "tamagui";
 import { Timestamp } from "firebase/firestore";
-import PokeEggDialog from "../PokeItem/PokeEggDialog"; // Import the new component
-import PokemonDialog from "components/PokeItem/PokemonDialog";
+import PokeEggDialog from "../PokeItem/PokeEggDialog";
+import PokemonDialog from "../PokeItem/PokemonDialog";
 
 interface PokeItemProps {
   itemData: {
@@ -44,12 +44,6 @@ interface PokeItemComponent extends React.FC<PokeItemProps> {
 
 const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  // Print the itemData id (if active)
-  if (isActive) {
-    console.log("itemData id:", itemData.id);
-    console.log("roomInfo:", roomInfo.roomId);
-  }
 
   useEffect(() => {
     if (
