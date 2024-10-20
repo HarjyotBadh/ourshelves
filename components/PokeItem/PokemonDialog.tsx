@@ -12,7 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { AlertDialog } from "../AlertDialog";
 import { useToastController } from "@tamagui/toast";
-import { Heart, Dumbbell, Sparkles } from "@tamagui/lucide-icons";
+import { Heart, Dumbbell, Sparkles, Zap } from "@tamagui/lucide-icons";
 import { PokemonClient, EvolutionClient } from "pokenode-ts";
 
 const pokeAPI = new PokemonClient();
@@ -276,7 +276,6 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
       }
   
       const evolvedPokemon = await pokeAPI.getPokemonByName(nextEvolution);
-      // const evolvedSpecies = await pokeAPI.getPokemonSpeciesByName(nextEvolution);
   
       const newData = {
         ...itemData,
@@ -332,6 +331,28 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
     }
   };
 
+  const EvolutionBadge = ({ canEvolve }: { canEvolve: boolean }) => (
+    <XStack
+      backgroundColor={canEvolve ? "$green8" : "$purple8"}
+      borderRadius="$full"
+      paddingHorizontal="$2"
+      paddingVertical="$1"
+      alignItems="center"
+      justifyContent="center"
+      gap="$1"
+      opacity={0.9}
+    >
+      {canEvolve ? (
+        <Zap size={12} color="#FFD700" />
+      ) : (
+        <Sparkles size={12} color="#FFD700" />
+      )}
+      <Text color="#FFFFFF" fontSize={12} fontWeight="bold">
+        {canEvolve ? "Can Evolve" : "Final Form"}
+      </Text>
+    </XStack>
+  );
+
   return (
     <Dialog.Content
       bordered
@@ -363,22 +384,25 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
       >
         <ScrollView>
           <YStack gap="$4" maxWidth={500} alignItems="center">
-            <Dialog.Title>
-              <AnimatedText
-                fontSize={36}
-                fontWeight="bold"
-                color="#FFDE00"
-                style={{
-                  textShadowColor: "#3B4CCA",
-                  textShadowOffset: { width: 2, height: 2 },
-                  textShadowRadius: 4,
-                }}
-              >
-                {itemData.pokemon?.name
-                  ? itemData.pokemon.name.charAt(0).toUpperCase() + itemData.pokemon.name.slice(1)
-                  : "Unknown Pokémon"}
-              </AnimatedText>
-            </Dialog.Title>
+            <YStack alignItems="center" gap="$2">
+              <Dialog.Title>
+                <AnimatedText
+                  fontSize={36}
+                  fontWeight="bold"
+                  color="#FFDE00"
+                  style={{
+                    textShadowColor: "#3B4CCA",
+                    textShadowOffset: { width: 2, height: 2 },
+                    textShadowRadius: 4,
+                  }}
+                >
+                  {itemData.pokemon?.name
+                    ? itemData.pokemon.name.charAt(0).toUpperCase() + itemData.pokemon.name.slice(1)
+                    : "Unknown Pokémon"}
+                </AnimatedText>
+              </Dialog.Title>
+              <EvolutionBadge canEvolve={itemData.pokemon?.hasEvolution ?? false} />
+            </YStack>
             <Card
               elevate
               size="$4"
@@ -505,38 +529,41 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
               )}
             </YStack>
 
-            <Button
-              onPress={handleFillInteractions}
-              backgroundColor="#8A2BE2"
-              color="#FFFFFF"
-              borderRadius="$4"
-              fontSize={18}
-              fontWeight="bold"
-              paddingHorizontal="$4"
-              marginTop="$2"
-              hoverStyle={{ opacity: 0.9 }}
-              pressStyle={{ scale: 0.95 }}
-            >
-              Fill Interactions (Test)
-            </Button>
+            <YStack alignItems="center" width="100%">
+              <Dialog.Close asChild>
+                <Button
+                  onPress={onClose}
+                  backgroundColor="#FF0000"
+                  color="#FFFFFF"
+                  borderRadius="$4"
+                  fontSize={18}
+                  fontWeight="bold"
+                  paddingHorizontal="$5"
+                  marginTop="$4"
+                  hoverStyle={{ backgroundColor: "#FF3333" }}
+                  pressStyle={{ scale: 0.95 }}
+                >
+                  Close
+                </Button>
+              </Dialog.Close>
 
-            <Dialog.Close asChild>
               <Button
-                onPress={onClose}
-                backgroundColor="#FF0000"
+                onPress={handleFillInteractions}
+                backgroundColor="#8A2BE2"
                 color="#FFFFFF"
-                borderRadius="$4"
-                fontSize={18}
-                fontWeight="bold"
-                paddingHorizontal="$5"
-                marginTop="$4"
+                borderRadius="$2"
+                fontSize={10}
+                fontWeight="normal"
+                paddingHorizontal="$2"
+                paddingVertical="$1"
+                marginTop="$2"
                 marginBottom="$2"
-                hoverStyle={{ backgroundColor: "#FF3333" }}
+                hoverStyle={{ opacity: 0.9 }}
                 pressStyle={{ scale: 0.95 }}
               >
-                Close
+                Fill Interactions (Test)
               </Button>
-            </Dialog.Close>
+            </YStack>
           </YStack>
         </ScrollView>
       </LinearGradient>
