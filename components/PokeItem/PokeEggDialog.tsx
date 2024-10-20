@@ -51,6 +51,7 @@ interface PokeEggDialogProps {
       name: string;
       imageUri: string;
       types: string[];
+      hasEvolution: boolean;
     };
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
@@ -75,8 +76,18 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
       const randomChainId = Math.floor(Math.random() * 549) + 1;
       const chainDetails = await evolutionAPI.getEvolutionChainById(randomChainId);
 
+      if (!chainDetails) {
+        console.error("No chain details found");
+        return null;
+      }
+
       const firstPokemonSpecies = chainDetails.chain.species;
       const pokemonData = await pokeAPI.getPokemonByName(firstPokemonSpecies.name);
+
+      if (!pokemonData) {
+        console.error("No pokemon data found");
+        return null;
+      }
 
       if (!pokemonData.sprites.front_default) {
         console.log(`Pokémon ${pokemonData.name} has no front sprite. Trying another...`);
@@ -84,17 +95,21 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
       }
 
       if (legendaryPokemonIds.includes(pokemonData.id)) {
+        console.log("Legendary Pokémon detected");
         // 1% chance to keep the legendary Pokémon
         if (Math.random() > 0.01) {
           return generatePokemon();
         }
       }
 
+      const hasEvolution = chainDetails.chain.evolves_to.length > 0;
+
       return {
         pokemonId: pokemonData.id,
         name: pokemonData.name,
         imageUri: pokemonData.sprites.front_default,
         types: pokemonData.types.map((t) => t.type.name),
+        hasEvolution: hasEvolution,
       };
     } catch (error) {
       console.error("Error fetching Pokémon data:", error);

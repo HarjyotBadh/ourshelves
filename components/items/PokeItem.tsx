@@ -20,6 +20,7 @@ interface PokeItemProps {
       name: string;
       imageUri: string;
       types: string[];
+      hasEvolution: boolean;
     };
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
@@ -42,6 +43,11 @@ interface PokeItemComponent extends React.FC<PokeItemProps> {
 
 const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Print the itemData id (if active)
+  if (isActive) {
+    console.log("itemData id:", itemData.id);
+  }
 
   useEffect(() => {
     if (

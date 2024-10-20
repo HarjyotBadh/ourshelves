@@ -13,6 +13,10 @@ import Animated, {
 import { AlertDialog } from "../AlertDialog";
 import { useToastController } from "@tamagui/toast";
 import { Heart, Dumbbell, Sparkles } from "@tamagui/lucide-icons";
+import { PokemonClient, EvolutionClient } from "pokenode-ts";
+
+const pokeAPI = new PokemonClient();
+const evolutionAPI = new EvolutionClient();
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 const AnimatedText = Animated.createAnimatedComponent(Text);
@@ -56,11 +60,7 @@ const StarryBackground = ({ color }: { color: string }) => {
   return (
     <View style={{ position: "absolute", width: "100%", height: "100%" }}>
       {stars.map((star) => (
-        <Star
-          key={star.id}
-          style={{ top: star.top, left: star.left }}
-          color={color}
-        />
+        <Star key={star.id} style={{ top: star.top, left: star.left }} color={color} />
       ))}
     </View>
   );
@@ -81,6 +81,7 @@ interface PokemonDialogProps {
       name: string;
       imageUri: string;
       types: string[];
+      hasEvolution: boolean;
     };
     feedingCount?: number;
     trainingCount?: number;
@@ -92,6 +93,10 @@ interface PokemonDialogProps {
   };
   onClose: () => void;
   onDataUpdate: (data: any) => void;
+}
+
+interface EvolutionSpecies {
+  name: string;
 }
 
 const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onDataUpdate }) => {
@@ -145,28 +150,41 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
   const primaryType = itemData.pokemon?.types[0]?.toLowerCase() || "normal";
   const [lightColor, darkColor] = getBackgroundColor(primaryType);
 
+  const getTimeUntilNextInteraction = (nextTime?: Timestamp | Date) => {
+    if (!nextTime) return "Ready!";
+    const now = Timestamp.now();
+    const next = nextTime instanceof Date ? Timestamp.fromDate(nextTime) : nextTime;
+    const timeLeft = next.toMillis() - now.toMillis();
+
+    if (timeLeft <= 0) return "Ready!";
+
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
   const InteractionBar = ({ type, count = 0 }) => {
     const config = {
-      feeding: { color: "#FF6B6B", icon: Heart },
-      training: { color: "#4ECDC4", icon: Dumbbell },
-      fun: { color: "#FFD93D", icon: Sparkles },
+      feeding: { color: "#FF6B6B", icon: Heart, maxCount: 10 },
+      training: { color: "#4ECDC4", icon: Dumbbell, maxCount: 22 },
+      fun: { color: "#FFD93D", icon: Sparkles, maxCount: 7 },
     };
 
-    const { color, icon: Icon } = config[type];
+    const { color, icon: Icon, maxCount } = config[type];
 
     return (
-      <XStack alignItems="center" space="$2">
+      <XStack alignItems="center" gap="$2">
         <Icon color={color} size={24} />
         <View flex={1} height={8} backgroundColor="$gray300" borderRadius={4}>
           <View
             height={8}
-            width={`${(count / 7) * 100}%`}
+            width={`${(count / maxCount) * 100}%`}
             backgroundColor={color}
             borderRadius={4}
           />
         </View>
         <Text color="$gray800" fontSize={14} fontWeight="bold">
-          {count}/7
+          {count}/{maxCount}
         </Text>
       </XStack>
     );
@@ -190,8 +208,13 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
       return;
     }
 
-    const newCount = Math.min((itemData[`${type}Count`] || 0) + 1, 7);
-    const newNextTime = Timestamp.fromMillis(Timestamp.now().toMillis() + 24 * 60 * 60 * 1000);
+    const maxCounts = { feeding: 10, training: 22, fun: 7 };
+    const cooldowns = { feeding: 18, training: 6, fun: 24 };
+
+    const newCount = Math.min((itemData[`${type}Count`] || 0) + 1, maxCounts[type]);
+    const newNextTime = Timestamp.fromMillis(
+      Timestamp.now().toMillis() + cooldowns[type] * 60 * 60 * 1000
+    );
     const newData = {
       ...itemData,
       [`${type}Count`]: newCount,
@@ -202,6 +225,109 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
     if (toast) {
       toast.show(`${type.charAt(0).toUpperCase() + type.slice(1)} successful!`, {
         message: `Your Pokemon is happy!`,
+      });
+    }
+  };
+
+  const isEvolutionReady = () => {
+    return (
+      (itemData.feedingCount || 0) >= 10 &&
+      (itemData.trainingCount || 0) >= 22 &&
+      (itemData.funCount || 0) >= 7 &&
+      itemData.pokemon?.hasEvolution
+    );
+  };
+
+  const handleEvolution = async () => {
+    try {
+      if (!itemData.pokemon) {
+        console.error("No Pokémon data found");
+        return;
+      }
+  
+      const species = await pokeAPI.getPokemonSpeciesByName(itemData.pokemon.name);
+      const evolutionChainId = species.evolution_chain.url.split("/").filter(Boolean).pop();
+  
+      if (!evolutionChainId) {
+        console.error("Failed to extract evolution chain ID");
+        return;
+      }
+  
+      const evolutionChain = await evolutionAPI.getEvolutionChainById(parseInt(evolutionChainId));
+  
+      let nextEvolution: string | null = null;
+      let hasNextEvolution = false;
+  
+      const findNextEvolution = (chain: any) => {
+        if (chain.species.name === itemData.pokemon?.name) {
+          if (chain.evolves_to.length > 0) {
+            nextEvolution = chain.evolves_to[0].species.name;
+            hasNextEvolution = chain.evolves_to[0].evolves_to.length > 0;
+          }
+          return;
+        }
+        chain.evolves_to.forEach(findNextEvolution);
+      };
+      findNextEvolution(evolutionChain.chain);
+  
+      if (!nextEvolution) {
+        console.error("No evolution found");
+        return;
+      }
+  
+      const evolvedPokemon = await pokeAPI.getPokemonByName(nextEvolution);
+      // const evolvedSpecies = await pokeAPI.getPokemonSpeciesByName(nextEvolution);
+  
+      const newData = {
+        ...itemData,
+        pokemon: {
+          pokemonId: evolvedPokemon.id,
+          name: evolvedPokemon.name,
+          imageUri: evolvedPokemon.sprites.front_default,
+          types: evolvedPokemon.types.map((t) => t.type.name),
+          hasEvolution: hasNextEvolution, // Set based on the check we did earlier
+        },
+        feedingCount: 0,
+        trainingCount: 0,
+        funCount: 0,
+        nextFeedingTime: Timestamp.now().toDate(),
+        nextTrainingTime: Timestamp.now().toDate(),
+        nextFunTime: Timestamp.now().toDate(),
+      };
+  
+      onDataUpdate(newData);
+  
+      if (toast) {
+        toast.show("Evolution successful!", {
+          message: `Your ${itemData.pokemon.name} evolved into ${newData.pokemon.name}!`,
+        });
+      }
+    } catch (error) {
+      console.error("Error during evolution:", error);
+      if (toast) {
+        toast.show("Evolution failed", {
+          message: "An error occurred during evolution. Please try again.",
+        });
+      }
+    }
+  };
+
+  // Add this function near your other handler functions
+  const handleFillInteractions = () => {
+    const newData = {
+      ...itemData,
+      feedingCount: 10,
+      trainingCount: 22,
+      funCount: 7,
+      nextFeedingTime: Timestamp.now().toDate(),
+      nextTrainingTime: Timestamp.now().toDate(),
+      nextFunTime: Timestamp.now().toDate(),
+    };
+    onDataUpdate(newData);
+
+    if (toast) {
+      toast.show("Interactions Filled", {
+        message: "All interaction bars have been filled for testing.",
       });
     }
   };
@@ -308,40 +434,91 @@ const PokemonDialog: React.FC<PokemonDialogProps> = ({ itemData, onClose, onData
                 <InteractionBar type="fun" count={itemData.funCount || 0} />
               </YStack>
 
-              <XStack gap="$3" justifyContent="center" flexWrap="wrap">
-                {["feeding", "training", "fun"].map((type) => (
-                  <Button
-                    key={type}
-                    onPress={() => handleInteraction(type as "feeding" | "training" | "fun")}
-                    disabled={
-                      !isInteractionAvailable(
-                        itemData[`next${type.charAt(0).toUpperCase() + type.slice(1)}Time`]
-                      )
-                    }
-                    backgroundColor={
-                      isInteractionAvailable(
-                        itemData[`next${type.charAt(0).toUpperCase() + type.slice(1)}Time`]
-                      )
-                        ? type === "feeding"
-                          ? "#FF6B6B"
-                          : type === "training"
-                          ? "#4ECDC4"
-                          : "#FFD93D"
-                        : "$gray8"
-                    }
-                    color="#FFFFFF"
-                    borderRadius="$4"
-                    fontSize={18}
-                    fontWeight="bold"
-                    paddingHorizontal="$4"
-                    hoverStyle={{ opacity: 0.9 }}
-                    pressStyle={{ scale: 0.95 }}
-                  >
-                    {type === "feeding" ? "Feed" : type === "training" ? "Train" : "Play"}
-                  </Button>
-                ))}
-              </XStack>
+              {isEvolutionReady() ? (
+                <Button
+                  onPress={handleEvolution}
+                  backgroundColor="#FFD700"
+                  color="#000000"
+                  borderRadius="$4"
+                  fontSize={18}
+                  fontWeight="bold"
+                  paddingHorizontal="$4"
+                  hoverStyle={{ opacity: 0.9 }}
+                  pressStyle={{ scale: 0.95 }}
+                >
+                  Evolve Pokemon
+                </Button>
+              ) : (
+                <XStack gap="$3" justifyContent="center" flexWrap="wrap">
+                  {["feeding", "training", "fun"].map((type) => (
+                    <Button
+                      key={type}
+                      onPress={() => handleInteraction(type as "feeding" | "training" | "fun")}
+                      disabled={
+                        !isInteractionAvailable(
+                          itemData[`next${type.charAt(0).toUpperCase() + type.slice(1)}Time`]
+                        ) ||
+                        (type === "feeding" && (itemData.feedingCount || 0) >= 10) ||
+                        (type === "training" && (itemData.trainingCount || 0) >= 22) ||
+                        (type === "fun" && (itemData.funCount || 0) >= 7)
+                      }
+                      backgroundColor={
+                        isInteractionAvailable(
+                          itemData[`next${type.charAt(0).toUpperCase() + type.slice(1)}Time`]
+                        ) &&
+                        ((type === "feeding" && (itemData.feedingCount || 0) < 10) ||
+                          (type === "training" && (itemData.trainingCount || 0) < 22) ||
+                          (type === "fun" && (itemData.funCount || 0) < 7))
+                          ? type === "feeding"
+                            ? "#FF6B6B"
+                            : type === "training"
+                            ? "#4ECDC4"
+                            : "#FFD93D"
+                          : "$gray8"
+                      }
+                      color="#FFFFFF"
+                      borderRadius="$4"
+                      fontSize={18}
+                      fontWeight="bold"
+                      paddingHorizontal="$4"
+                      hoverStyle={{ opacity: 0.9 }}
+                      pressStyle={{ scale: 0.95 }}
+                    >
+                      <YStack alignItems="center">
+                        <Text color="#FFFFFF" fontSize={18} fontWeight="bold">
+                          {type === "feeding" ? "Feed" : type === "training" ? "Train" : "Play"}
+                        </Text>
+                        {isInteractionAvailable(
+                          itemData[`next${type.charAt(0).toUpperCase() + type.slice(1)}Time`]
+                        ) &&
+                        ((type === "feeding" && (itemData.feedingCount || 0) < 10) ||
+                          (type === "training" && (itemData.trainingCount || 0) < 22) ||
+                          (type === "fun" && (itemData.funCount || 0) < 7)) ? (
+                          <Text color="#FFFFFF" fontSize={14}>
+                            Ready!
+                          </Text>
+                        ) : null}
+                      </YStack>
+                    </Button>
+                  ))}
+                </XStack>
+              )}
             </YStack>
+
+            <Button
+              onPress={handleFillInteractions}
+              backgroundColor="#8A2BE2"
+              color="#FFFFFF"
+              borderRadius="$4"
+              fontSize={18}
+              fontWeight="bold"
+              paddingHorizontal="$4"
+              marginTop="$2"
+              hoverStyle={{ opacity: 0.9 }}
+              pressStyle={{ scale: 0.95 }}
+            >
+              Fill Interactions (Test)
+            </Button>
 
             <Dialog.Close asChild>
               <Button

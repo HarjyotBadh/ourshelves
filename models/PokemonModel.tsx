@@ -9,4 +9,5 @@ export interface Pokemon {
       name: string;
     };
   }[];
+  hasEvolution: boolean;
 }
