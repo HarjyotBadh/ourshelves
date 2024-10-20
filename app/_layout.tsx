@@ -10,6 +10,7 @@ import { auth } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { TamaguiProvider } from "@tamagui/core";
 import { ToastProvider } from "@tamagui/toast";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import config from "tamagui.config";
 
 LogBox.ignoreLogs([
@@ -83,6 +84,7 @@ function RootLayoutNav() {
   return (
     <TamaguiProvider config={config}>
       <ToastProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <Provider>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <Stack>
@@ -119,6 +121,7 @@ function RootLayoutNav() {
             </Stack>
           </ThemeProvider>
         </Provider>
+      </GestureHandlerRootView>
       </ToastProvider>
     </TamaguiProvider>
   );
