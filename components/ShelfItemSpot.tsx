@@ -21,6 +21,7 @@ interface ShelfItemSpotProps {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
+    roomId: string;
   };
 }
 
@@ -88,6 +89,8 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
    * @throws Will log an error to the console if acquiring the lock fails.
    */
   const handleItemPress = async () => {
+    if (showPlusSigns) return;
+
     if (item && item.shouldLock) {
       const lockRef = dbRef(rtdb, `locks/${item.id}`);
       const user = auth.currentUser;
@@ -211,7 +214,10 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
           onDataUpdate={(newItemData) => onItemDataUpdate(position, newItemData)}
           isActive={isItemActive}
           onClose={handleItemClose}
-          roomInfo={roomInfo}
+          roomInfo={{
+            ...roomInfo,
+            roomId: roomInfo.roomId,
+          }}
         />
       );
     } else {
@@ -286,11 +292,15 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   } else {
     return (
       <Stack key={position} width="30%" height="100%" position="relative">
-        <Pressable onPress={handleItemPress} disabled={isLockedByAnotherUser} style={{ flex: 1 }}>
+        <Pressable 
+          onPress={handleItemPress} 
+          disabled={showPlusSigns || isLockedByAnotherUser} 
+          style={{ flex: 1 }}
+        >
           {renderItem(item, position)}
         </Pressable>
         {isLockedByAnotherUser && <LockOverlay />}
-        {showPlusSigns && !isLockedByAnotherUser && (
+        {showPlusSigns && item && (
           <Button
             unstyled
             onPress={handleRemovePress}
@@ -321,5 +331,4 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
     );
   }
 };
-
 export default ShelfItemSpot;

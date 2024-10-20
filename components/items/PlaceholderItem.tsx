@@ -24,6 +24,7 @@ interface PlaceholderItemProps {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
+    roomId: string;
   }; // various room info (do not change)
 }
 
