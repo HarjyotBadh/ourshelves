@@ -30,6 +30,7 @@ interface PokeItemProps {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
+    roomId: string;
   };
 }
 
@@ -47,6 +48,7 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
   // Print the itemData id (if active)
   if (isActive) {
     console.log("itemData id:", itemData.id);
+    console.log("roomInfo:", roomInfo.roomId);
   }
 
   useEffect(() => {

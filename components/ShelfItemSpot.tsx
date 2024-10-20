@@ -21,6 +21,7 @@ interface ShelfItemSpotProps {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
+    roomId: string;
   };
 }
 
@@ -213,7 +214,10 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
           onDataUpdate={(newItemData) => onItemDataUpdate(position, newItemData)}
           isActive={isItemActive}
           onClose={handleItemClose}
-          roomInfo={roomInfo}
+          roomInfo={{
+            ...roomInfo,
+            roomId: roomInfo.roomId,
+          }}
         />
       );
     } else {
@@ -328,4 +332,3 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   }
 };
 export default ShelfItemSpot;
-
