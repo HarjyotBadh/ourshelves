@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Dimensions} from "react-native";
-import { View, styled, YStack, XStack, Input, Button } from "tamagui";
+import { View, styled, YStack, XStack, Input, Button, Circle, Image } from "tamagui";
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
+import { Shape } from "react-native-svg";
 
 const { width: screenWidth } = Dimensions.get("window");
 const LETTERBOARD_WIDTH = screenWidth - 40;
@@ -51,8 +52,8 @@ const LetterBoard: LetterBoardComponent = ({
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Custom properties (remove these)
-  const [gridValues, setGridValues] = useState(Array(12).fill('').map(() => Array(8).fill('')))
+  // Grid of letters to be used for letterboard
+  const [gridValues, setGridValues] = useState(Array(4).fill('').map(() => Array(6).fill('')))
 
 
   // Opens dialog when item is active/clicked
@@ -76,38 +77,17 @@ const LetterBoard: LetterBoardComponent = ({
     setGridValues(newGridValues)
   }
 
+  const handlePress = () => {
+  }
+
   // What the letterboard looks like when sitting on the shelf
   const renderLetterBoardPreview = () => (
-    // <View style={{ padding: PREVIEW_PADDING }}>
-    //   <Canvas style={{ width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }}>
-    //     <Rect
-    //       x={0}
-    //       y={0}
-    //       width={PREVIEW_WIDTH}
-    //       height={PREVIEW_HEIGHT}
-    //       color="white"
-    //     />
-    //     {itemData.paths &&
-    //       itemData.paths.map((pathData: PathData, index: number) => {
-    //         const scaledPath = scalePath(pathData.path, SCALE_FACTOR);
-    //         return (
-    //           <Path
-    //             key={index}
-    //             path={scaledPath}
-    //             color={pathData.color}
-    //             style="stroke"
-    //             strokeWidth={
-    //               pathData.color === ERASER_COLOR
-    //                 ? ERASER_STROKE_WIDTH * SCALE_FACTOR
-    //                 : (pathData.strokeWidth || NORMAL_STROKE_WIDTH) *
-    //                   SCALE_FACTOR
-    //             }
-    //           />
-    //         );
-    //       })}
-    //   </Canvas>
-    // </View>
-    <Button> Press Me! </Button>
+    <Image
+      source={{ uri: itemData.imageUri ? itemData.imageUri : itemData.imageUri }}
+      width = { 100 }
+      height = { 100 }
+      objectFit="contain"
+    />
   );
 
   // Renders item when not active/clicked
