@@ -96,32 +96,6 @@ const RoomScreen = () => {
   const roomRef = useRef(doc(db, 'Rooms', roomId));
   const { stop, tracks } = useAudio();
 
-  // useEffect(() => {
-  //   let isMounted = true;
-  //   const unsubscribe = onSnapshot(roomRef.current, async (docSnapshot) => {
-  //     if (docSnapshot.exists() && isMounted) {
-  //       const roomData = docSnapshot.data();
-  //       const bgMusic = roomData.backgroundMusic;
-  
-  //       if (bgMusic && bgMusic.isPlaying) {
-  //         try {
-  //           await AudioManager.playAudio(bgMusic.trackUrl);
-  //         } catch (error) {
-  //           console.error('Error loading background music:', error);
-  //         }
-  //       } else {
-  //         await AudioManager.stopAudio();
-  //       }
-  //     }
-  //   });
-  
-  //   return () => {
-  //     isMounted = false;
-  //     unsubscribe();
-  //     AudioManager.stopAudio();
-  //   };
-  // }, [roomId]);
-
   /**
    * Initializes shelves for a new room.
    * 

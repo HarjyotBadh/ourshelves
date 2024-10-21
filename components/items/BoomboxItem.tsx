@@ -5,12 +5,13 @@ import { Play, Pause, Music, FileAudio} from "@tamagui/lucide-icons";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "firebaseConfig";
 import { TrackSelectionModal } from "components/TrackSelectionModal";
-import { BoomboxItemProps, BoomboxItemComponent } from "models/BoomboxModel";
+import { BoomboxItemProps, BoomboxItemComponent, soundEffectUrl } from "models/BoomboxModel";
 import { useToastController } from "@tamagui/toast";
 import { useAudio } from "components/AudioContext";
 import { AnimatedMusicNotes } from "components/AnimatedMusicNotes";
 import { boomboxStyles } from "styles/BoomboxStyles";
 import { BottomBar } from "styles/WhiteboardStyles";
+import { Audio } from 'expo-av';
 
 const BoomboxItem: BoomboxItemComponent = ({
   itemData,
@@ -22,6 +23,7 @@ const BoomboxItem: BoomboxItemComponent = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTrackSelectionVisible, setIsTrackSelectionVisible] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<string | null>(null);
+  const [soundEffect, setSoundEffect] = useState<Audio.Sound | null>(null);
   // const roomId = roomInfo.id;
   const roomId = "ue5COlxMW6Mmj5ccb3Ee";
   const toast = useToastController();
@@ -64,6 +66,31 @@ const BoomboxItem: BoomboxItemComponent = ({
     }
   }, [isActive]);
 
+  useEffect(() => {
+    const loadSoundEffect = async () => {
+      if (soundEffectUrl) {
+        try {
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: soundEffectUrl },
+            { shouldPlay: false }
+          );
+          setSoundEffect(sound);
+        } catch (error) {
+          console.error("Error loading sound effect:", error);
+          toast.show("Failed to load sound effect", { type: "error" });
+        }
+      }
+    };
+  
+    loadSoundEffect();
+  
+    return () => {
+      if (soundEffect) {
+        soundEffect.unloadAsync();
+      }
+    };
+  }, [itemData.soundEffectUrl, toast]);
+
   const handleAudioChange = useCallback(async (roomData: any) => {
     const bgMusic = roomData.backgroundMusic;
     if (bgMusic?.isPlaying && bgMusic?.trackUrl && bgMusic?.itemId === itemData.id) {
@@ -90,10 +117,21 @@ const BoomboxItem: BoomboxItemComponent = ({
     };
   }, [roomId, handleAudioChange]);
 
+  const playSoundEffect = async () => {
+    if (soundEffect) {
+      try {
+        await soundEffect.replayAsync();
+      } catch (error) {
+        console.error("Error playing sound effect:", error);
+        toast.show("Failed to play sound effect", { type: "error" });
+      }
+    }
+  };
+
   const handlePlay = async () => {
     if (!currentTrack || !itemData.trackUrl) return;
-
     try {
+      await playSoundEffect();
       await play(itemData.trackUrl, currentTrack, itemData.id);
       await updateRoomBackgroundMusic(true, currentTrack);
     } catch (error) {
@@ -104,6 +142,7 @@ const BoomboxItem: BoomboxItemComponent = ({
 
   const handleStop = async () => {
     try {
+      await playSoundEffect();
       await stop(itemData.id);
       if (currentTrack) {
         await updateRoomBackgroundMusic(false, currentTrack);
