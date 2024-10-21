@@ -12,7 +12,7 @@ import {
 } from "tamagui";
 import { Animated, PanResponder, StyleSheet, View } from "react-native";
 import plants from "../Plants";
-import { differenceInDays, differenceInMinutes, addDays, format } from "date-fns";
+import { differenceInDays, differenceInMinutes, addDays, format, subDays } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import { Droplet, Sun, Cloud } from "@tamagui/lucide-icons";
 
@@ -73,14 +73,15 @@ interface PlantItemComponent extends React.FC<PlantItemProps> {
 const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [growthStage, setGrowthStage] = useState(itemData.growthStage || 0);
-  const [lastWatered, setLastWatered] = useState(itemData.lastWatered || Timestamp.now());
+  const [lastWatered, setLastWatered] = useState(
+    itemData.lastWatered || Timestamp.fromDate(subDays(new Date(), 1))
+  );
   const [seedType, setSeedType] = useState(itemData.seedType || "sunflower");
   const [isWithered, setIsWithered] = useState(itemData.isWithered || false);
   const [timeUntilWatering, setTimeUntilWatering] = useState("");
   const [canWater, setCanWater] = useState(false);
   const [isWatering, setIsWatering] = useState(false);
   const pan = useRef(new Animated.ValueXY()).current;
-  const wateringAnimation = useRef(new Animated.Value(0)).current;
   const [showWateringMessage, setShowWateringMessage] = useState(false);
   const wateringZoneRef = useRef<View | null>(null);
   const [wateringZone, setWateringZone] = useState<WateringZone | null>(null);
@@ -186,9 +187,6 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     setGrowthStage(newGrowthStage);
     setLastWatered(newLastWatered);
 
-    const milestone = Math.floor(newGrowthStage / 10) * 10;
-    const reachedNewMilestone = milestone > Math.floor(growthStage / 10) * 10;
-
     setIsWithered(false);
 
     setCanWater(false);
@@ -197,14 +195,13 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
       ...itemData,
       growthStage: newGrowthStage,
       lastWatered: newLastWatered.toDate(),
-      milestone: reachedNewMilestone ? milestone : itemData.milestone,
       isWithered: false,
     };
 
     onDataUpdate(updatedData);
 
     console.log("Updated plant data:", updatedData);
-  }, [growthStage, lastWatered, isFullyGrown, isWithered, itemData, onDataUpdate]);
+  }, [growthStage, lastWatered, isFullyGrown, isWithered, itemData, onDataUpdate, canWater]);
 
   const startWatering = useCallback(() => {
     setIsWatering(true);
@@ -285,6 +282,24 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     setDialogOpen(false);
     onClose();
   };
+
+  const handleTestWater = useCallback(() => {
+    let newGrowthStage = Math.min(growthStage + 10, 100);
+    const newLastWatered = Timestamp.now();
+    setGrowthStage(newGrowthStage);
+    setLastWatered(newLastWatered);
+    setIsWithered(false);
+
+    const updatedData = {
+      ...itemData,
+      growthStage: newGrowthStage,
+      lastWatered: newLastWatered.toDate(),
+      isWithered: false,
+    };
+
+    onDataUpdate(updatedData);
+    console.log("Test watering - Updated plant data:", updatedData);
+  }, [growthStage, itemData, onDataUpdate]);
 
   const PlantComponent = plants[seedType] || plants["sunflower"];
 
@@ -378,9 +393,11 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                     Next watering: {timeUntilWatering}
                   </Text>
                 </XStack>
-                <Text fontSize="$3" color="$gray10">
-                  Last watered: {format(lastWatered.toDate(), "MMM d, yyyy 'at' h:mm a")}
-                </Text>
+                {growthStage > 0 && (
+                  <Text fontSize="$3" color="$gray10">
+                    Last watered: {format(lastWatered.toDate(), "MMM d, yyyy 'at' h:mm a")}
+                  </Text>
+                )}
               </YStack>
 
               <YStack alignItems="center" gap="$2">
@@ -394,6 +411,10 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                   <Cloud size={50} color="$blue9" />
                 </Animated.View>
               </YStack>
+
+              <Button onPress={handleTestWater} backgroundColor="$blue3" color="$blue11">
+                <Text>Water (test)</Text>
+              </Button>
 
               {isWatering && (
                 <>
@@ -578,7 +599,7 @@ const styles = StyleSheet.create({
 
 PlantItem.getInitialData = () => ({
   growthStage: 0,
-  lastWatered: Timestamp.now(),
+  lastWatered: Timestamp.fromDate(subDays(new Date(), 1)),
   seedType: "sunflower",
 });
 
