@@ -10,11 +10,14 @@ import {
   Progress,
   Circle,
 } from "tamagui";
+import { useToastController } from "@tamagui/toast";
 import { Animated, PanResponder, StyleSheet, View } from "react-native";
 import plants from "../Plants";
 import { differenceInDays, differenceInMinutes, addDays, format, subDays } from "date-fns";
+import { auth } from "firebaseConfig";
 import { Timestamp } from "firebase/firestore";
 import { Droplet, Sun, Cloud } from "@tamagui/lucide-icons";
+import { earnCoins } from "project-functions/shopFunctions";
 
 type WateringZone = {
   top: number;
@@ -81,6 +84,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
   const [timeUntilWatering, setTimeUntilWatering] = useState("");
   const [canWater, setCanWater] = useState(false);
   const [isWatering, setIsWatering] = useState(false);
+  const toast = useToastController();
   const pan = useRef(new Animated.ValueXY()).current;
   const [showWateringMessage, setShowWateringMessage] = useState(false);
   const wateringZoneRef = useRef<View | null>(null);
@@ -190,6 +194,12 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     setIsWithered(false);
 
     setCanWater(false);
+
+    earnCoins(auth.currentUser?.uid, 10);
+    toast.show("You earned 10 coins!", {
+      backgroundColor: "$green9",
+      color: "$green1",
+    });
 
     const updatedData = {
       ...itemData,
@@ -306,6 +316,17 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
   const plantDisplay = (
     <PlantItemView>
       <PlantComponent growth={growthStage} isWithered={isWithered} />
+      {canWater && !isActive && (
+        <TamaguiView
+          position="absolute"
+          top={5}
+          left={5}
+          borderRadius="$full"
+          padding="$1"
+        >
+          <Droplet size={16} color="blue" />
+        </TamaguiView>
+      )}
     </PlantItemView>
   );
 
