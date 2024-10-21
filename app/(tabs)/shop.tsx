@@ -51,7 +51,6 @@ const SectionHeader = styled(XStack, {
   paddingVertical: "$2",
   paddingHorizontal: "$4",
   backgroundColor: "$pink7",
-  borderRadius: "$2",
   marginBottom: "$2",
 });
 

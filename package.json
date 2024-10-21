@@ -63,6 +63,7 @@
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
     "react-native-canvas": "^0.1.40",
+    "react-native-clock-analog": "^0.0.3",
     "react-native-color-picker": "^0.6.0",
     "react-native-country-picker-modal": "^2.0.0",
     "react-native-gesture-handler": "^2.20.0",
@@ -98,5 +99,5 @@
     "typescript": "~5.3.3"
   },
   "private": true,
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.5.1"
 }
