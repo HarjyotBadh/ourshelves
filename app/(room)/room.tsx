@@ -94,7 +94,7 @@ const RoomScreen = () => {
   }>({ name: "", users: [], description: "" });
   const [backgroundMusic, setBackgroundMusic] = useState<Audio.Sound | null>(null);
   const roomRef = useRef(doc(db, 'Rooms', roomId));
-  const { stop } = useAudio();
+  const { stop, tracks } = useAudio();
 
   // useEffect(() => {
   //   let isMounted = true;
@@ -592,8 +592,12 @@ const RoomScreen = () => {
   };
 
   const handleLeaveMusic = async () => {
-    await stop();
-    // Add your existing leave room logic here
+    // await stop();
+    for (const itemId in tracks) {
+      if (tracks[itemId].isPlaying) {
+        await stop(itemId);
+      }
+    }
   };
 
   const handleGoBack = () => {

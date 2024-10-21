@@ -22,15 +22,16 @@ const BoomboxItem: BoomboxItemComponent = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTrackSelectionVisible, setIsTrackSelectionVisible] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<string | null>(null);
+  // const roomId = roomInfo.id;
   const roomId = "ue5COlxMW6Mmj5ccb3Ee";
   const toast = useToastController();
-  const { isPlaying, currentTrackId, play, stop } = useAudio();
+  const { play, stop, isPlaying } = useAudio();
 
   const bounceAnim = new Animated.Value(0);
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation;
-    if (isPlaying) {
+    if (isPlaying(itemData.id)) {
       animation = Animated.loop(
         Animated.sequence([
           Animated.timing(bounceAnim, {
@@ -55,7 +56,7 @@ const BoomboxItem: BoomboxItemComponent = ({
         animation.stop();
       }
     };
-  }, [isPlaying, bounceAnim]);
+  }, [isPlaying, itemData.id, bounceAnim]);
 
   useEffect(() => {
     if (isActive && !isModalVisible) {
@@ -65,14 +66,14 @@ const BoomboxItem: BoomboxItemComponent = ({
 
   const handleAudioChange = useCallback(async (roomData: any) => {
     const bgMusic = roomData.backgroundMusic;
-    if (bgMusic?.isPlaying && bgMusic?.trackUrl) {
-      if (currentTrackId !== bgMusic.trackId || !isPlaying) {
-        await play(bgMusic.trackUrl, bgMusic.trackId);
+    if (bgMusic?.isPlaying && bgMusic?.trackUrl && bgMusic?.itemId === itemData.id) {
+      if (!isPlaying(itemData.id)) {
+        await play(bgMusic.trackUrl, bgMusic.trackId, itemData.id);
       }
-    } else if (isPlaying) {
-      await stop();
+    } else if (isPlaying(itemData.id)) {
+      await stop(itemData.id);
     }
-  }, [currentTrackId, isPlaying, play, stop]);
+  }, [isPlaying, play, stop, itemData.id]);
 
   useEffect(() => {
     const roomRef = doc(db, "Rooms", roomId);
@@ -93,7 +94,7 @@ const BoomboxItem: BoomboxItemComponent = ({
     if (!currentTrack || !itemData.trackUrl) return;
 
     try {
-      await play(itemData.trackUrl, currentTrack);
+      await play(itemData.trackUrl, currentTrack, itemData.id);
       await updateRoomBackgroundMusic(true, currentTrack);
     } catch (error) {
       console.error('Error playing sound:', error);
@@ -103,7 +104,7 @@ const BoomboxItem: BoomboxItemComponent = ({
 
   const handleStop = async () => {
     try {
-      await stop();
+      await stop(itemData.id);
       if (currentTrack) {
         await updateRoomBackgroundMusic(false, currentTrack);
       }
@@ -123,6 +124,7 @@ const BoomboxItem: BoomboxItemComponent = ({
         isPlaying,
         trackId,
         trackUrl: itemData.trackUrl,
+        itemId: itemData.id,
       },
     });
   };
@@ -137,6 +139,7 @@ const BoomboxItem: BoomboxItemComponent = ({
     setIsModalVisible(false);
     onClose();
   }, [onClose]);
+
   if (!isActive) {
     return (
       <View style={boomboxStyles.inactiveContainer}>
@@ -144,7 +147,7 @@ const BoomboxItem: BoomboxItemComponent = ({
           source={{ uri: itemData.imageUri }}
           style={boomboxStyles.inactiveImage}
         />
-        {isPlaying && <AnimatedMusicNotes />}
+        {isPlaying(itemData.id) && <AnimatedMusicNotes />}
       </View>
     );
   }
@@ -178,24 +181,24 @@ const BoomboxItem: BoomboxItemComponent = ({
                 source={{ uri: itemData.imageUri }}
                 style={boomboxStyles.boomboxImage}
               />
-              {isPlaying && <AnimatedMusicNotes />}
+              {isPlaying(itemData.id) && <AnimatedMusicNotes />}
             </Animated.View>
             <XStack space justifyContent="center" marginVertical="$4">
               <Button
                 icon={Play}
                 onPress={handlePlay}
-                disabled={isPlaying}
-                backgroundColor={isPlaying ? "$green8" : "$green10"}
-                borderColor={isPlaying ? "$green10" : "transparent"}
+                disabled={isPlaying(itemData.id)}
+                backgroundColor={isPlaying(itemData.id) ? "$green8" : "$green10"}
+                borderColor={isPlaying(itemData.id) ? "$green10" : "transparent"}
                 borderWidth={2}
                 style={boomboxStyles.controlButton}
               />
               <Button
                 icon={Pause}
                 onPress={handleStop}
-                disabled={!isPlaying}
-                backgroundColor={!isPlaying ? "$red8" : "$red10"}
-                borderColor={!isPlaying ? "$red10" : "transparent"}
+                disabled={!isPlaying(itemData.id)}
+                backgroundColor={!isPlaying(itemData.id) ? "$red8" : "$red10"}
+                borderColor={!isPlaying(itemData.id) ? "$red10" : "transparent"}
                 borderWidth={2}
                 style={boomboxStyles.controlButton}
               />
