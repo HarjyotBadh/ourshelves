@@ -1,5 +1,9 @@
 import { Timestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
 import Svg, { Path as SvgPath } from 'react-native-svg';
+
+import { Text } from "tamagui";
 
 export interface PathData {
   path: string;

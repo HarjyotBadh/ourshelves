@@ -34,6 +34,7 @@
 		E7D58A45A8B4478AB9170BE3 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "OurShelves/noop-file.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-OurShelves/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		9610F6E4C6294531B11675E2 /* OurShelves-Bridging-Header.h */ = {isa = PBXFileReference; name = "OurShelves-Bridging-Header.h"; path = "OurShelves/OurShelves-Bridging-Header.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +61,7 @@
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				E7D58A45A8B4478AB9170BE3 /* noop-file.swift */,
 				E082618FBFD4609B7C543B63 /* PrivacyInfo.xcprivacy */,
+				9610F6E4C6294531B11675E2 /* OurShelves-Bridging-Header.h */,
 			);
 			name = OurShelves;
 			sourceTree = "<group>";
@@ -201,6 +203,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				BAEED9BA12C0035083CAF165 /* PrivacyInfo.xcprivacy in Resources */,
+				F733B84E690F4B9898E55129 /* OurShelves-Bridging-Header.h in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,6 +338,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
+				SWIFT_OBJC_BRIDGING_HEADER = OurShelves/OurShelves-Bridging-Header.h;
 			};
 			name = Debug;
 		};
@@ -361,6 +365,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
+				SWIFT_OBJC_BRIDGING_HEADER = OurShelves/OurShelves-Bridging-Header.h;
 			};
 			name = Release;
 		};

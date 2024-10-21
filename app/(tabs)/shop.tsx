@@ -18,8 +18,8 @@ import {
   purchaseItem,
   purchaseShelfColor,
   purchaseWallpaper,
-  handleEarnCoins,
-  handleLoseCoins,
+  earnCoins,
+  loseCoins,
   handleDailyGiftClaim,
 } from "project-functions/shopFunctions";
 import { ItemData } from "components/item";
@@ -355,32 +355,28 @@ export default function ShopScreen() {
   };
 
   const handleEarnCoinsClick = async () => {
-    if (!user) return;
-    const result = await handleEarnCoins(user);
-    if (result.success && result.updatedUser) {
-      setUser(result.updatedUser);
-      //alert(result.message);
-      toast.show("You earned 50 coins! Great job!", {
+    let userId = auth.currentUser?.uid;
+    const result = await earnCoins(userId, 50);
+    if (result.success && result.newCoins !== null) {
+      setUser(prevUser => prevUser ? { ...prevUser, coins: result.newCoins ?? prevUser.coins } : prevUser);
+    } else {
+      toast.show("Error", {
         message: result.message,
         duration: 3000,
       });
-    } else {
-      alert(result.message);
     }
   };
 
   const handleLoseCoinsClick = async () => {
-    if (!user) return;
-    const result = await handleLoseCoins(user);
-    if (result.success && result.updatedUser) {
-      setUser(result.updatedUser);
-      //alert(result.message);
-      toast.show("You lost 50 coins! Great job!", {
+    let userId = auth.currentUser?.uid;
+    const result = await loseCoins(userId, 50);
+    if (result.success && result.newCoins !== null) {
+      setUser(prevUser => prevUser ? { ...prevUser, coins: result.newCoins ?? prevUser.coins } : prevUser);
+    } else {
+      toast.show("Error", {
         message: result.message,
         duration: 3000,
       });
-    } else {
-      alert(result.message);
     }
   };
 
