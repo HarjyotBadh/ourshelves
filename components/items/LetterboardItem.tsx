@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Dimensions} from "react-native";
-import { View, styled, YStack, XStack, Input, Button, Circle, Image } from "tamagui";
+import { View, Dialog, YStack, XStack, Input, Button, Circle, Image } from "tamagui";
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
 import { Shape } from "react-native-svg";
 
@@ -51,7 +51,7 @@ const LetterBoard: LetterBoardComponent = ({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Grid of letters to be used for letterboard
-  const [gridValues, setGridValues] = useState(Array(4).fill('').map(() => Array(6).fill('')))
+  const [gridValues, setGridValues] = useState(Array(8).fill('').map(() => Array(3).fill('')))
   const [boardChanged, setBoardChanged] = useState(false);
 
   // Opens dialog when item is active/clicked
@@ -80,12 +80,42 @@ const LetterBoard: LetterBoardComponent = ({
 
   // What the letterboard looks like when sitting on the shelf
   const renderLetterBoardPreview = () => (
-    <Image
-      source={{ uri: itemData.imageUri ? itemData.imageUri : itemData.imageUri }}
-      width = { 100 }
-      height = { 100 }
-      objectFit="contain"
+  <YStack flex={1} alignItems="center" justifyContent="center" padding={5} backgroundColor="#ddd">
+    <YStack 
+      position="absolute" 
+      backgroundColor="black" 
+      height={120} // 1/4 of 250
+      width={120} // 1/4 of 380
+      borderRadius="$1" // Reduced the border radius
+      alignItems="center"
+      justifyContent="center"
     />
+    {/* Grid of text inputs positioned over the pink rectangle */}
+    <YStack padding={5} space="$1">
+      {gridValues.map((row, rowIndex) => (
+        <XStack key={rowIndex} space="$1">
+          {row.map((value, colIndex) => (
+            <Input
+              key={`${rowIndex}-${colIndex}`}
+              editable={false}
+              value={value}
+              onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
+              maxLength={1} // Ensures only one letter can be entered
+              width={1} // 1/4 of 50
+              height={10} // 1/4 of 50
+              textAlign="center"
+              fontSize={10} // 1/4 of 25
+              fontWeight="bold"
+              backgroundColor="#000" // Set background to black
+              color="#fff" // Set text color to white
+              borderWidth={0.25} // 1/4 of 1 (border width)
+              borderRadius="$1" // Reduced the border radius
+            />
+          ))}
+        </XStack>
+      ))}
+    </YStack>
+  </YStack>
   );
 
   // Renders item when not active/clicked
@@ -101,43 +131,72 @@ const LetterBoard: LetterBoardComponent = ({
   // Renders item when active/clicked
   // (item is clicked and dialog is open, feel free to change this return)
   return (
-    <YStack flex={1} alignItems="center" justifyContent="center" padding={20} backgroundColor="#ddd">
-      {/* Pink rectangle acting as background */}
-      <YStack 
-        position="absolute" 
-        backgroundColor="black" 
-        height={250} // Adjust height as needed to cover the entire grid 
-        width={380} // Adjust width based on grid width
-        borderRadius="$4"
-        alignItems="center"
-        justifyContent="center"
-      />
+    <Dialog modal open={isActive} onOpenChange={onClose}>
+            <Dialog.Portal>
+                <Dialog.Overlay key="overlay" />
+                <Dialog.Content
+                    bordered
+                    elevate
+                    key="content"
+                    animation={[
+                        'quick',
+                        {
+                            opacity: {
+                                overshootClamping: true,
+                            },
+                        },
+                    ]}  
+                    width = {300}
+                    height = {650}
+                >
+                    <Dialog.Title>Select a Color</Dialog.Title>
+                    <Dialog.Description>
+                        Choose a color for the placeholder item.
+                    </Dialog.Description>
+                    <YStack flex={1} alignItems="center" justifyContent="center" padding={2} backgroundColor="#ddd">
+                      <YStack 
+                        position="absolute" 
+                        backgroundColor="black" 
+                        height={460} // Adjust height as needed to cover the entire grid 
+                        width={200} // Adjust width based on grid width
+                        borderRadius="$4"
+                        alignItems="center"
+                        justifyContent="center"
+                      />
 
-      {/* Grid of text inputs positioned over the pink rectangle */}
-      <YStack padding={20} space="$2">
-        {gridValues.map((row, rowIndex) => (
-          <XStack key={rowIndex} space="$2">
-            {row.map((value, colIndex) => (
-              <Input
-                key={`${rowIndex}-${colIndex}`}
-                value={value}
-                onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
-                maxLength={1} // Ensures only one letter can be entered
-                width={50}
-                height={50}
-                textAlign="center"
-                fontSize={25}
-                fontWeight="bold"
-                backgroundColor="#000" // Set background to black
-                color="#fff" // Set text color to white
-                borderWidth={1}
-                borderRadius="$2"
-              />
-            ))}
-          </XStack>
-        ))}
-      </YStack>
-    </YStack>
+                      {/* Grid of text inputs positioned over the pink rectangle */}
+                      <YStack padding={2} space="$2">
+                        {gridValues.map((row, rowIndex) => (
+                          <XStack key={rowIndex} space="$2">
+                            {row.map((value, colIndex) => (
+                              <Input
+                                key={`${rowIndex}-${colIndex}`}
+                                value={value}
+                                onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
+                                maxLength={1} // Ensures only one letter can be entered
+                                width={50}
+                                height={50}
+                                textAlign="center"
+                                fontSize={25}
+                                fontWeight="bold"
+                                backgroundColor="#000" // Set background to black
+                                color="#fff" // Set text color to white
+                                borderWidth={1}
+                                borderRadius="$2"
+                              />
+                            ))}
+                          </XStack>
+                        ))}
+                      </YStack>
+                    </YStack>
+                    <Dialog.Close displayWhenAdapted asChild>
+                        <Button theme="alt1" aria-label="Close">
+                            Cancel
+                        </Button>
+                    </Dialog.Close>
+                </Dialog.Content>
+            </Dialog.Portal>
+        </Dialog>
     );
 };
 
