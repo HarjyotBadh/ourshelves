@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Dimensions} from "react-native";
-import { View, styled, YStack } from "tamagui";
+import { View, styled, YStack, XStack, Input, Button } from "tamagui";
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -52,8 +52,8 @@ const LetterBoard: LetterBoardComponent = ({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Custom properties (remove these)
-  const [clickCount, setClickCount] = useState(itemData.clickCount || 0);
-  const [color, setColor] = useState(itemData.color || "red");
+  const [gridValues, setGridValues] = useState(Array(12).fill('').map(() => Array(8).fill('')))
+
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
@@ -62,48 +62,52 @@ const LetterBoard: LetterBoardComponent = ({
     }
   }, [isActive]);
 
-  const handleColorSelect = (newColor: string) => {
-    setClickCount(clickCount + 1);
-    setColor(newColor);
-    onDataUpdate({ ...itemData, color: newColor, clickCount: clickCount }); // updates item data when called
-  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
 
+  // Handler for input changes
+  const handleInputChange = (text, rowIndex, colIndex) => {
+    if (text.length > 1) return
+    const newGridValues = [...gridValues]
+    newGridValues[rowIndex][colIndex] = text
+    setGridValues(newGridValues)
+  }
+
   // What the letterboard looks like when sitting on the shelf
   const renderLetterBoardPreview = () => (
-    <View style={{ padding: PREVIEW_PADDING }}>
-      <Canvas style={{ width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }}>
-        <Rect
-          x={0}
-          y={0}
-          width={PREVIEW_WIDTH}
-          height={PREVIEW_HEIGHT}
-          color="white"
-        />
-        {itemData.paths &&
-          itemData.paths.map((pathData: PathData, index: number) => {
-            const scaledPath = scalePath(pathData.path, SCALE_FACTOR);
-            return (
-              <Path
-                key={index}
-                path={scaledPath}
-                color={pathData.color}
-                style="stroke"
-                strokeWidth={
-                  pathData.color === ERASER_COLOR
-                    ? ERASER_STROKE_WIDTH * SCALE_FACTOR
-                    : (pathData.strokeWidth || NORMAL_STROKE_WIDTH) *
-                      SCALE_FACTOR
-                }
-              />
-            );
-          })}
-      </Canvas>
-    </View>
+    // <View style={{ padding: PREVIEW_PADDING }}>
+    //   <Canvas style={{ width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }}>
+    //     <Rect
+    //       x={0}
+    //       y={0}
+    //       width={PREVIEW_WIDTH}
+    //       height={PREVIEW_HEIGHT}
+    //       color="white"
+    //     />
+    //     {itemData.paths &&
+    //       itemData.paths.map((pathData: PathData, index: number) => {
+    //         const scaledPath = scalePath(pathData.path, SCALE_FACTOR);
+    //         return (
+    //           <Path
+    //             key={index}
+    //             path={scaledPath}
+    //             color={pathData.color}
+    //             style="stroke"
+    //             strokeWidth={
+    //               pathData.color === ERASER_COLOR
+    //                 ? ERASER_STROKE_WIDTH * SCALE_FACTOR
+    //                 : (pathData.strokeWidth || NORMAL_STROKE_WIDTH) *
+    //                   SCALE_FACTOR
+    //             }
+    //           />
+    //         );
+    //       })}
+    //   </Canvas>
+    // </View>
+    <Button> Press Me! </Button>
   );
 
   // Renders item when not active/clicked
@@ -111,6 +115,7 @@ const LetterBoard: LetterBoardComponent = ({
   if (!isActive) {
     return (
       <YStack flex={1}>
+        {renderLetterBoardPreview()}
       </YStack>
     );
   }
@@ -118,19 +123,30 @@ const LetterBoard: LetterBoardComponent = ({
   // Renders item when active/clicked
   // (item is clicked and dialog is open, feel free to change this return)
   return (
-    <YStack flex={1}>
-      <ColorSelectionDialog
-        open={dialogOpen}
-        onOpenChange={(isOpen) => {
-          setDialogOpen(isOpen);
-          if (!isOpen) {
-            handleDialogClose();
-          }
-        }}
-        onColorSelect={handleColorSelect}
-      />
+    <YStack padding={20} space="$2">
+      {gridValues.map((row, rowIndex) => (
+        <XStack key={rowIndex} space="$2">
+          {row.map((value, colIndex) => (
+            <Input
+              key={`${rowIndex}-${colIndex}`}
+              value={value}
+              onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
+              maxLength={1} // Ensures only one letter can be entered
+              width={50}
+              height={50}
+              textAlign="center"
+              fontSize={20}
+              backgroundColor="#000" // Set background to black
+              color="#fff" // Set text color to white
+              borderColor="#fff" // Optional: white border to make the boxes stand out
+              borderWidth={1}
+              borderRadius="$4"
+            />
+          ))}
+        </XStack>
+      ))}
     </YStack>
-  );
+    );
 };
 
 // Initializes item data (default values)
