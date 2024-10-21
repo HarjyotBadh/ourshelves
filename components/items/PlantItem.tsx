@@ -1,17 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { View, styled, YStack, Button, Text, Dialog, XStack, Progress, Circle } from "tamagui";
-import plants from "../Plants";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
-  differenceInDays,
-  differenceInMinutes,
-  addDays,
-  format,
-  differenceInHours,
-} from "date-fns";
+  View as TamaguiView,
+  styled,
+  YStack,
+  Button,
+  Text,
+  Dialog,
+  XStack,
+  Progress,
+  Circle,
+} from "tamagui";
+import { Animated, PanResponder, StyleSheet, View } from "react-native";
+import plants from "../Plants";
+import { differenceInDays, differenceInMinutes, addDays, format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
-import { Droplet, Sun } from "@tamagui/lucide-icons";
+import { Droplet, Sun, Cloud } from "@tamagui/lucide-icons";
 
-const PlantItemView = styled(View, {
+type WateringZone = {
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+};
+
+const PlantItemView = styled(TamaguiView, {
   width: "100%",
   height: "100%",
   borderRadius: "$2",
@@ -66,18 +78,28 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
   const [isWithered, setIsWithered] = useState(itemData.isWithered || false);
   const [timeUntilWatering, setTimeUntilWatering] = useState("");
   const [canWater, setCanWater] = useState(false);
+  const [isWatering, setIsWatering] = useState(false);
+  const pan = useRef(new Animated.ValueXY()).current;
+  const wateringAnimation = useRef(new Animated.Value(0)).current;
+  const [showWateringMessage, setShowWateringMessage] = useState(false);
+  const wateringZoneRef = useRef<View | null>(null);
+  const [wateringZone, setWateringZone] = useState<WateringZone | null>(null);
+  const waterDropAnimation1 = useRef(new Animated.Value(0)).current;
+  const waterDropAnimation2 = useRef(new Animated.Value(0)).current;
+  const waterDropAnimation3 = useRef(new Animated.Value(0)).current;
+  const waterDropAnimation4 = useRef(new Animated.Value(0)).current;
+  const waterDropAnimation5 = useRef(new Animated.Value(0)).current;
 
   const isFullyGrown = growthStage >= 100;
 
-  // Print the item's id when the dialog opens
-  if (isActive) {
-    console.log(itemData.id);
-  }
   useEffect(() => {
-    if (isActive && !dialogOpen) {
-      setDialogOpen(true);
+    if (isActive) {
+      console.log(itemData.id);
+      if (!dialogOpen) {
+        setDialogOpen(true);
+      }
     }
-  }, [isActive]);
+  }, [isActive, itemData.id, dialogOpen]);
 
   useEffect(() => {
     const updateTimeUntilWatering = () => {
@@ -110,12 +132,40 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     };
 
     checkWithering();
-    const interval = setInterval(checkWithering, 60000); // Check every minute
+    const interval = setInterval(checkWithering, 60000);
 
     return () => clearInterval(interval);
   }, [lastWatered]);
 
-  const handleWater = () => {
+  const handleWateringZoneLayout = useCallback(() => {
+    if (wateringZoneRef.current) {
+      wateringZoneRef.current.measureInWindow((x, y, width, height) => {
+        console.log("Measured watering zone:", { x, y, width, height });
+        setWateringZone({
+          top: y,
+          left: x,
+          right: x + width,
+          bottom: y + height,
+        });
+      });
+    }
+  }, []);
+
+  const isOverWateringZone = useCallback(
+    (x: number, y: number) => {
+      if (!wateringZone) {
+        console.log("No watering zone found.");
+        return false;
+      }
+      const { left, right, top, bottom } = wateringZone;
+      const isOver = x >= left && x <= right && y >= top && y <= bottom;
+      console.log("Is over watering zone:", isOver, "Coords:", { x, y }, "Zone:", wateringZone);
+      return isOver;
+    },
+    [wateringZone]
+  );
+
+  const handleWater = useCallback(() => {
     if (isFullyGrown && !isWithered) {
       console.log("Plant is fully grown and not withered. It cannot be watered.");
       return;
@@ -128,7 +178,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
 
     let newGrowthStage = growthStage;
     if (!isFullyGrown) {
-      const growthIncrement = Math.random() * (15 - 5) + 5; // Random growth between 5 and 15
+      const growthIncrement = Math.random() * (15 - 5) + 5;
       newGrowthStage = Math.min(growthStage + growthIncrement, 100);
     }
 
@@ -136,8 +186,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     setGrowthStage(newGrowthStage);
     setLastWatered(newLastWatered);
 
-    // Check if the plant has reached a new milestone
-    const milestone = Math.floor(newGrowthStage / 10) * 10; // Milestones at every 10%
+    const milestone = Math.floor(newGrowthStage / 10) * 10;
     const reachedNewMilestone = milestone > Math.floor(growthStage / 10) * 10;
 
     setIsWithered(false);
@@ -147,7 +196,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     const updatedData = {
       ...itemData,
       growthStage: newGrowthStage,
-      lastWatered: newLastWatered.toDate(), // Convert Timestamp to Date
+      lastWatered: newLastWatered.toDate(),
       milestone: reachedNewMilestone ? milestone : itemData.milestone,
       isWithered: false,
     };
@@ -155,7 +204,82 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     onDataUpdate(updatedData);
 
     console.log("Updated plant data:", updatedData);
-  };
+  }, [growthStage, lastWatered, isFullyGrown, isWithered, itemData, onDataUpdate]);
+
+  const startWatering = useCallback(() => {
+    setIsWatering(true);
+    const animateDrop = (animation: Animated.Value, delay: number, duration: number) => {
+      return Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+      ]);
+    };
+
+    Animated.parallel([
+      animateDrop(waterDropAnimation1, 0, 1500),
+      animateDrop(waterDropAnimation2, 200, 1700),
+      animateDrop(waterDropAnimation3, 400, 1600),
+      animateDrop(waterDropAnimation4, 600, 1800),
+      animateDrop(waterDropAnimation5, 800, 1500),
+    ]).start(() => {
+      handleWater();
+      setIsWatering(false);
+      [
+        waterDropAnimation1,
+        waterDropAnimation2,
+        waterDropAnimation3,
+        waterDropAnimation4,
+        waterDropAnimation5,
+      ].forEach((anim) => anim.setValue(0));
+    });
+  }, [
+    waterDropAnimation1,
+    waterDropAnimation2,
+    waterDropAnimation3,
+    waterDropAnimation4,
+    waterDropAnimation5,
+    handleWater,
+  ]);
+
+  const onPanResponderRelease = useCallback(
+    (_, gesture) => {
+      console.log("Released:", gesture.moveX, gesture.moveY, "Can water:", canWater);
+      if (isOverWateringZone(gesture.moveX, gesture.moveY)) {
+        if (canWater) {
+          console.log("Starting watering");
+          startWatering();
+        } else {
+          console.log("Cannot water yet");
+          setShowWateringMessage(true);
+          setTimeout(() => setShowWateringMessage(false), 2000);
+        }
+      } else {
+        console.log("Not over watering zone");
+      }
+      Animated.spring(pan, {
+        toValue: { x: 0, y: 0 },
+        useNativeDriver: false,
+      }).start();
+    },
+    [isOverWateringZone, canWater, pan, startWatering]
+  );
+
+  // Use useMemo to recreate panResponder when dependencies change
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
+          useNativeDriver: false,
+        }),
+        onPanResponderRelease: onPanResponderRelease,
+      }),
+    [onPanResponderRelease, pan]
+  );
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -213,17 +337,29 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
             opacity={1}
             scale={1}
           >
-            <YStack space="$4" maxWidth={350}>
+            <YStack gap="$4" maxWidth={350}>
               <Dialog.Title>
                 <Text fontSize="$8" fontWeight="bold" color="$gray12">
                   Your {seedType.charAt(0).toUpperCase() + seedType.slice(1)}
                 </Text>
               </Dialog.Title>
-              <YStack alignItems="center" space="$4">
-                <Circle size={200} backgroundColor="$green3">
-                  <PlantComponent growth={growthStage} isWithered={isWithered} />
-                </Circle>
-                <XStack alignItems="center" space="$2">
+              <YStack alignItems="center" gap="$4">
+                <View style={styles.plantContainer}>
+                  <View
+                    ref={wateringZoneRef}
+                    onLayout={handleWateringZoneLayout}
+                    style={[
+                      styles.wateringZone,
+                      {
+                        // backgroundColor: canWater ? "rgba(0, 255, 0, 0.1)" : "rgba(255, 0, 0, 0.1)",
+                      },
+                    ]}
+                  />
+                  <Circle size={200} backgroundColor="$green3">
+                    <PlantComponent growth={growthStage} isWithered={isWithered} />
+                  </Circle>
+                </View>
+                <XStack alignItems="center" gap="$2">
                   <Sun color="$yellow10" size={24} />
                   <StyledProgressBar value={growthStage}>
                     <ProgressIndicator />
@@ -236,7 +372,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                     ? "Fully Grown"
                     : `${Math.round(growthStage)}% Grown`}
                 </Text>
-                <XStack alignItems="center" space="$2">
+                <XStack alignItems="center" gap="$2">
                   <Droplet color="$blue10" size={24} />
                   <Text fontSize="$4" color="$gray11">
                     Next watering: {timeUntilWatering}
@@ -246,24 +382,126 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                   Last watered: {format(lastWatered.toDate(), "MMM d, yyyy 'at' h:mm a")}
                 </Text>
               </YStack>
-              <Button
-                onPress={handleWater}
-                disabled={(isFullyGrown && !isWithered) || !canWater}
-                opacity={(isFullyGrown && !isWithered) || !canWater ? 0.5 : 1}
-                backgroundColor={isWithered ? "$red9" : "$blue9"}
-                color="white"
-                pressStyle={{ opacity: 0.8 }}
-              >
-                <Text>
-                  {isWithered
-                    ? "Revive Plant"
-                    : isFullyGrown
-                    ? "Fully Grown"
-                    : canWater
-                    ? "Water Plant"
-                    : "Wait to Water"}
+
+              <YStack alignItems="center" gap="$2">
+                <Text fontSize="$3" color="$gray10">
+                  Drag cloud over plant to water
                 </Text>
-              </Button>
+                <Animated.View
+                  {...panResponder.panHandlers}
+                  style={[styles.wateringCan, { transform: pan.getTranslateTransform() }]}
+                >
+                  <Cloud size={50} color="$blue9" />
+                </Animated.View>
+              </YStack>
+
+              {isWatering && (
+                <>
+                  <Animated.View
+                    style={[
+                      styles.waterDrop,
+                      styles.waterDrop1,
+                      {
+                        opacity: waterDropAnimation1,
+                        transform: [
+                          {
+                            translateY: waterDropAnimation1.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 100],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Droplet size={12} color="$blue9" />
+                  </Animated.View>
+                  <Animated.View
+                    style={[
+                      styles.waterDrop,
+                      styles.waterDrop2,
+                      {
+                        opacity: waterDropAnimation2,
+                        transform: [
+                          {
+                            translateY: waterDropAnimation2.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 120],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Droplet size={10} color="$blue9" />
+                  </Animated.View>
+                  <Animated.View
+                    style={[
+                      styles.waterDrop,
+                      styles.waterDrop3,
+                      {
+                        opacity: waterDropAnimation3,
+                        transform: [
+                          {
+                            translateY: waterDropAnimation3.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 110],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Droplet size={11} color="$blue9" />
+                  </Animated.View>
+                  <Animated.View
+                    style={[
+                      styles.waterDrop,
+                      styles.waterDrop4,
+                      {
+                        opacity: waterDropAnimation4,
+                        transform: [
+                          {
+                            translateY: waterDropAnimation4.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 130],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Droplet size={9} color="$blue9" />
+                  </Animated.View>
+                  <Animated.View
+                    style={[
+                      styles.waterDrop,
+                      styles.waterDrop5,
+                      {
+                        opacity: waterDropAnimation5,
+                        transform: [
+                          {
+                            translateY: waterDropAnimation5.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 115],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Droplet size={10} color="$blue9" />
+                  </Animated.View>
+                  <View style={styles.cloudContainer}>
+                    <Cloud size={60} color="$blue9" />
+                  </View>
+                </>
+              )}
+
+              {showWateringMessage && (
+                <Text style={styles.wateringMessage}>Not ready for watering yet!</Text>
+              )}
+
               <Dialog.Close asChild>
                 <Button onPress={handleDialogClose} backgroundColor="$gray3" color="$gray11">
                   <Text>Close</Text>
@@ -276,6 +514,67 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     </YStack>
   );
 };
+
+const styles = StyleSheet.create({
+  plantContainer: {
+    position: "relative",
+    width: 220,
+    height: 220,
+  },
+  wateringZone: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 110,
+    zIndex: 1,
+  },
+  wateringCan: {
+    alignSelf: "center",
+    zIndex: 10,
+  },
+  waterDrop: {
+    position: "absolute",
+    zIndex: 5,
+  },
+  waterDrop1: {
+    top: 70,
+    left: "43%",
+  },
+  waterDrop2: {
+    top: 70,
+    left: "48%",
+  },
+  waterDrop3: {
+    top: 70,
+    left: "53%",
+  },
+  waterDrop4: {
+    top: 70,
+    left: "58%",
+  },
+  waterDrop5: {
+    top: 70,
+    left: "38%",
+  },
+  cloudContainer: {
+    position: "absolute",
+    top: 20,
+    left: "50%",
+    marginLeft: -30,
+    zIndex: 6,
+  },
+  wateringMessage: {
+    position: "absolute",
+    top: 260,
+    left: 50,
+    right: 50,
+    textAlign: "center",
+    color: "$red9",
+    zIndex: 15,
+  },
+});
 
 PlantItem.getInitialData = () => ({
   growthStage: 0,

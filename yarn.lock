@@ -8960,6 +8960,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-blur@npm:^13.0.2":
+  version: 13.0.2
+  resolution: "expo-blur@npm:13.0.2"
+  peerDependencies:
+    expo: "*"
+  checksum: b98260d29abf6003ada13db2c7dac10ff896935baf0bc8a4d7fe1d5a3cfcf442b3c82f191b93e8c7f84476e9e4e57706fb940b87dfce1f94025503a0fb4fd65f
+  languageName: node
+  linkType: hard
+
 "expo-constants@npm:^16.0.2, expo-constants@npm:~16.0.0":
   version: 16.0.2
   resolution: "expo-constants@npm:16.0.2"
@@ -12671,6 +12680,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     eslint: "npm:^9.10.0"
     expo: "npm:~51.0.36"
+    expo-blur: "npm:^13.0.2"
     expo-constants: "npm:^16.0.2"
     expo-firebase-core: "npm:^6.0.0"
     expo-firebase-recaptcha: "npm:2.3.1"
