@@ -23,8 +23,6 @@ interface LetterBoardProps {
     [key: string]: any; // any other properties (do not change)
 
     // add custom properties below ------
-    clickCount?: number;
-    color: string;
 
     // ---------------------------------
   };
@@ -54,7 +52,7 @@ const LetterBoard: LetterBoardComponent = ({
 
   // Grid of letters to be used for letterboard
   const [gridValues, setGridValues] = useState(Array(4).fill('').map(() => Array(6).fill('')))
-
+  const [boardChanged, setBoardChanged] = useState(false);
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
@@ -103,28 +101,42 @@ const LetterBoard: LetterBoardComponent = ({
   // Renders item when active/clicked
   // (item is clicked and dialog is open, feel free to change this return)
   return (
-    <YStack padding={20} space="$2">
-      {gridValues.map((row, rowIndex) => (
-        <XStack key={rowIndex} space="$2">
-          {row.map((value, colIndex) => (
-            <Input
-              key={`${rowIndex}-${colIndex}`}
-              value={value}
-              onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
-              maxLength={1} // Ensures only one letter can be entered
-              width={50}
-              height={50}
-              textAlign="center"
-              fontSize={20}
-              backgroundColor="#000" // Set background to black
-              color="#fff" // Set text color to white
-              borderColor="#fff" // Optional: white border to make the boxes stand out
-              borderWidth={1}
-              borderRadius="$4"
-            />
-          ))}
-        </XStack>
-      ))}
+    <YStack flex={1} alignItems="center" justifyContent="center" padding={20} backgroundColor="#ddd">
+      {/* Pink rectangle acting as background */}
+      <YStack 
+        position="absolute" 
+        backgroundColor="black" 
+        height={250} // Adjust height as needed to cover the entire grid 
+        width={380} // Adjust width based on grid width
+        borderRadius="$4"
+        alignItems="center"
+        justifyContent="center"
+      />
+
+      {/* Grid of text inputs positioned over the pink rectangle */}
+      <YStack padding={20} space="$2">
+        {gridValues.map((row, rowIndex) => (
+          <XStack key={rowIndex} space="$2">
+            {row.map((value, colIndex) => (
+              <Input
+                key={`${rowIndex}-${colIndex}`}
+                value={value}
+                onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
+                maxLength={1} // Ensures only one letter can be entered
+                width={50}
+                height={50}
+                textAlign="center"
+                fontSize={25}
+                fontWeight="bold"
+                backgroundColor="#000" // Set background to black
+                color="#fff" // Set text color to white
+                borderWidth={1}
+                borderRadius="$2"
+              />
+            ))}
+          </XStack>
+        ))}
+      </YStack>
     </YStack>
     );
 };
