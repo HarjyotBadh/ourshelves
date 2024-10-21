@@ -35,7 +35,6 @@ interface PlaceholderItemComponent extends React.FC<PlaceholderItemProps> {
 const PlaceholderItemView = styled(View, {
   width: "100%",
   height: "100%",
-  borderRadius: "$2",
 });
 
 const PlaceholderItem: PlaceholderItemComponent = ({

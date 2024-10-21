@@ -234,7 +234,6 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
       <YStack alignItems="center" gap="$3">
         <XStack
           backgroundColor="$gray1"
-          borderRadius="$4"
           padding="$2"
           alignItems="center"
           gap="$2"
@@ -302,7 +301,6 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
             justifyContent="center"
             alignItems="center"
             backgroundColor="$red10"
-            borderRadius="$2"
             zIndex={20}
             elevate
           >

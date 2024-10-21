@@ -20,7 +20,6 @@ export const ColorButton = styled(Button, {
 export const WhiteboardView = styled(View, {
   width: "100%",
   height: "100%",
-  borderRadius: "$2",
   backgroundColor: "$pink7",
 });
 

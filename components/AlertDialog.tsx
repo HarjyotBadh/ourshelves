@@ -12,7 +12,6 @@ interface AlertDialogProps {
 
 const StyledContent = styled(TamaguiAlertDialog.Content, {
     backgroundColor: '$background',
-    borderRadius: '$4',
     padding: '$4',
     maxWidth: 350,
     width: '90%',
@@ -39,7 +38,6 @@ const StyledDescription = styled(TamaguiAlertDialog.Description, {
 const StyledButton = styled(Button, {
     paddingVertical: '$2',
     paddingHorizontal: '$3',
-    borderRadius: '$2',
 })
 
 export const AlertDialog: React.FC<AlertDialogProps> = ({

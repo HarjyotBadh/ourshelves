@@ -7,7 +7,6 @@ export const USER_ITEM_BACKGROUND = "#DEB887";
 export const StyledAccordionItem = styled(Accordion.Item, {
   backgroundColor: "$backgroundStrong",
   marginBottom: "$2",
-  borderRadius: "$4",
   overflow: "hidden",
 });
 
@@ -34,7 +33,6 @@ export const UserItem = styled(XStack, {
   alignItems: "center",
   paddingVertical: "$2",
   paddingHorizontal: "$3",
-  borderRadius: "$2",
   marginBottom: "$2",
   backgroundColor: USER_ITEM_BACKGROUND,
 });
