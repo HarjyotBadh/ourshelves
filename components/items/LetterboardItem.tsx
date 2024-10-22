@@ -55,6 +55,7 @@ const LetterBoard: LetterBoardComponent = ({
 
   const handleDialogClose = () => {
     setDialogOpen(false);
+    // TODO, get the grid to save the data and have it persist
     onDataUpdate({...itemData, gridData: gridValues})
     if (boardChanged) {
       earnCoins(auth.currentUser.uid, 10);
