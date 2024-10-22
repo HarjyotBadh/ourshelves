@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Dimensions } from "react-native";
 import { View, Dialog, YStack, XStack, Input, Button } from "tamagui";
+import { earnCoins } from "project-functions/shopFunctions";
+import { auth, db } from "firebaseConfig";
+import { ToastViewport, useToastController } from "@tamagui/toast";
+
 
 interface LetterBoardProps {
   itemData: {
@@ -24,7 +27,7 @@ interface LetterBoardProps {
 }
 
 interface LetterBoardComponent extends React.FC<LetterBoardProps> {
-  getInitialData: () => {};
+  getInitialData: () => {gridData: string[][]};
 }
 
 const LetterBoard: LetterBoardComponent = ({
@@ -40,6 +43,8 @@ const LetterBoard: LetterBoardComponent = ({
   const [gridValues, setGridValues] = useState(Array(8).fill('').map(() => Array(3).fill('')))
   const [boardChanged, setBoardChanged] = useState(false);
 
+  const toast = useToastController();
+
   // Opens dialog when item is active/clicked
   useEffect(() => {
     if (isActive && !dialogOpen) {
@@ -50,7 +55,14 @@ const LetterBoard: LetterBoardComponent = ({
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    onDataUpdate({...gridValues})
+    onDataUpdate({...itemData, gridData: gridValues})
+    if (boardChanged) {
+      earnCoins(auth.currentUser.uid, 10);
+      toast.show("You earned 10 coins for interacting with the letterboard!", {
+        duration: 3000,
+      });
+      setBoardChanged(false)
+    }
     
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
@@ -91,8 +103,8 @@ const LetterBoard: LetterBoardComponent = ({
                 value={value}
                 onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
                 maxLength={1}
-                width={1} 
-                height={10}
+                width={38} 
+                height={12}
                 textAlign="center"
                 fontSize={10}
                 fontWeight="bold"
@@ -185,7 +197,7 @@ const LetterBoard: LetterBoardComponent = ({
 
           <Dialog.Close displayWhenAdapted asChild>
             <Button onPress={handleDialogClose} theme="alt1" aria-label="Close">
-              Cancel
+              Exit
             </Button>
           </Dialog.Close>
         </Dialog.Content>
