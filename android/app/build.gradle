@@ -109,7 +109,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.ourshelves"
+    namespace 'com.harjyotbadh.OurShelves'
     defaultConfig {
         applicationId 'com.harjyotbadh.OurShelves'
         minSdkVersion rootProject.ext.minSdkVersion

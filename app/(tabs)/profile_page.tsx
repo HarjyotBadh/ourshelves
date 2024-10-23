@@ -262,7 +262,6 @@ export default function ProfilePage() {
             setIsEditMode(true);
           }}
           color="$white"
-          borderRadius="50%"
           justifyContent="center"
           alignItems="center"
           display="flex"
@@ -308,7 +307,6 @@ export default function ProfilePage() {
             }}
             bg="$yellow8"
             color="$white"
-            borderRadius="50%"
             justifyContent="center"
             alignItems="center"
             display="flex"

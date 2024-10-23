@@ -91,24 +91,25 @@ const RoomScreen = () => {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
-  }>({ name: "", users: [], description: "" });
+    roomId: string;
+  }>({ name: "", users: [], description: "", roomId: "" });
   const [backgroundMusic, setBackgroundMusic] = useState<Audio.Sound | null>(null);
   const roomRef = useRef(doc(db, 'Rooms', roomId));
   const { stop, tracks } = useAudio();
 
   /**
    * Initializes shelves for a new room.
-   * 
+   *
    * @param roomId - The ID of the room to initialize shelves for.
    * @returns A Promise that resolves to an array of ShelfData objects representing the newly created shelves.
-   * 
+   *
    * This function performs the following actions:
    * 1. Creates a new batch write operation.
    * 2. Generates 10 new shelf documents with default data.
    * 3. Adds each new shelf document to the batch operation.
    * 4. Updates the room document with references to the new shelves.
    * 5. Commits the batch operation to Firestore.
-   * 
+   *
    * Note: This function uses a batch write to ensure atomicity of the operation.
    * If any part of the batch fails, none of the writes will be applied.
    */
@@ -142,16 +143,16 @@ const RoomScreen = () => {
 
   /**
    * Preloads images for a list of items to improve performance.
-   * 
+   *
    * @param items - An array of ItemData objects containing image URIs to preload.
    * @returns A Promise that resolves when all images have been preloaded or failed to load.
-   * 
+   *
    * This function performs the following actions:
    * 1. Iterates through the provided items array.
    * 2. For each item, it attempts to prefetch the image using Image.prefetch.
    * 3. Tracks the number of loaded images, regardless of success or failure.
    * 4. Resolves the Promise once all images have been processed.
-   * 
+   *
    * Note: This function will not throw errors for individual image load failures,
    * ensuring that the preloading process continues even if some images fail to load.
    */
@@ -407,6 +408,7 @@ const RoomScreen = () => {
             name: roomData.name,
             description: roomData.description || "",
             users: combinedUsers,
+            roomId: roomId,
           });
         } else {
           console.error("Room not found");
@@ -429,16 +431,16 @@ const RoomScreen = () => {
 
   /**
    * Handles the selection of an item to be placed on a shelf.
-   * 
+   *
    * @param item - The ItemData object representing the selected item.
-   * 
+   *
    * This function performs the following actions:
    * 1. Checks if a spot on a shelf has been selected.
    * 2. Creates a new PlacedItem object with the selected item's data.
    * 3. Adds the new PlacedItem to the Firestore 'PlacedItems' collection.
    * 4. Updates the corresponding shelf's itemList in Firestore.
    * 5. Closes the item selection sheet and resets the selected spot.
-   * 
+   *
    * @throws Will log an error to the console if the Firestore operations fail.
    */
   const handleItemSelect = async (item: ItemData) => {
@@ -483,16 +485,16 @@ const RoomScreen = () => {
 
   /**
    * Removes an item from a specific position on a shelf.
-   * 
+   *
    * This function performs the following actions:
    * 1. Finds the shelf with the given shelfId.
    * 2. Locates the item at the specified position on that shelf.
    * 3. Deletes the PlacedItem document from Firestore.
    * 4. Updates the shelf's itemList in Firestore to remove the reference to the deleted item.
-   * 
+   *
    * @param shelfId - The ID of the shelf containing the item to be removed.
    * @param position - The position of the item on the shelf.
-   * 
+   *
    * @throws Will not throw errors, but will silently fail if the shelf or item is not found.
    */
   const handleItemRemove = async (shelfId: string, position: number) => {
@@ -513,18 +515,18 @@ const RoomScreen = () => {
 
   /**
    * Updates the data of a specific item on a shelf.
-   * 
+   *
    * This function performs the following actions:
    * 1. Finds the shelf with the given shelfId in the local state.
    * 2. Locates the item at the specified position on that shelf.
    * 3. Updates the item's data with the new data provided.
    * 4. Updates the PlacedItem document in Firestore with the new data.
    * 5. Updates the local state with the modified shelf and item data.
-   * 
+   *
    * @param shelfId - The ID of the shelf containing the item to be updated.
    * @param position - The position of the item on the shelf.
    * @param newItemData - An object containing the new data to be applied to the item.
-   * 
+   *
    * @throws Will not throw errors, but will silently fail if the shelf or item is not found.
    */
   const handleItemDataUpdate = async (
@@ -585,7 +587,7 @@ const RoomScreen = () => {
 
   /**
    * Removes a user from the current room.
-   * 
+   *
    * @param userId - The ID of the user to be removed.
    */
   const handleRemoveUser = async (userId: string) => {
@@ -597,6 +599,21 @@ const RoomScreen = () => {
       Alert.alert("Success", "User removed from room successfully");
     } else {
       Alert.alert("Error", result.message);
+    }
+  };
+
+  const handleShelfNameChange = async (shelfId: string, newName: string) => {
+    try {
+      await updateDoc(doc(db, "Shelves", shelfId), {
+        name: newName,
+        updatedAt: new Date(),
+      });
+
+      setShelves((prevShelves) =>
+        prevShelves.map((shelf) => (shelf.id === shelfId ? { ...shelf, name: newName } : shelf))
+      );
+    } catch (error) {
+      console.error("Failed to update shelf name:", error);
     }
   };
 
@@ -705,7 +722,9 @@ const RoomScreen = () => {
                 {shelves.map((shelf, index) => (
                   <Shelf
                     key={shelf.id}
+                    shelfId={shelf.id}
                     shelfNumber={index + 1}
+                    shelfName={shelf.name}
                     items={[0, 1, 2].map((position) => {
                       const placedItem = shelf.placedItems?.find(
                         (item) => item.position === position
@@ -721,8 +740,11 @@ const RoomScreen = () => {
                     onItemDataUpdate={(position, newItemData) =>
                       handleItemDataUpdate(shelf.id, position, newItemData)
                     }
+                    onShelfNameChange={handleShelfNameChange}
                     users={users}
-                    roomInfo={roomInfo}
+                    roomInfo={{
+                      ...roomInfo,
+                    }}
                   />
                 ))}
               </YStack>

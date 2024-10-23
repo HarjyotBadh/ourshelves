@@ -24,6 +24,7 @@ interface PlaceholderItemProps {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
+    roomId: string;
   }; // various room info (do not change)
 }
 
@@ -35,7 +36,6 @@ interface PlaceholderItemComponent extends React.FC<PlaceholderItemProps> {
 const PlaceholderItemView = styled(View, {
   width: "100%",
   height: "100%",
-  borderRadius: "$2",
 });
 
 const PlaceholderItem: PlaceholderItemComponent = ({
