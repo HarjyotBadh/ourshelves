@@ -24,8 +24,8 @@ const BoomboxItem: BoomboxItemComponent = ({
   const [isTrackSelectionVisible, setIsTrackSelectionVisible] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<string | null>(null);
   const [soundEffect, setSoundEffect] = useState<Audio.Sound | null>(null);
-  // const roomId = roomInfo.id;
-  const roomId = "ue5COlxMW6Mmj5ccb3Ee";
+  const roomId = roomInfo.roomId;
+  // const roomId = "ue5COlxMW6Mmj5ccb3Ee";
   const toast = useToastController();
   const { play, stop, isPlaying } = useAudio();
 
