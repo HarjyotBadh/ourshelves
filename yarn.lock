@@ -8781,6 +8781,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-av@npm:^14.0.7":
+  version: 14.0.7
+  resolution: "expo-av@npm:14.0.7"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/6ba91c204e8e734d5209f32d27ceeb27e03286d0b91006e2ea8a5185d29282098f9e7deed47acea5b8f03c87713235d6ba8a3ae01c3ef365f35d7a0b86822602
+  languageName: node
+  linkType: hard
+
 "expo-blur@npm:^13.0.2":
   version: 13.0.2
   resolution: "expo-blur@npm:13.0.2"
@@ -12506,6 +12515,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     eslint: "npm:^9.10.0"
     expo: "npm:~51.0.36"
+    expo-av: "npm:^14.0.7"
     expo-blur: "npm:^13.0.2"
     expo-constants: "npm:^16.0.2"
     expo-firebase-core: "npm:^6.0.0"
