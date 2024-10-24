@@ -9,6 +9,7 @@ const items = {
     'Xn1C1Z2P3ccfZI9bAgcO': lazy(() => import('./BoomboxItem')),
     'r0bLQwyspeXIKE5d6fzg': lazy(() => import('./PlantItem')),
     'qWoaz1vNrtW9If87Tq8l': lazy(() => import('./ClockItem')),
+    '1xFx35XueUeIA8JEI2Xu': lazy(() => import('./CalendarItem')),
     // Add new items here, for example:
     // '{ID of item from Firestore (in the Items collection) }': lazy(() => import('./{Name of file}')),
 };
