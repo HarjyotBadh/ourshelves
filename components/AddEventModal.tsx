@@ -1,24 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, View } from 'react-native';
 import { Button, Text, YStack, Input } from 'tamagui';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Event } from 'models/CalendarModel';
+import { startOfDay } from 'date-fns';
 
 interface AddEventModalProps {
   isVisible: boolean;
   onClose: () => void;
   onAddEvent: (event: Event) => void;
+  currentDate: Date;
 }
 
-export const AddEventModal: React.FC<AddEventModalProps> = ({ isVisible, onClose, onAddEvent }) => {
+export const AddEventModal: React.FC<AddEventModalProps> = ({ isVisible, onClose, onAddEvent, currentDate }) => {
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(startOfDay(currentDate));
+
+  useEffect(() => {
+    if (isVisible) {
+      setDate(startOfDay(currentDate));
+    }
+  }, [isVisible, currentDate]);
 
   const handleAddEvent = () => {
     if (title.trim()) {
-      onAddEvent({ title: title.slice(0, 50), date: date.toISOString() });
+      onAddEvent({ title: title.trim().slice(0, 50), date: date.toISOString() });
       setTitle('');
-      setDate(new Date());
       onClose();
     }
   };

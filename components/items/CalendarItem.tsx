@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, View, Animated, PanResponder } from 'react-native';
 import { Button, Text, YStack, XStack, Image } from 'tamagui';
-import { format, addDays, isBefore, parseISO } from 'date-fns';
+import { format, addDays, isBefore, parseISO, startOfDay, isSameDay } from 'date-fns';
 import { CalendarItemProps, CalendarItemComponent, Event } from 'models/CalendarModel'
 import { calendarStyles } from 'styles/CalendarStyles'
 import { BOTTOM_BAR_HEIGHT } from 'styles/WhiteboardStyles';
@@ -60,16 +60,24 @@ const CalendarItem: CalendarItemComponent = ({
     onDataUpdate({ ...itemData, events: [...events, newEvent] });
   };
 
+  // Filter events for the current date
+  const currentEvents = useMemo(() => {
+    const startOfCurrentDate = startOfDay(currentDate);
+    return events.filter(event => 
+      isSameDay(parseISO(event.date), startOfCurrentDate)
+    );
+  }, [events, currentDate]);
+
   const renderCalendarPreview = () => (
     <View style={calendarStyles.previewContainer}>
       <Text style={calendarStyles.monthText}>{format(currentDate, 'MMMM')}</Text>
       <Text style={calendarStyles.dayText}>{format(currentDate, 'd')}</Text>
-      {events.length > 0 && (
+      {currentEvents.length > 0 && (
         <View style={calendarStyles.eventContainer}>
-          <Text style={calendarStyles.eventText}>{events[0].title}</Text>
-          {events.length > 1 && (
+          <Text style={calendarStyles.eventText}>{currentEvents[0].title}</Text>
+          {currentEvents.length > 1 && (
             <View style={calendarStyles.eventIndicator}>
-              <Text style={calendarStyles.eventIndicatorText}>+{events.length - 1}</Text>
+              <Text style={calendarStyles.eventIndicatorText}>+{currentEvents.length - 1}</Text>
             </View>
           )}
         </View>
@@ -84,8 +92,17 @@ const CalendarItem: CalendarItemComponent = ({
         console.log("ripping calendar");
         const newDate = addDays(currentDate, 1);
         console.log("newDate", newDate);
-        console.log("isBefore", isBefore(newDate, new Date()));
-        if (isBefore(newDate, new Date())) {
+        console.log(itemData.id);
+        
+        // Compare only the dates, ignoring the time
+        const today = new Date();
+        const isBeforeToday = newDate.getDate() <= today.getDate() &&
+                              newDate.getMonth() <= today.getMonth() &&
+                              newDate.getFullYear() <= today.getFullYear();
+        
+        console.log("isBeforeToday", isBeforeToday);
+        
+        if (isBeforeToday) {
           setCurrentDate(newDate);
           onDataUpdate({ ...itemData, currentDate: newDate.toISOString() });
         }
@@ -112,7 +129,7 @@ const CalendarItem: CalendarItemComponent = ({
               <Text style={calendarStyles.monthText}>{format(currentDate, 'MMMM')}</Text>
               <Text style={calendarStyles.dayText}>{format(currentDate, 'd')}</Text>
               <View style={calendarStyles.eventListContainer}>
-                {events.map((event, index) => (
+                {currentEvents.map((event, index) => (
                   <Text key={index} style={calendarStyles.eventListText}>{event.title}</Text>
                 ))}
               </View>
@@ -146,6 +163,7 @@ const CalendarItem: CalendarItemComponent = ({
         isVisible={isAddEventModalVisible}
         onClose={() => setIsAddEventModalVisible(false)}
         onAddEvent={handleAddEvent}
+        currentDate={currentDate}
       />
     </Modal>
   );
