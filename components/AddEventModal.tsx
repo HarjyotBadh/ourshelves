@@ -26,7 +26,7 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({ isVisible, onClose
   return (
     <Modal visible={isVisible} transparent animationType="fade">
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-        <YStack backgroundColor="#DEB887" padding="$4" borderRadius="$4" width={300}>
+        <YStack backgroundColor="$pink6" padding="$4" borderRadius="$4" width={300} alignItems='center'>
           <Text fontSize="$6" fontWeight="bold" marginBottom="$4">Add Event</Text>
           <Input
             value={title}
@@ -34,15 +34,25 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({ isVisible, onClose
             placeholder="Event Title (max 50 characters)"
             marginBottom="$4"
             maxLength={50}
+            placeholderTextColor="$gray11"
           />
           <DateTimePicker
             value={date}
             mode="datetime"
             display="default"
             onChange={(event, selectedDate) => setDate(selectedDate || date)}
+            style={{ marginBottom: 16 }}
           />
-          <Button onPress={handleAddEvent}>Add Event</Button>
-          <Button onPress={onClose} marginTop="$2">Cancel</Button>
+          <Button 
+            onPress={handleAddEvent} 
+            width="100%" 
+            backgroundColor="$green10" 
+            disabled={!title.trim()}
+            opacity={!title.trim() ? 0.5 : 1}
+          >
+            Add Event
+          </Button>
+          <Button onPress={onClose} marginTop="$2" width="100%" backgroundColor="$red10">Cancel</Button>
         </YStack>
       </View>
     </Modal>

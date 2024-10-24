@@ -81,7 +81,10 @@ const CalendarItem: CalendarItemComponent = ({
     onStartShouldSetPanResponder: () => isRipMode,
     onPanResponderRelease: (_, gestureState) => {
       if (gestureState.dx < -50 && isRipMode) {
+        console.log("ripping calendar");
         const newDate = addDays(currentDate, 1);
+        console.log("newDate", newDate);
+        console.log("isBefore", isBefore(newDate, new Date()));
         if (isBefore(newDate, new Date())) {
           setCurrentDate(newDate);
           onDataUpdate({ ...itemData, currentDate: newDate.toISOString() });
@@ -105,7 +108,7 @@ const CalendarItem: CalendarItemComponent = ({
       <View style={calendarStyles.modalContainer}>
         <View style={[calendarStyles.modalWrapper, { backgroundColor: '#DEB887' }]}>
           <YStack style={calendarStyles.modalContent}>
-            <View {...panResponder.panHandlers}>
+            <View {...panResponder.panHandlers} style={calendarStyles.calendarView}>
               <Text style={calendarStyles.monthText}>{format(currentDate, 'MMMM')}</Text>
               <Text style={calendarStyles.dayText}>{format(currentDate, 'd')}</Text>
               <View style={calendarStyles.eventListContainer}>
