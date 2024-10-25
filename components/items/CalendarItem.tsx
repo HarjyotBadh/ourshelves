@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Modal, View, Animated, PanResponder } from "react-native";
+import { Modal, View, Animated, PanResponder, Dimensions } from "react-native";
 import { Button, Text, YStack, XStack, Image } from "tamagui";
 import {
   format,
@@ -39,6 +39,10 @@ const CalendarItem: CalendarItemComponent = ({
   const [events, setEvents] = useState<Event[]>(itemData.events || []);
   const [isRipMode, setIsRipMode] = useState(false);
   const [isAddEventModalVisible, setIsAddEventModalVisible] = useState(false);
+  const [animation] = useState(new Animated.ValueXY());
+  const [isRipping, setIsRipping] = useState(false);
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+  const [nextDate, setNextDate] = useState(addDays(currentDate, 1));
 
   useEffect(() => {
     if (isActive && !isModalVisible) {
@@ -51,6 +55,7 @@ const CalendarItem: CalendarItemComponent = ({
       try {
         const parsedDate = parseISO(itemData.currentDate);
         setCurrentDate(parsedDate);
+        setNextDate(addDays(parsedDate, 1));
       } catch (error) {
         console.error("Error parsing date:", error);
       }
@@ -98,27 +103,36 @@ const CalendarItem: CalendarItemComponent = ({
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => isRipMode,
+    onPanResponderMove: (_, gestureState) => {
+      if (isRipMode) {
+        animation.setValue({ x: gestureState.dx, y: gestureState.dy });
+      }
+    },
     onPanResponderRelease: (_, gestureState) => {
-      if (gestureState.dx < -50 && isRipMode) {
-        console.log("ripping calendar");
-        const newDate = addDays(currentDate, 1);
-        console.log("newDate", newDate);
-        console.log(itemData.id);
-
-        // Compare only the dates, ignoring the time
-        const today = new Date();
-        const isBeforeToday =
-          newDate.getDate() <= today.getDate() &&
-          newDate.getMonth() <= today.getMonth() &&
-          newDate.getFullYear() <= today.getFullYear();
-
-        console.log("isBeforeToday", isBeforeToday);
-
-        if (isBeforeToday) {
+      if (isRipMode && (Math.abs(gestureState.dx) > 50 || Math.abs(gestureState.dy) > 50)) {
+        setIsRipping(true);
+        const velocity = Math.sqrt(gestureState.vx ** 2 + gestureState.vy ** 2);
+        const toValue = {
+          x: gestureState.vx * 200,
+          y: gestureState.vy * 200,
+        };
+        Animated.decay(animation, {
+          velocity: { x: gestureState.vx, y: gestureState.vy },
+          deceleration: 0.997,
+          useNativeDriver: true,
+        }).start(() => {
+          setIsRipping(false);
+          animation.setValue({ x: 0, y: 0 });
+          const newDate = addDays(currentDate, 1);
           setCurrentDate(newDate);
           onDataUpdate({ ...itemData, currentDate: newDate.toISOString() });
-        }
-        setIsRipMode(false);
+          setIsRipMode(false);
+        });
+      } else {
+        Animated.spring(animation, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: true,
+        }).start();
       }
     },
   });
@@ -137,22 +151,53 @@ const CalendarItem: CalendarItemComponent = ({
       <View style={calendarStyles.modalContainer}>
         <View style={[calendarStyles.modalWrapper]}>
           <YStack style={calendarStyles.modalContent}>
-            <View
-              {...panResponder.panHandlers}
-              style={calendarStyles.calendarView}
-            >
-              <Text style={calendarStyles.monthText}>
-                {format(currentDate, "MMMM")}
-              </Text>
-              <Text style={calendarStyles.dayText}>
-                {format(currentDate, "d")}
-              </Text>
-              <View style={calendarStyles.eventListContainer}>
-                {currentEvents.map((event, index) => (
-                  <Text key={index} style={calendarStyles.eventListText}>
-                    {event.title}
-                  </Text>
-                ))}
+            <View style={calendarStyles.calendarContainer}>
+              <Animated.View
+                {...panResponder.panHandlers}
+                style={[
+                  calendarStyles.calendarView,
+                  {
+                    transform: isRipping ? animation.getTranslateTransform() : [],
+                    zIndex: 2,
+                  },
+                ]}
+              >
+                <Text style={calendarStyles.monthText}>
+                  {format(currentDate, "MMMM")}
+                </Text>
+                <Text style={calendarStyles.dayText}>
+                  {format(currentDate, "d")}
+                </Text>
+                <View style={calendarStyles.eventListContainer}>
+                  {currentEvents.map((event, index) => (
+                    <Text key={index} style={calendarStyles.eventListText}>
+                      {event.title}
+                    </Text>
+                  ))}
+                </View>
+              </Animated.View>
+              <View
+                style={[
+                  calendarStyles.calendarView,
+                  calendarStyles.nextCalendarView,
+                  { zIndex: 1 },
+                ]}
+              >
+                <Text style={calendarStyles.monthText}>
+                  {format(nextDate, "MMMM")}
+                </Text>
+                <Text style={calendarStyles.dayText}>
+                  {format(nextDate, "d")}
+                </Text>
+                <View style={calendarStyles.eventListContainer}>
+                  {events
+                    .filter((event) => isSameDay(parseISO(event.date), nextDate))
+                    .map((event, index) => (
+                      <Text key={index} style={calendarStyles.eventListText}>
+                        {event.title}
+                      </Text>
+                    ))}
+                </View>
               </View>
             </View>
             <XStack space justifyContent="center" marginVertical="$4">

@@ -96,4 +96,14 @@ export const calendarStyles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+  calendarContainer: {
+    position: 'relative',
+    width: 300,
+    height: 300,
+  },
+  nextCalendarView: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
 });
