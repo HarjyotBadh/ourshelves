@@ -18,6 +18,8 @@ import {
 import { calendarStyles } from "styles/CalendarStyles";
 import { BOTTOM_BAR_HEIGHT } from "styles/WhiteboardStyles";
 import { AddEventModal } from "components/AddEventModal";
+import { earnCoins } from "project-functions/shopFunctions";
+import { auth } from "firebaseConfig";
 
 const CalendarItem: CalendarItemComponent = ({
   itemData,
@@ -137,6 +139,8 @@ const CalendarItem: CalendarItemComponent = ({
             setCurrentDate(newDate);
             setNextDate(addDays(newDate, 1));
             onDataUpdate({ ...itemData, currentDate: newDate.toISOString() });
+            earnCoins(auth.currentUser?.uid, 100);
+            toast.show("You earned 100 coins for ripping the calendar!");
             setIsRipMode(false);
           });
         } else {
