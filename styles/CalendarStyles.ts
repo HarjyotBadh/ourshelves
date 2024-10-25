@@ -66,8 +66,7 @@ export const calendarStyles = StyleSheet.create({
   },
   modalWrapper: {
     borderRadius: 8,
-    width: SCREEN_WIDTH * 0.8,
-    maxWidth: 400,
+    width: '100%',
     overflow: 'hidden',
     backgroundColor: '#DEB887',
   },
