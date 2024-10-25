@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Modal, View, Animated, PanResponder, Dimensions } from "react-native";
 import { Button, Text, YStack, XStack, Image } from "tamagui";
+import { useToastController } from "@tamagui/toast";
 import {
   format,
   addDays,
@@ -43,6 +44,8 @@ const CalendarItem: CalendarItemComponent = ({
   const [isRipping, setIsRipping] = useState(false);
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
   const [nextDate, setNextDate] = useState(addDays(currentDate, 1));
+
+  const toast = useToastController();
 
   useEffect(() => {
     if (isActive && !isModalVisible) {
@@ -110,25 +113,42 @@ const CalendarItem: CalendarItemComponent = ({
     },
     onPanResponderRelease: (_, gestureState) => {
       if (isRipMode && (Math.abs(gestureState.dx) > 50 || Math.abs(gestureState.dy) > 50)) {
-        setIsRipping(true);
-        const velocity = Math.sqrt(gestureState.vx ** 2 + gestureState.vy ** 2);
-        const toValue = {
-          x: gestureState.vx * 200,
-          y: gestureState.vy * 200,
-        };
-        Animated.decay(animation, {
-          velocity: { x: gestureState.vx, y: gestureState.vy },
-          deceleration: 0.997,
-          useNativeDriver: true,
-        }).start(() => {
-          setIsRipping(false);
-          animation.setValue({ x: 0, y: 0 });
-          const newDate = addDays(currentDate, 1);
-          setCurrentDate(newDate);
-          onDataUpdate({ ...itemData, currentDate: newDate.toISOString() });
-          setIsRipMode(false);
-        });
+        const newDate = addDays(currentDate, 1);
+        const today = new Date();
+        const isBeforeToday = newDate.getDate() <= today.getDate() &&
+        newDate.getMonth() <= today.getMonth() &&
+        newDate.getFullYear() <= today.getFullYear();
+        console.log("isBeforeToday", isBeforeToday);
+        
+        if (isBeforeToday) {
+          setIsRipping(true);
+          const velocity = Math.sqrt(gestureState.vx ** 2 + gestureState.vy ** 2);
+          const toValue = {
+            x: gestureState.vx * 200,
+            y: gestureState.vy * 200,
+          };
+          Animated.decay(animation, {
+            velocity: { x: gestureState.vx, y: gestureState.vy },
+            deceleration: 0.997,
+            useNativeDriver: true,
+          }).start(() => {
+            setIsRipping(false);
+            animation.setValue({ x: 0, y: 0 });
+            setCurrentDate(newDate);
+            setNextDate(addDays(newDate, 1));
+            onDataUpdate({ ...itemData, currentDate: newDate.toISOString() });
+            setIsRipMode(false);
+          });
+        } else {
+          // If ripping is not allowed, just reset the animation
+          Animated.spring(animation, {
+            toValue: { x: 0, y: 0 },
+            useNativeDriver: true,
+          }).start();
+          toast.show("You cannot rip to a date before today");
+        }
       } else {
+        // Reset animation if the gesture is not strong enough
         Animated.spring(animation, {
           toValue: { x: 0, y: 0 },
           useNativeDriver: true,
