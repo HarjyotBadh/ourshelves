@@ -69,6 +69,7 @@ export const calendarStyles = StyleSheet.create({
     width: SCREEN_WIDTH * 0.8,
     maxWidth: 400,
     overflow: 'hidden',
+    backgroundColor: '#DEB887',
   },
   modalContent: {
     alignItems: 'center',
