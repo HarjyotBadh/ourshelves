@@ -3,6 +3,7 @@ import { View, Dialog, YStack, XStack, Input, Button } from "tamagui";
 import { earnCoins } from "project-functions/shopFunctions";
 import { auth, db } from "firebaseConfig";
 import { ToastViewport, useToastController } from "@tamagui/toast";
+import { set } from "date-fns";
 
 
 interface LetterBoardProps {
@@ -13,7 +14,8 @@ interface LetterBoardProps {
     imageUri: string;
     placedUserId: string;
     [key: string]: any;
-    gridData: string[][];
+    gridData: string[];
+    numColumns: number;
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
   isActive: boolean;
@@ -41,6 +43,7 @@ const LetterBoard: LetterBoardComponent = ({
 
   // Grid of letters to be used for letterboard
   const [gridValues, setGridValues] = useState(Array(8).fill('').map(() => Array(3).fill('')))
+  const [storedGridVals, setStoredGrid] = useState<string[]>([]);
   const [boardChanged, setBoardChanged] = useState(false);
 
   const toast = useToastController();
@@ -50,13 +53,22 @@ const LetterBoard: LetterBoardComponent = ({
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
     }
+
+    // TODO edit this so it uses a local variable instead of itemData
+    if (itemData.gridData !== undefined) {
+      convertTo2DArray(itemData.gridData, itemData.numColumns)
+    }
   }, [isActive]);
 
 
   const handleDialogClose = () => {
     setDialogOpen(false);
     // TODO, get the grid to save the data and have it persist
-    onDataUpdate({...itemData, gridData: gridValues})
+    console.log(itemData.id)
+    console.log(gridValues[0].length)
+    console.log(gridValues)
+    console.log(storedGridVals)
+    onDataUpdate({...itemData, gridData: storedGridVals, numColumns: gridValues[0].length})
     if (boardChanged) {
       earnCoins(auth.currentUser.uid, 10);
       toast.show("You earned 10 coins for interacting with the letterboard!", {
@@ -64,8 +76,22 @@ const LetterBoard: LetterBoardComponent = ({
       });
       setBoardChanged(false)
     }
-    
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
+  };
+
+   // Convert 2D array to 1D array
+   const convertTo1DArray = () => {
+    const flatArray = gridValues.flat(); // Flatten the 2D array
+    setStoredGrid(flatArray);
+  };
+
+  // Convert 1D array back to 2D array (with given number of columns)
+  const convertTo2DArray = (array1D: string[], numColumns: number) => {
+    const array2D: string[][] = [];
+    for (let i = 0; i < array1D.length; i += numColumns) {
+      array2D.push(array1D.slice(i, i + numColumns)); // Slice the array into chunks
+    }
+    setGridValues(array2D);
   };
 
   // Handler for input changes
@@ -74,7 +100,10 @@ const LetterBoard: LetterBoardComponent = ({
     const newGridValues = [...gridValues]
     newGridValues[rowIndex][colIndex] = text
     setGridValues(newGridValues)
+    convertTo1DArray()
+    renderLetterBoardPreview()
     setBoardChanged(true) // Checking for board interaction so we could reward coins
+    console.log(gridValues)
   }
 
   // Function to print grid values
@@ -166,9 +195,9 @@ const LetterBoard: LetterBoardComponent = ({
               alignItems="center"
               justifyContent="center"
             />
-            <YStack padding={2} space="$2">
+            <YStack padding={2} gap="$2">
               {gridValues.map((row, rowIndex) => (
-                <XStack key={rowIndex} space="$2">
+                <XStack key={rowIndex} gap="$2">
                   {row.map((value, colIndex) => (
                     <Input
                       key={`${rowIndex}-${colIndex}`}
