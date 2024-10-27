@@ -9,9 +9,10 @@ import {
   XStack,
   Progress,
   Image,
+  Input,
 } from "tamagui";
 import { Animated, PanResponder, StyleSheet, View } from "react-native";
-import { Heart, PlayCircle, Pizza } from "@tamagui/lucide-icons";
+import { Heart, PlayCircle, Pizza, Pencil } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { Timestamp } from "firebase/firestore";
 import { earnCoins } from "project-functions/shopFunctions";
@@ -20,8 +21,8 @@ import { auth } from "firebaseConfig";
 const styles = StyleSheet.create({
   petContainer: {
     position: "relative",
-    width: 220,
-    height: 220,
+    width: 180,
+    height: 180,
   },
   foodItem: {},
   containerView: {
@@ -69,6 +70,7 @@ interface PetItemProps {
     happinessLevel?: number;
     lastFed?: Timestamp;
     lastPlayed?: Timestamp;
+    petName?: string;
     // ---------------------------------
   };
   onDataUpdate: (newItemData: Record<string, any>) => void; // updates item data when called (do not change)
@@ -107,9 +109,12 @@ interface PetItemComponent extends React.FC<PetItemProps> {
 
 const StyledProgressBar = styled(Progress, {
   height: 20,
-  backgroundColor: "$gray5",
+  backgroundColor: "$gray3",
   overflow: "hidden",
-  width: 200,
+  flex: 1,
+  borderRadius: "$4",
+  borderWidth: 2,
+  borderColor: "$gray4",
 });
 
 const ProgressIndicator = styled(Progress.Indicator, {
@@ -143,6 +148,124 @@ const calculateDecayedLevels = (
   return { newHunger, newHappiness };
 };
 
+// Add or update these styled components
+const StyledDialog = styled(Dialog.Content, {
+  backgroundColor: "$blue2", // Light blue background
+  borderRadius: "$6",
+  paddingVertical: "$3", // Reduced from $6
+  paddingHorizontal: "$3", // Reduced from $4
+  shadowColor: "$shadowColor",
+  shadowRadius: 26,
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.2,
+  width: '90%',        // Make dialog responsive
+  maxWidth: 420,       // Increased maximum width
+  minWidth: 380,       // Added minimum width
+  borderWidth: 2,
+  borderColor: "$blue6",
+});
+
+const StyledTitle = styled(Text, {
+  color: "$blue11",
+  fontSize: "$6", // Reduced from $8
+  fontWeight: "bold",
+  textAlign: "center",
+  marginBottom: "$2", // Reduced from $4
+});
+
+const StyledButton = styled(Button, {
+  backgroundColor: "$green9",
+  borderRadius: "$4",
+  paddingHorizontal: "$4",
+  borderWidth: 2,
+  borderColor: "$green10",
+  marginBottom: "$4",
+
+  variants: {
+    disabled: {
+      true: {
+        backgroundColor: "$gray6",
+        borderColor: "$gray7",
+        opacity: 0.6,
+      },
+    },
+    close: {
+      true: {
+        backgroundColor: "$red9",
+        borderColor: "$red10",
+      },
+    },
+  },
+});
+
+const StyledButtonText = styled(Text, {
+  color: "white",
+  fontSize: "$4",
+  fontWeight: "600",
+  textAlign: "center",
+
+  variants: {
+    close: {
+      true: {
+        color: "white",
+      },
+    },
+  },
+});
+
+const InfoText = styled(Text, {
+  fontSize: "$2", // Reduced from $3
+  color: "$blue11",
+  textAlign: "center",
+  backgroundColor: "$blue4",
+  paddingVertical: "$1", // Reduced padding
+  paddingHorizontal: "$2",
+  borderRadius: "$2",
+  borderWidth: 1,
+  borderColor: "$blue6",
+});
+
+const StatLabel = styled(Text, {
+  fontSize: "$3",
+  color: "$gray11",
+  fontWeight: "600",
+});
+
+const StyledIconContainer = styled(XStack, {
+  backgroundColor: "$blue4",
+  padding: "$2",
+  borderRadius: "$3",
+  borderWidth: 1,
+  borderColor: "$blue6",
+});
+
+const EditableName = styled(XStack, {
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '$1',
+  cursor: 'pointer',
+  padding: '$1',
+  borderRadius: '$4',
+  
+  variants: {
+    editing: {
+      true: {
+        backgroundColor: '$blue4',
+      }
+    }
+  }
+});
+
+const NameInput = styled(Input, {
+  textAlign: 'center',
+  fontSize: '$6',
+  fontWeight: 'bold',
+  color: '$blue11',
+  backgroundColor: 'transparent',
+  borderWidth: 0,
+  minWidth: 120,
+});
+
 const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hungerLevel, setHungerLevel] = useState(itemData.hungerLevel || 0);
@@ -162,6 +285,8 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
     right: number;
     bottom: number;
   } | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [petName, setPetName] = useState(itemData.petName || "Unnamed Pet");
 
   useEffect(() => {
     if (isActive && !dialogOpen) {
@@ -324,6 +449,20 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
     }
   }, [dialogOpen]);
 
+  const handleNameChange = (newName: string) => {
+    const trimmedName = newName.trim();
+    if (trimmedName) {
+      setPetName(trimmedName);
+      onDataUpdate({
+        ...itemData,
+        petName: trimmedName,
+      });
+    } else {
+      setPetName("Unnamed Pet");
+    }
+    setIsEditingName(false);
+  };
+
   // Renders item when not active/clicked
   if (!isActive) {
     return (
@@ -381,7 +520,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
             enterStyle={{ opacity: 0 }}
             exitStyle={{ opacity: 0 }}
           />
-          <Dialog.Content
+          <StyledDialog
             bordered
             elevate
             key="content"
@@ -400,101 +539,102 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
             opacity={1}
             scale={1}
           >
-            <YStack gap="$4" maxWidth={350}>
-              <Dialog.Title>
-                <Text fontSize="$8" fontWeight="bold" color="$gray12">
-                  Your Pet
-                </Text>
-              </Dialog.Title>
-
-              <YStack alignItems="center" gap="$4">
-                <View style={styles.petContainer}>
+            <YStack gap="$2" paddingHorizontal="$2">
+              <EditableName 
+                editing={isEditingName}
+                onPress={() => !isEditingName && setIsEditingName(true)}
+              >
+                {isEditingName ? (
+                  <NameInput
+                    autoFocus
+                    value={petName}
+                    onChangeText={setPetName}
+                    onBlur={() => handleNameChange(petName)}
+                    onSubmitEditing={({ nativeEvent: { text } }) => handleNameChange(text)}
+                  />
+                ) : (
+                  <>
+                    <StyledTitle>{petName}</StyledTitle>
+                    <Pencil size={16} color="$blue9" />
+                  </>
+                )}
+              </EditableName>
+              <YStack alignItems="center" gap="$2">
+                <View
+                  style={[styles.petContainer, { backgroundColor: "$blue3", borderRadius: 90 }]}
+                >
                   <View
                     ref={feedingZoneRef}
                     onLayout={handleFeedingZoneLayout}
-                    style={styles.feedingZone}
+                    style={[styles.feedingZone, { backgroundColor: "$blue4", opacity: 0.1 }]}
                   />
                   <Image
                     source={{ uri: itemData.imageUri }}
-                    width={200}
-                    height={200}
+                    width={160}
+                    height={160}
                     objectFit="contain"
                   />
                 </View>
-
-                <YStack width="100%" gap="$3" paddingHorizontal="$4">
+                <YStack width="100%" gap="$2" paddingHorizontal="$2">
                   <XStack alignItems="center" gap="$2" justifyContent="space-between">
-                    <Pizza color="$orange10" size={24} />
-                    <StyledProgressBar value={hungerLevel}>
-                      <ProgressIndicator backgroundColor="$orange9" />
+                    <StyledIconContainer>
+                      <Pizza color="$orange10" size={20} />
+                    </StyledIconContainer>
+                    <StyledProgressBar value={hungerLevel} flex={1}>
+                      <Progress.Indicator backgroundColor="$orange9" />
                     </StyledProgressBar>
                   </XStack>
 
                   <XStack alignItems="center" gap="$2" justifyContent="space-between">
-                    <Heart color="$red10" size={24} />
-                    <StyledProgressBar value={happinessLevel}>
-                      <ProgressIndicator backgroundColor="$red9" />
+                    <StyledIconContainer>
+                      <Heart color="$red10" size={20} />
+                    </StyledIconContainer>
+                    <StyledProgressBar value={happinessLevel} flex={1}>
+                      <Progress.Indicator backgroundColor="$red9" />
                     </StyledProgressBar>
                   </XStack>
                 </YStack>
-
-                <YStack gap="$2">
-                  <Text fontSize="$3" color="$gray11">
-                    Next feeding available:{" "}
-                    {canFeed ? "Now!" : getTimeUntilNextInteraction(lastFed)}
-                  </Text>
-                  <Text fontSize="$3" color="$gray11">
-                    Next play available:{" "}
-                    {canPlay ? "Now!" : getTimeUntilNextInteraction(lastPlayed, true)}
-                  </Text>
-                </YStack>
-
-                <YStack alignItems="center" gap="$4" width="100%">
-                  <Text fontSize="$3" color="$gray10">
-                    Drag pizza over pet to feed
-                  </Text>
-                  <Animated.View
-                    {...panResponder.panHandlers}
-                    style={[
-                      styles.draggablePizza,
-                      {
-                        transform: pan.getTranslateTransform(),
-                      },
-                    ]}
-                  >
-                    <Pizza size={50} color="$orange9" />
-                  </Animated.View>
-                </YStack>
-
-                {showFeedingMessage && <Text style={styles.feedingMessage}>Pet has been fed!</Text>}
-
-                <Button
-                  onPress={handlePlay}
-                  disabled={!canPlay || happinessLevel >= 100}
-                  backgroundColor={canPlay && happinessLevel < 100 ? "$blue9" : "$gray8"}
-                  color="white"
-                  borderRadius="$4"
-                  paddingHorizontal="$4"
-                  paddingVertical="$2"
-                >
-                  <Text color="white">Play with Pet</Text>
-                </Button>
               </YStack>
-
-              <Dialog.Close asChild>
-                <Button
-                  onPress={() => {
-                    setDialogOpen(false);
-                    onClose();
-                  }}
-                  backgroundColor="$gray3"
-                  color="$gray11"
+              <YStack
+                gap="$2"
+                alignItems="center"
+                backgroundColor="$blue3"
+                padding="$2"
+                borderRadius="$4"
+              >
+                <InfoText>
+                  Next feeding: {canFeed ? "Ready now! 🍕" : getTimeUntilNextInteraction(lastFed)}
+                </InfoText>
+                <InfoText>
+                  Next play:{" "}
+                  {canPlay ? "Let's play! 🎮" : getTimeUntilNextInteraction(lastPlayed, true)}
+                </InfoText>
+              </YStack>
+              <YStack alignItems="center" gap="$2" width="100%">
+                <InfoText>🍕 Drag pizza to feed your pet! 🍕</InfoText>
+                <Animated.View
+                  {...panResponder.panHandlers}
+                  style={[
+                    styles.draggablePizza,
+                    {
+                      transform: pan.getTranslateTransform(),
+                    },
+                  ]}
                 >
-                  <Text>Close</Text>
-                </Button>
-              </Dialog.Close>
+                  <Pizza size={40} color="$orange10" />
+                </Animated.View>
+              </YStack>
+              <StyledButton onPress={handlePlay} disabled={!canPlay || happinessLevel >= 100}>
+                <StyledButtonText>🎮 Play with Pet</StyledButtonText>
+              </StyledButton>
             </YStack>
-          </Dialog.Content>
+
+            <Dialog.Close asChild>
+              <StyledButton close>
+                <StyledButtonText>Close</StyledButtonText>
+              </StyledButton>
+            </Dialog.Close>
+          </StyledDialog>
         </Dialog.Portal>
       </Dialog>
     </YStack>
