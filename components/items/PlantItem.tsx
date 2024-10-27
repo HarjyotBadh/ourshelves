@@ -99,7 +99,6 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
 
   useEffect(() => {
     if (isActive) {
-      console.log(itemData.id);
       if (!dialogOpen) {
         setDialogOpen(true);
       }
@@ -132,7 +131,6 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     const checkWithering = () => {
       const daysSinceWatered = differenceInDays(new Date(), lastWatered.toDate());
       const newIsWithered = daysSinceWatered >= 3;
-      console.log("Days since watered:", daysSinceWatered, "Is withered:", newIsWithered);
       setIsWithered(newIsWithered);
     };
 
@@ -145,7 +143,6 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
   const handleWateringZoneLayout = useCallback(() => {
     if (wateringZoneRef.current) {
       wateringZoneRef.current.measureInWindow((x, y, width, height) => {
-        console.log("Measured watering zone:", { x, y, width, height });
         setWateringZone({
           top: y,
           left: x,
@@ -159,12 +156,10 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
   const isOverWateringZone = useCallback(
     (x: number, y: number) => {
       if (!wateringZone) {
-        console.log("No watering zone found.");
         return false;
       }
       const { left, right, top, bottom } = wateringZone;
       const isOver = x >= left && x <= right && y >= top && y <= bottom;
-      console.log("Is over watering zone:", isOver, "Coords:", { x, y }, "Zone:", wateringZone);
       return isOver;
     },
     [wateringZone]
@@ -172,12 +167,10 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
 
   const handleWater = useCallback(() => {
     if (isFullyGrown && !isWithered) {
-      console.log("Plant is fully grown and not withered. It cannot be watered.");
       return;
     }
 
     if (!canWater) {
-      console.log("Plant can only be watered once every 24 hours.");
       return;
     }
 
@@ -209,8 +202,6 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     };
 
     onDataUpdate(updatedData);
-
-    console.log("Updated plant data:", updatedData);
   }, [growthStage, lastWatered, isFullyGrown, isWithered, itemData, onDataUpdate, canWater]);
 
   const startWatering = useCallback(() => {
@@ -254,18 +245,15 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
 
   const onPanResponderRelease = useCallback(
     (_, gesture) => {
-      console.log("Released:", gesture.moveX, gesture.moveY, "Can water:", canWater);
       if (isOverWateringZone(gesture.moveX, gesture.moveY)) {
         if (canWater) {
-          console.log("Starting watering");
           startWatering();
         } else {
-          console.log("Cannot water yet");
           setShowWateringMessage(true);
           setTimeout(() => setShowWateringMessage(false), 2000);
         }
       } else {
-        console.log("Not over watering zone");
+        // Not over watering zone
       }
       Animated.spring(pan, {
         toValue: { x: 0, y: 0 },
@@ -308,7 +296,6 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     };
 
     onDataUpdate(updatedData);
-    console.log("Test watering - Updated plant data:", updatedData);
   }, [growthStage, itemData, onDataUpdate]);
 
   const PlantComponent = plants[seedType] || plants["sunflower"];
