@@ -17,6 +17,8 @@ import { useToastController } from "@tamagui/toast";
 import { Timestamp } from "firebase/firestore";
 import { earnCoins } from "project-functions/shopFunctions";
 import { auth } from "firebaseConfig";
+import { FoodShopDialog } from "../PetItem/FoodShopDialog";
+import { FoodItem, FOOD_ITEMS } from "models/FoodItem";
 
 const styles = StyleSheet.create({
   petContainer: {
@@ -71,6 +73,7 @@ interface PetItemProps {
     lastFed?: Timestamp;
     lastPlayed?: Timestamp;
     petName?: string;
+    selectedFoodId?: string; // Add this line
     // ---------------------------------
   };
   onDataUpdate: (newItemData: Record<string, any>) => void; // updates item data when called (do not change)
@@ -104,6 +107,7 @@ interface PetItemComponent extends React.FC<PetItemProps> {
     happinessLevel: number;
     lastFed: Timestamp;
     lastPlayed: Timestamp;
+    selectedFoodId: string;
   };
 }
 
@@ -115,10 +119,6 @@ const StyledProgressBar = styled(Progress, {
   borderRadius: "$4",
   borderWidth: 2,
   borderColor: "$gray4",
-});
-
-const ProgressIndicator = styled(Progress.Indicator, {
-  backgroundColor: "$green9",
 });
 
 const calculateDecayedLevels = (
@@ -148,29 +148,28 @@ const calculateDecayedLevels = (
   return { newHunger, newHappiness };
 };
 
-// Add or update these styled components
 const StyledDialog = styled(Dialog.Content, {
-  backgroundColor: "$blue2", // Light blue background
+  backgroundColor: "$blue2",
   borderRadius: "$6",
-  paddingVertical: "$3", // Reduced from $6
-  paddingHorizontal: "$3", // Reduced from $4
+  paddingVertical: "$3",
+  paddingHorizontal: "$3",
   shadowColor: "$shadowColor",
   shadowRadius: 26,
   shadowOffset: { width: 0, height: 8 },
   shadowOpacity: 0.2,
-  width: '90%',        // Make dialog responsive
-  maxWidth: 420,       // Increased maximum width
-  minWidth: 380,       // Added minimum width
+  width: "90%",
+  maxWidth: 420,
+  minWidth: 380,
   borderWidth: 2,
   borderColor: "$blue6",
 });
 
 const StyledTitle = styled(Text, {
   color: "$blue11",
-  fontSize: "$6", // Reduced from $8
+  fontSize: "$6",
   fontWeight: "bold",
   textAlign: "center",
-  marginBottom: "$2", // Reduced from $4
+  marginBottom: "$2",
 });
 
 const StyledButton = styled(Button, {
@@ -214,21 +213,15 @@ const StyledButtonText = styled(Text, {
 });
 
 const InfoText = styled(Text, {
-  fontSize: "$2", // Reduced from $3
+  fontSize: "$2",
   color: "$blue11",
   textAlign: "center",
   backgroundColor: "$blue4",
-  paddingVertical: "$1", // Reduced padding
+  paddingVertical: "$1",
   paddingHorizontal: "$2",
   borderRadius: "$2",
   borderWidth: 1,
   borderColor: "$blue6",
-});
-
-const StatLabel = styled(Text, {
-  fontSize: "$3",
-  color: "$gray11",
-  fontWeight: "600",
 });
 
 const StyledIconContainer = styled(XStack, {
@@ -240,28 +233,28 @@ const StyledIconContainer = styled(XStack, {
 });
 
 const EditableName = styled(XStack, {
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '$1',
-  cursor: 'pointer',
-  padding: '$1',
-  borderRadius: '$4',
-  
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "$1",
+  cursor: "pointer",
+  padding: "$1",
+  borderRadius: "$4",
+
   variants: {
     editing: {
       true: {
-        backgroundColor: '$blue4',
-      }
-    }
-  }
+        backgroundColor: "$blue4",
+      },
+    },
+  },
 });
 
 const NameInput = styled(Input, {
-  textAlign: 'center',
-  fontSize: '$6',
-  fontWeight: 'bold',
-  color: '$blue11',
-  backgroundColor: 'transparent',
+  textAlign: "center",
+  fontSize: "$6",
+  fontWeight: "bold",
+  color: "$blue11",
+  backgroundColor: "transparent",
   borderWidth: 0,
   minWidth: 120,
 });
@@ -287,6 +280,22 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
   } | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [petName, setPetName] = useState(itemData.petName || "Unnamed Pet");
+  const [isFoodShopOpen, setIsFoodShopOpen] = useState(false);
+  const [selectedFoodId, setSelectedFoodId] = useState<string>(itemData.selectedFoodId || "basic_kibble");
+
+  // Add this helper function near the top of the component
+  const getSelectedFood = useMemo(() => {
+    return FOOD_ITEMS.find((food) => food.id === selectedFoodId) || FOOD_ITEMS[0];
+  }, [selectedFoodId]);
+
+  // Create a wrapper function for setSelectedFoodId that also updates Firestore
+  const handleFoodSelection = (foodId: string) => {
+    setSelectedFoodId(foodId);
+    onDataUpdate({
+      ...itemData,
+      selectedFoodId: foodId,
+    });
+  };
 
   useEffect(() => {
     if (isActive && !dialogOpen) {
@@ -336,20 +345,27 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
 
   // Handle feeding
   const handleFeed = useCallback(() => {
-    console.log("Feeding...");
     if (!canFeed || hungerLevel >= 100) return;
+
+    const selectedFood = FOOD_ITEMS.find((food) => food.id === selectedFoodId);
+    if (!selectedFood) {
+      toast.show("Please select a food item first!", {
+        backgroundColor: "$red9",
+      });
+      return;
+    }
 
     setIsFeeding(true);
 
     setTimeout(() => {
-      const newHungerLevel = Math.min(hungerLevel + 9, 100); // Changed from 20 to 9
+      const newHungerLevel = Math.min(hungerLevel + selectedFood.feedValue, 100);
       setHungerLevel(newHungerLevel);
       setLastFed(Timestamp.now());
       setCanFeed(false);
       setIsFeeding(false);
 
       earnCoins(auth.currentUser?.uid, 5);
-      toast.show("Pet fed! Earned 5 coins!", {
+      toast.show(`Fed ${selectedFood.name}! Earned 5 coins!`, {
         backgroundColor: "$green9",
       });
 
@@ -359,7 +375,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
         lastFed: Timestamp.now().toDate(),
       });
     }, 1000);
-  }, [hungerLevel, canFeed, itemData, onDataUpdate]);
+  }, [hungerLevel, canFeed, itemData, onDataUpdate, selectedFoodId, toast]);
 
   // Handle playing
   const handlePlay = useCallback(() => {
@@ -540,7 +556,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
             scale={1}
           >
             <YStack gap="$2" paddingHorizontal="$2">
-              <EditableName 
+              <EditableName
                 editing={isEditingName}
                 onPress={() => !isEditingName && setIsEditingName(true)}
               >
@@ -578,7 +594,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                 <YStack width="100%" gap="$2" paddingHorizontal="$2">
                   <XStack alignItems="center" gap="$2" justifyContent="space-between">
                     <StyledIconContainer>
-                      <Pizza color="$orange10" size={20} />
+                      <getSelectedFood.icon color="$orange10" size={20} />
                     </StyledIconContainer>
                     <StyledProgressBar value={hungerLevel} flex={1}>
                       <Progress.Indicator backgroundColor="$orange9" />
@@ -611,7 +627,9 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                 </InfoText>
               </YStack>
               <YStack alignItems="center" gap="$2" width="100%">
-                <InfoText>🍕 Drag pizza to feed your pet! 🍕</InfoText>
+                <InfoText>
+                  🎯 Drag {getSelectedFood.name} to feed your pet! 🎯
+                </InfoText>
                 <Animated.View
                   {...panResponder.panHandlers}
                   style={[
@@ -621,12 +639,31 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                     },
                   ]}
                 >
-                  <Pizza size={40} color="$orange10" />
+                  <getSelectedFood.icon size={40} color="$orange10" />
                 </Animated.View>
               </YStack>
-              <StyledButton onPress={handlePlay} disabled={!canPlay || happinessLevel >= 100}>
-                <StyledButtonText>🎮 Play with Pet</StyledButtonText>
-              </StyledButton>
+              <XStack gap="$2" width="100%">
+                <StyledButton
+                  onPress={handlePlay}
+                  disabled={!canPlay || happinessLevel >= 100}
+                  flex={1}
+                >
+                  <StyledButtonText>🎮 Play with Pet</StyledButtonText>
+                </StyledButton>
+                <StyledButton
+                  onPress={() => setIsFoodShopOpen(true)}
+                  backgroundColor="$blue9"
+                  flex={1}
+                >
+                  <StyledButtonText>🛍️ Food Shop</StyledButtonText>
+                </StyledButton>
+              </XStack>
+              <FoodShopDialog
+                open={isFoodShopOpen}
+                onOpenChange={setIsFoodShopOpen}
+                selectedFoodId={selectedFoodId}
+                onSelectFood={handleFoodSelection}
+              />
             </YStack>
 
             <Dialog.Close asChild>
@@ -642,11 +679,18 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
 };
 
 // Initializes item data (default values)
-PetItem.getInitialData = () => ({
-  hungerLevel: 50,
-  happinessLevel: 50,
-  lastFed: Timestamp.now(),
-  lastPlayed: Timestamp.now(),
-});
+PetItem.getInitialData = () => {
+  const now = Timestamp.now();
+  const twentyFourHoursAgo = new Timestamp(now.seconds - 24 * 60 * 60, now.nanoseconds);
+  const twelveHoursAgo = new Timestamp(now.seconds - 12 * 60 * 60, now.nanoseconds);
+
+  return {
+    hungerLevel: 50,
+    happinessLevel: 50,
+    lastFed: twentyFourHoursAgo,
+    lastPlayed: twelveHoursAgo,
+    selectedFoodId: "basic_kibble", // Add this line
+  };
+};
 
 export default PetItem; // do not remove the export (but change the name of the Item to match the name of the file)
