@@ -82,21 +82,21 @@ interface PetItemProps {
   }; // various room info (do not change)
 }
 
-const getTimeUntilNextInteraction = (lastTime: Timestamp) => {
-  // If lastTime is 0 (new pet), return "Now!"
+const getTimeUntilNextInteraction = (lastTime: Timestamp, isPlaying: boolean = false) => {
   if (lastTime.toMillis() === 0) {
     return "Now!";
   }
 
   const now = Timestamp.now().toMillis();
-  const diff = Math.max(0, 4 * 60 * 60 * 1000 - (now - lastTime.toMillis()));
+  const cooldownTime = isPlaying ? 12 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+
+  const diff = Math.max(0, cooldownTime - (now - lastTime.toMillis()));
   const hours = Math.floor(diff / (60 * 60 * 1000));
   const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
   return `${hours}h ${minutes}m`;
 };
 
 interface PetItemComponent extends React.FC<PetItemProps> {
-  // Update this line to specify the correct return type
   getInitialData: () => {
     hungerLevel: number;
     happinessLevel: number;
@@ -109,12 +109,39 @@ const StyledProgressBar = styled(Progress, {
   height: 20,
   backgroundColor: "$gray5",
   overflow: "hidden",
-  width: 200, // Add fixed width
+  width: 200,
 });
 
 const ProgressIndicator = styled(Progress.Indicator, {
   backgroundColor: "$green9",
 });
+
+const calculateDecayedLevels = (
+  lastFed: Timestamp,
+  lastPlayed: Timestamp,
+  currentHunger: number,
+  currentHappiness: number
+) => {
+  const now = Timestamp.now().toMillis();
+  let newHunger = currentHunger;
+  let newHappiness = currentHappiness;
+
+  // Calculate hunger decay (after 72 hours)
+  const hoursSinceLastFed = (now - lastFed.toMillis()) / (60 * 60 * 1000);
+  if (hoursSinceLastFed > 72) {
+    const decayPeriods = Math.floor((hoursSinceLastFed - 72) / 24);
+    newHunger = Math.max(0, currentHunger - decayPeriods * 25);
+  }
+
+  // Calculate happiness decay (after 48 hours)
+  const hoursSinceLastPlayed = (now - lastPlayed.toMillis()) / (60 * 60 * 1000);
+  if (hoursSinceLastPlayed > 48) {
+    const decayPeriods = Math.floor((hoursSinceLastPlayed - 48) / 24);
+    newHappiness = Math.max(0, currentHappiness - decayPeriods * 15);
+  }
+
+  return { newHunger, newHappiness };
+};
 
 const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -136,20 +163,17 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
     bottom: number;
   } | null>(null);
 
-  // print the placed item id
-  console.log("Placed item id:", itemData.id);
   useEffect(() => {
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
     }
   }, [isActive]);
 
-  // Check if feeding/playing is available
   useEffect(() => {
     const updateInteractionAvailability = () => {
       const now = Timestamp.now();
-      const feedingCooldown = 4 * 60 * 60 * 1000; // 4 hours
-      const playingCooldown = 2 * 60 * 60 * 1000; // 2 hours
+      const feedingCooldown = 24 * 60 * 60 * 1000; // 24 hours
+      const playingCooldown = 12 * 60 * 60 * 1000; // 12 hours
 
       setCanFeed(now.toMillis() - lastFed.toMillis() >= feedingCooldown);
       setCanPlay(now.toMillis() - lastPlayed.toMillis() >= playingCooldown);
@@ -160,7 +184,6 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
     return () => clearInterval(interval);
   }, [lastFed, lastPlayed]);
 
-  // Handle feeding zone layout
   const handleFeedingZoneLayout = useCallback(() => {
     if (feedingZoneRef.current) {
       feedingZoneRef.current.measureInWindow((x, y, width, height) => {
@@ -193,9 +216,8 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
 
     setIsFeeding(true);
 
-    // Add a delay to show the feeding animation
     setTimeout(() => {
-      const newHungerLevel = Math.min(hungerLevel + 20, 100);
+      const newHungerLevel = Math.min(hungerLevel + 9, 100); // Changed from 20 to 9
       setHungerLevel(newHungerLevel);
       setLastFed(Timestamp.now());
       setCanFeed(false);
@@ -211,14 +233,14 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
         hungerLevel: newHungerLevel,
         lastFed: Timestamp.now().toDate(),
       });
-    }, 1000); // 1 second delay
+    }, 1000);
   }, [hungerLevel, canFeed, itemData, onDataUpdate]);
 
   // Handle playing
   const handlePlay = useCallback(() => {
     if (!canPlay || happinessLevel >= 100) return;
 
-    const newHappinessLevel = Math.min(happinessLevel + 15, 100);
+    const newHappinessLevel = Math.min(happinessLevel + 5, 100); // Changed from 15 to 5
     setHappinessLevel(newHappinessLevel);
     setLastPlayed(Timestamp.now());
     setCanPlay(false);
@@ -269,9 +291,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
     [onPanResponderRelease, pan]
   );
 
-  // Add this effect to initialize the pet's data when first placed
   useEffect(() => {
-    // Check if this is a new pet (no lastFed timestamp)
     if (!itemData.lastFed) {
       const now = Timestamp.now();
       const initialData = {
@@ -284,6 +304,25 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
       onDataUpdate(initialData);
     }
   }, []);
+
+  useEffect(() => {
+    const { newHunger, newHappiness } = calculateDecayedLevels(
+      lastFed,
+      lastPlayed,
+      hungerLevel,
+      happinessLevel
+    );
+
+    if (newHunger !== hungerLevel || newHappiness !== happinessLevel) {
+      setHungerLevel(newHunger);
+      setHappinessLevel(newHappiness);
+      onDataUpdate({
+        ...itemData,
+        hungerLevel: newHunger,
+        happinessLevel: newHappiness,
+      });
+    }
+  }, [dialogOpen]);
 
   // Renders item when not active/clicked
   if (!isActive) {
@@ -389,9 +428,6 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                     <StyledProgressBar value={hungerLevel}>
                       <ProgressIndicator backgroundColor="$orange9" />
                     </StyledProgressBar>
-                    <Text fontSize={14} color="$gray11">
-                      {hungerLevel}%
-                    </Text>
                   </XStack>
 
                   <XStack alignItems="center" gap="$2" justifyContent="space-between">
@@ -399,9 +435,6 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                     <StyledProgressBar value={happinessLevel}>
                       <ProgressIndicator backgroundColor="$red9" />
                     </StyledProgressBar>
-                    <Text fontSize={14} color="$gray11">
-                      {happinessLevel}%
-                    </Text>
                   </XStack>
                 </YStack>
 
@@ -412,7 +445,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                   </Text>
                   <Text fontSize="$3" color="$gray11">
                     Next play available:{" "}
-                    {canPlay ? "Now!" : getTimeUntilNextInteraction(lastPlayed)}
+                    {canPlay ? "Now!" : getTimeUntilNextInteraction(lastPlayed, true)}
                   </Text>
                 </YStack>
 
