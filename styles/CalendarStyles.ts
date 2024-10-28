@@ -129,4 +129,32 @@ export const calendarStyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFD700',
   },
+  eventTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  eventCreator: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  eventTime: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  eventItem: {
+    marginBottom: 8,
+    padding: 8,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: '#4a90e2',
+  },
+  eventDetails: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+  },
 });

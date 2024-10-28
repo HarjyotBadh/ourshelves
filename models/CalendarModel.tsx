@@ -1,6 +1,9 @@
 export interface Event {
   title: string;
   date: string;
+  createdBy: string;
+  isAllDay: boolean;
+  time?: string;
 }
 
 export interface CalendarItemProps {

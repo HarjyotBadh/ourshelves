@@ -137,6 +137,16 @@ const CalendarItem: CalendarItemComponent = ({
     );
   }, [events, currentDate]);
 
+  const renderEventDetails = (event: Event) => (
+    <View style={calendarStyles.eventListContainer}>
+      <Text style={calendarStyles.eventTitle}>{event.title}</Text>
+      <Text style={calendarStyles.eventCreator}>Created by: {event.createdBy}</Text>
+      <Text style={calendarStyles.eventTime}>
+        {event.isAllDay ? 'All Day' : event.time}
+      </Text>
+    </View>
+  );
+
   const renderCalendarPreview = () => (
     <PulsingOutline isActive={canBeRipped} style={calendarStyles.previewContainer}>
       <View style={calendarStyles.previewInner}>
@@ -146,7 +156,7 @@ const CalendarItem: CalendarItemComponent = ({
         <Text style={calendarStyles.dayText}>{format(currentDate, "d")}</Text>
         {currentEvents.length > 0 && (
           <View style={calendarStyles.eventContainer}>
-            <Text style={calendarStyles.eventText}>{currentEvents[0].title}</Text>
+                        <Text style={calendarStyles.eventText}>{currentEvents[0].title}</Text>
             {currentEvents.length > 1 && (
               <View style={calendarStyles.eventIndicator}>
                 <Text style={calendarStyles.eventIndicatorText}>
@@ -245,9 +255,12 @@ const CalendarItem: CalendarItemComponent = ({
           {events
             .filter((event) => isSameDay(parseISO(event.date), nextDate))
             .map((event, index) => (
-              <Text key={index} style={calendarStyles.eventListText}>
-                {event.title}
-              </Text>
+              <View key={index} style={calendarStyles.eventItem}>
+                <Text style={calendarStyles.eventTitle}>{event.title}</Text>
+                <Text style={calendarStyles.eventDetails}>
+                  By: {event.createdBy} • {event.isAllDay ? 'All Day' : event.time}
+                </Text>
+              </View>
             ))}
         </View>
       </View>
@@ -270,9 +283,12 @@ const CalendarItem: CalendarItemComponent = ({
           </Text>
           <View style={calendarStyles.eventListContainer}>
             {currentEvents.map((event, index) => (
-              <Text key={index} style={calendarStyles.eventListText}>
-                {event.title}
-              </Text>
+              <View key={index} style={calendarStyles.eventItem}>
+                <Text style={calendarStyles.eventTitle}>{event.title}</Text>
+                <Text style={calendarStyles.eventDetails}>
+                  By: {event.createdBy} • {event.isAllDay ? 'All Day' : event.time}
+                </Text>
+              </View>
             ))}
           </View>
         </Animated.View>

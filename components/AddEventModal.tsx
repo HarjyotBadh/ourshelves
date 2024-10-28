@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View } from 'react-native';
-import { Button, Text, YStack, Input } from 'tamagui';
+import { Button, Text, YStack, Input, XStack, Switch, Label } from 'tamagui';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Event } from 'models/CalendarModel';
-import { startOfDay } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
+import { auth } from 'firebaseConfig';
 
 interface AddEventModalProps {
   isVisible: boolean;
@@ -15,17 +16,29 @@ interface AddEventModalProps {
 export const AddEventModal: React.FC<AddEventModalProps> = ({ isVisible, onClose, onAddEvent, currentDate }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(startOfDay(currentDate));
+  const [isAllDay, setIsAllDay] = useState(false);
+  const [time, setTime] = useState(new Date());
 
   useEffect(() => {
     if (isVisible) {
       setDate(startOfDay(currentDate));
+      setTime(new Date());
     }
   }, [isVisible, currentDate]);
 
   const handleAddEvent = () => {
     if (title.trim()) {
-      onAddEvent({ title: title.trim().slice(0, 50), date: date.toISOString() });
+      const eventData: Event = {
+        title: title.trim().slice(0, 50),
+        date: date.toISOString(),
+        createdBy: auth.currentUser?.displayName || 'Unknown User',
+        isAllDay,
+        time: isAllDay ? undefined : format(time, 'HH:mm')
+      };
+      
+      onAddEvent(eventData);
       setTitle('');
+      setIsAllDay(false);
       onClose();
     }
   };
@@ -43,13 +56,34 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({ isVisible, onClose
             maxLength={50}
             placeholderTextColor="$gray11"
           />
+          
+          <XStack alignItems="center" marginBottom="$4" space>
+            <Label htmlFor="all-day">All Day</Label>
+            <Switch
+              id="all-day"
+              checked={isAllDay}
+              onCheckedChange={setIsAllDay}
+            />
+          </XStack>
+
           <DateTimePicker
             value={date}
-            mode="datetime"
+            mode="date"
             display="default"
             onChange={(event, selectedDate) => setDate(selectedDate || date)}
             style={{ marginBottom: 16 }}
           />
+
+          {!isAllDay && (
+            <DateTimePicker
+              value={time}
+              mode="time"
+              display="default"
+              onChange={(event, selectedDate) => setDate(selectedDate || time)}
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
           <Button 
             onPress={handleAddEvent} 
             width="100%" 
