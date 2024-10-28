@@ -3787,6 +3787,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/datetimepicker@npm:^8.2.0":
+  version: 8.2.0
+  resolution: "@react-native-community/datetimepicker@npm:8.2.0"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    expo: ">=50.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+    react-native-windows:
+      optional: true
+  checksum: 10/57b51a9423d3ba49029e2d9905db040f7091285c51578eef5273baf3dd2e22bde6d1a17962a8dc5e0ac588dccff0ab36c9774f9da76363fca458ec42d30c4d66
+  languageName: node
+  linkType: hard
+
 "@react-native-community/slider@npm:^4.5.4":
   version: 4.5.4
   resolution: "@react-native-community/slider@npm:4.5.4"
@@ -7936,7 +7955,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:^4.0.0":
+"date-fns@npm:^4.1.0":
   version: 4.1.0
   resolution: "date-fns@npm:4.1.0"
   checksum: 10/d5f6e9de5bbc52310f786099e18609289ed5e30af60a71e0646784c8185ddd1d0eebcf7c96b7faaaefc4a8366f3a3a4244d099b6d0866ee2bec80d1361e64342
@@ -12481,6 +12500,7 @@ __metadata:
     "@expo/metro-config": "npm:~0.18.4"
     "@expo/metro-runtime": "npm:~3.2.1"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
+    "@react-native-community/datetimepicker": "npm:^8.2.0"
     "@react-native-community/slider": "npm:^4.5.4"
     "@react-native-firebase/app": "npm:^20.5.0"
     "@react-native-firebase/firestore": "npm:^20.5.0"
@@ -12510,7 +12530,7 @@ __metadata:
     babel-plugin-transform-inline-environment-variables: "npm:^0.4.4"
     babel-preset-expo: "npm:^11.0.6"
     burnt: "npm:^0.12.2"
-    date-fns: "npm:^4.0.0"
+    date-fns: "npm:^4.1.0"
     date-fns-tz: "npm:^3.1.3"
     dotenv: "npm:^16.4.5"
     eslint: "npm:^9.10.0"
