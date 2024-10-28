@@ -156,6 +156,31 @@ const CalendarItem: CalendarItemComponent = ({
     }
   };
 
+  const handleDeleteEvent = async (eventToDelete: Event) => {
+    try {
+      // Filter out the event to delete
+      const updatedEvents = events.filter(
+        event => !(
+          event.title === eventToDelete.title &&
+          event.date === eventToDelete.date &&
+          event.createdBy === eventToDelete.createdBy
+        )
+      );
+      
+      // Update local state
+      setEvents(updatedEvents);
+      
+      // Update parent component
+      onDataUpdate({ ...itemData, events: updatedEvents });
+      
+      // Show success message
+      toast.show("Event deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.show("Failed to delete event. Please try again.");
+    }
+  };
+
   // Filter events for the current date
   const currentEvents = useMemo(() => {
     const startOfCurrentDate = startOfDay(currentDate);
@@ -166,11 +191,30 @@ const CalendarItem: CalendarItemComponent = ({
 
   const renderEventDetails = (event: Event) => (
     <View style={calendarStyles.eventListContainer}>
-      <Text style={calendarStyles.eventTitle}>{event.title}</Text>
-      <Text style={calendarStyles.eventCreator}>Created by: {event.createdBy}</Text>
-      <Text style={calendarStyles.eventTime}>
-        {event.isAllDay ? 'All Day' : event.time}
-      </Text>
+      <XStack alignItems="center" justifyContent="space-between">
+        <YStack flex={1}>
+          <Text style={calendarStyles.eventTitle}>{event.title}</Text>
+          <Text style={calendarStyles.eventCreator}>Created by: {event.createdBy}</Text>
+          <Text style={calendarStyles.eventTime}>
+            {event.isAllDay ? 'All Day' : event.time}
+          </Text>
+        </YStack>
+        {event.createdBy === auth.currentUser?.displayName && (
+          <Button
+            unstyled
+            onPress={() => handleDeleteEvent(event)}
+            backgroundColor="$red10"
+            width={24}
+            height={24}
+            borderRadius={12}
+            justifyContent="center"
+            alignItems="center"
+            marginLeft={8}
+          >
+            <Text color="white">X</Text>
+          </Button>
+        )}
+      </XStack>
     </View>
   );
 
@@ -309,10 +353,29 @@ const CalendarItem: CalendarItemComponent = ({
           <ScrollView style={calendarStyles.eventsScrollContainer}>
             {currentEvents.map((event, index) => (
               <View key={index} style={calendarStyles.eventItem}>
-                <Text style={calendarStyles.eventTitle}>{event.title}</Text>
-                <Text style={calendarStyles.eventDetails}>
-                  By: {event.createdBy} • {event.isAllDay ? 'All Day' : event.time}
-                </Text>
+                <XStack alignItems="center" justifyContent="space-between">
+                  <YStack flex={1}>
+                    <Text style={calendarStyles.eventTitle}>{event.title}</Text>
+                    <Text style={calendarStyles.eventDetails}>
+                      By: {event.createdBy} • {event.isAllDay ? 'All Day' : event.time}
+                    </Text>
+                  </YStack>
+                  {event.createdBy === auth.currentUser?.displayName && (
+                    <Button
+                      unstyled
+                      onPress={() => handleDeleteEvent(event)}
+                      backgroundColor="$red10"
+                      width={24}
+                      height={24}
+                      borderRadius={12}
+                      justifyContent="center"
+                      alignItems="center"
+                      marginLeft={8}
+                    >
+                      <Text color="white">X</Text>
+                    </Button>
+                  )}
+                </XStack>
               </View>
             ))}
           </ScrollView>
