@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Modal, View, Animated, PanResponder, Dimensions, StyleSheet } from "react-native";
+import { Modal, View, Animated, PanResponder, Dimensions, StyleSheet, ScrollView } from "react-native";
 import { Button, Text, YStack, XStack, Image } from "tamagui";
 import { useToastController } from "@tamagui/toast";
 import {
@@ -124,9 +124,36 @@ const CalendarItem: CalendarItemComponent = ({
     onClose();
   }, [onClose]);
 
-  const handleAddEvent = (newEvent: Event) => {
-    setEvents([...events, newEvent]);
-    onDataUpdate({ ...itemData, events: [...events, newEvent] });
+  const handleAddEvent = async (newEvent: Event) => {
+    try {
+      // Validate the new event data
+      if (!newEvent.title || !newEvent.date || !newEvent.createdBy) {
+        throw new Error("Invalid event data");
+      }
+
+      // Create a sanitized event object with only the required fields
+      const sanitizedEvent = {
+        title: newEvent.title,
+        date: newEvent.date,
+        createdBy: newEvent.createdBy,
+        isAllDay: Boolean(newEvent.isAllDay),
+        time: newEvent.time || null, // Ensure time is never undefined
+      };
+
+      // Update local state with sanitized event
+      const updatedEvents = [...events, sanitizedEvent];
+      setEvents(updatedEvents);
+      onDataUpdate({ ...itemData, events: updatedEvents });
+
+      // Close the add event modal
+      setIsAddEventModalVisible(false);
+
+      // Show success message
+      toast.show("Event added successfully!");
+    } catch (error) {
+      console.error("Error adding event:", error);
+      toast.show("Failed to add event. Please try again.");
+    }
   };
 
   // Filter events for the current date
@@ -156,7 +183,7 @@ const CalendarItem: CalendarItemComponent = ({
         <Text style={calendarStyles.dayText}>{format(currentDate, "d")}</Text>
         {currentEvents.length > 0 && (
           <View style={calendarStyles.eventContainer}>
-                        <Text style={calendarStyles.eventText}>{currentEvents[0].title}</Text>
+            <Text style={calendarStyles.eventText}>{currentEvents[0].title}</Text>
             {currentEvents.length > 1 && (
               <View style={calendarStyles.eventIndicator}>
                 <Text style={calendarStyles.eventIndicatorText}>
@@ -178,7 +205,7 @@ const CalendarItem: CalendarItemComponent = ({
       }
     },
     onPanResponderRelease: (_, gestureState) => {
-      if (isRipMode && (Math.abs(gestureState.dx) > 50 || Math.abs(gestureState.dy) > 50)) {
+      if (isRipMode)  {
         const newDate = addDays(currentDate, 1);
         const today = new Date();
         const isBeforeToday = newDate.getDate() <= today.getDate() &&
@@ -238,20 +265,16 @@ const CalendarItem: CalendarItemComponent = ({
 
   const renderCalendarView = () => (
     <View style={calendarStyles.calendarContainer}>
-      <View
-        style={[
-          calendarStyles.calendarView,
-          calendarStyles.nextCalendarView,
-          { zIndex: 1 },
-        ]}
-      >
-        <Text style={calendarStyles.monthText}>
-          {format(nextDate, "MMMM")}
-        </Text>
-        <Text style={calendarStyles.dayText}>
-          {format(nextDate, "d")}
-        </Text>
-        <View style={calendarStyles.eventListContainer}>
+      <View style={[calendarStyles.calendarView, calendarStyles.nextCalendarView, { zIndex: 1 }]}>
+        <View style={calendarStyles.headerContainer}>
+          <Text style={calendarStyles.monthText}>
+            {format(nextDate, "MMMM")}
+          </Text>
+          <Text style={calendarStyles.dayText}>
+            {format(nextDate, "d")}
+          </Text>
+        </View>
+        <ScrollView style={calendarStyles.eventsScrollContainer}>
           {events
             .filter((event) => isSameDay(parseISO(event.date), nextDate))
             .map((event, index) => (
@@ -262,7 +285,7 @@ const CalendarItem: CalendarItemComponent = ({
                 </Text>
               </View>
             ))}
-        </View>
+        </ScrollView>
       </View>
       
       <PulsingOutline isActive={isRipMode && canBeRipped} style={{ flex: 1, zIndex: 2 }}>
@@ -275,13 +298,15 @@ const CalendarItem: CalendarItemComponent = ({
             },
           ]}
         >
-          <Text style={calendarStyles.monthText}>
-            {format(currentDate, "MMMM")}
-          </Text>
-          <Text style={calendarStyles.dayText}>
-            {format(currentDate, "d")}
-          </Text>
-          <View style={calendarStyles.eventListContainer}>
+          <View style={calendarStyles.headerContainer}>
+            <Text style={calendarStyles.monthText}>
+              {format(currentDate, "MMMM")}
+            </Text>
+            <Text style={calendarStyles.dayText}>
+              {format(currentDate, "d")}
+            </Text>
+          </View>
+          <ScrollView style={calendarStyles.eventsScrollContainer}>
             {currentEvents.map((event, index) => (
               <View key={index} style={calendarStyles.eventItem}>
                 <Text style={calendarStyles.eventTitle}>{event.title}</Text>
@@ -290,14 +315,8 @@ const CalendarItem: CalendarItemComponent = ({
                 </Text>
               </View>
             ))}
-          </View>
+          </ScrollView>
         </Animated.View>
-        {isRipMode && canBeRipped && (
-          <View style={calendarStyles.ripIndicator}>
-            <ArrowRight size={30} color="#FFD700" />
-            <Text style={calendarStyles.ripText}>Swipe to rip!</Text>
-          </View>
-        )}
       </PulsingOutline>
     </View>
   );

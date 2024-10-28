@@ -33,7 +33,9 @@ export const calendarStyles = StyleSheet.create({
   },
   eventContainer: {
     marginTop: 8,
-    alignItems: 'center',
+    flex: 1,
+    // width: '100%',
+    // paddingHorizontal: 8,
   },
   eventText: {
     fontSize: 12,
@@ -56,9 +58,8 @@ export const calendarStyles = StyleSheet.create({
   },
   eventListContainer: {
     marginTop: 16,
-    maxHeight: 150,
+    flex: 1,
     width: '100%',
-    // backgroundColor: '#f0f0f0', // Light gray background for visibility
   },
   eventListText: {
     fontSize: 14,
@@ -100,11 +101,13 @@ export const calendarStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+    display: 'flex',
+    flexDirection: 'column',
   },
   calendarContainer: {
     position: 'relative',
     width: 300,
-    height: 300,
+    height: 300, // Match the calendarView height
   },
   nextCalendarView: {
     position: 'absolute',
@@ -156,5 +159,16 @@ export const calendarStyles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
+  },
+  container: {
+    flex: 1,
+    maxHeight: '80%',
+  },
+  eventsScrollContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  headerContainer: {
+    marginBottom: 16,
   },
 });

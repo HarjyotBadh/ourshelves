@@ -3,7 +3,7 @@ export interface Event {
   date: string;
   createdBy: string;
   isAllDay: boolean;
-  time?: string;
+  time?: string | null; // Make time optional but never undefined
 }
 
 export interface CalendarItemProps {
