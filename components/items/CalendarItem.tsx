@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Modal, View, Animated, PanResponder, Dimensions } from "react-native";
+import { Modal, View, Animated, PanResponder, Dimensions, StyleSheet } from "react-native";
 import { Button, Text, YStack, XStack, Image } from "tamagui";
 import { useToastController } from "@tamagui/toast";
 import {
@@ -20,6 +20,48 @@ import { BOTTOM_BAR_HEIGHT } from "styles/WhiteboardStyles";
 import { AddEventModal } from "components/AddEventModal";
 import { earnCoins } from "project-functions/shopFunctions";
 import { auth } from "firebaseConfig";
+import { ArrowRight } from "@tamagui/lucide-icons";
+
+const PulsingOutline = ({ children, isActive, style }) => {
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    if (isActive) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isActive]);
+
+  return (
+    <Animated.View
+      style={[
+        {
+          borderWidth: 2,
+          borderColor: "#FFD700",
+          borderRadius: 8,
+          transform: [{ scale: pulseAnim }],
+        },
+        style,
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+};
 
 const CalendarItem: CalendarItemComponent = ({
   itemData,
@@ -46,6 +88,7 @@ const CalendarItem: CalendarItemComponent = ({
   const [isRipping, setIsRipping] = useState(false);
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
   const [nextDate, setNextDate] = useState(addDays(currentDate, 1));
+  const [canBeRipped, setCanBeRipped] = useState(false);
 
   const toast = useToastController();
 
@@ -67,6 +110,15 @@ const CalendarItem: CalendarItemComponent = ({
     }
   }, [itemData.currentDate]);
 
+  useEffect(() => {
+    const newDate = addDays(currentDate, 1);
+    const today = new Date();
+    const isBeforeToday = newDate.getDate() <= today.getDate() &&
+      newDate.getMonth() <= today.getMonth() &&
+      newDate.getFullYear() <= today.getFullYear();
+    setCanBeRipped(isBeforeToday);
+  }, [currentDate]);
+
   const handleCloseModal = useCallback(() => {
     setIsModalVisible(false);
     onClose();
@@ -86,24 +138,26 @@ const CalendarItem: CalendarItemComponent = ({
   }, [events, currentDate]);
 
   const renderCalendarPreview = () => (
-    <View style={calendarStyles.previewContainer}>
-      <Text style={calendarStyles.monthText}>
-        {format(currentDate, "MMMM")}
-      </Text>
-      <Text style={calendarStyles.dayText}>{format(currentDate, "d")}</Text>
-      {currentEvents.length > 0 && (
-        <View style={calendarStyles.eventContainer}>
-          <Text style={calendarStyles.eventText}>{currentEvents[0].title}</Text>
-          {currentEvents.length > 1 && (
-            <View style={calendarStyles.eventIndicator}>
-              <Text style={calendarStyles.eventIndicatorText}>
-                +{currentEvents.length - 1}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-    </View>
+    <PulsingOutline isActive={canBeRipped} style={calendarStyles.previewContainer}>
+      <View style={calendarStyles.previewInner}>
+        <Text style={calendarStyles.monthText}>
+          {format(currentDate, "MMMM")}
+        </Text>
+        <Text style={calendarStyles.dayText}>{format(currentDate, "d")}</Text>
+        {currentEvents.length > 0 && (
+          <View style={calendarStyles.eventContainer}>
+            <Text style={calendarStyles.eventText}>{currentEvents[0].title}</Text>
+            {currentEvents.length > 1 && (
+              <View style={calendarStyles.eventIndicator}>
+                <Text style={calendarStyles.eventIndicatorText}>
+                  +{currentEvents.length - 1}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+    </PulsingOutline>
   );
 
   const panResponder = PanResponder.create({
@@ -118,17 +172,15 @@ const CalendarItem: CalendarItemComponent = ({
         const newDate = addDays(currentDate, 1);
         const today = new Date();
         const isBeforeToday = newDate.getDate() <= today.getDate() &&
-        newDate.getMonth() <= today.getMonth() &&
-        newDate.getFullYear() <= today.getFullYear();
-        console.log("isBeforeToday", isBeforeToday);
+          newDate.getMonth() <= today.getMonth() &&
+          newDate.getFullYear() <= today.getFullYear();
         
         if (isBeforeToday) {
+          // Immediately disable ripping and update canBeRipped
           setIsRipping(true);
-          const velocity = Math.sqrt(gestureState.vx ** 2 + gestureState.vy ** 2);
-          const toValue = {
-            x: gestureState.vx * 200,
-            y: gestureState.vy * 200,
-          };
+          setIsRipMode(false);
+          setCanBeRipped(false);
+          
           Animated.decay(animation, {
             velocity: { x: gestureState.vx, y: gestureState.vy },
             deceleration: 0.997,
@@ -141,7 +193,6 @@ const CalendarItem: CalendarItemComponent = ({
             onDataUpdate({ ...itemData, currentDate: newDate.toISOString() });
             earnCoins(auth.currentUser?.uid, 100);
             toast.show("You earned 100 coins for ripping the calendar!");
-            setIsRipMode(false);
           });
         } else {
           // If ripping is not allowed, just reset the animation
@@ -161,6 +212,80 @@ const CalendarItem: CalendarItemComponent = ({
     },
   });
 
+  const renderRipButton = () => (
+    <Button
+      onPress={() => setIsRipMode(!isRipMode)}
+      backgroundColor={isRipMode ? "$blue8" : "$blue10"}
+      style={[
+        canBeRipped && !isRipMode && calendarStyles.ripButton
+      ]}
+      disabled={!canBeRipped}
+      opacity={!canBeRipped ? 0.5 : 1}
+    >
+      {isRipMode ? "Cancel Rip" : "Rip Calendar"}
+    </Button>
+  );
+
+  const renderCalendarView = () => (
+    <View style={calendarStyles.calendarContainer}>
+      <View
+        style={[
+          calendarStyles.calendarView,
+          calendarStyles.nextCalendarView,
+          { zIndex: 1 },
+        ]}
+      >
+        <Text style={calendarStyles.monthText}>
+          {format(nextDate, "MMMM")}
+        </Text>
+        <Text style={calendarStyles.dayText}>
+          {format(nextDate, "d")}
+        </Text>
+        <View style={calendarStyles.eventListContainer}>
+          {events
+            .filter((event) => isSameDay(parseISO(event.date), nextDate))
+            .map((event, index) => (
+              <Text key={index} style={calendarStyles.eventListText}>
+                {event.title}
+              </Text>
+            ))}
+        </View>
+      </View>
+      
+      <PulsingOutline isActive={isRipMode && canBeRipped} style={{ flex: 1, zIndex: 2 }}>
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            calendarStyles.calendarView,
+            {
+              transform: isRipping ? animation.getTranslateTransform() : [],
+            },
+          ]}
+        >
+          <Text style={calendarStyles.monthText}>
+            {format(currentDate, "MMMM")}
+          </Text>
+          <Text style={calendarStyles.dayText}>
+            {format(currentDate, "d")}
+          </Text>
+          <View style={calendarStyles.eventListContainer}>
+            {currentEvents.map((event, index) => (
+              <Text key={index} style={calendarStyles.eventListText}>
+                {event.title}
+              </Text>
+            ))}
+          </View>
+        </Animated.View>
+        {isRipMode && canBeRipped && (
+          <View style={calendarStyles.ripIndicator}>
+            <ArrowRight size={30} color="#FFD700" />
+            <Text style={calendarStyles.ripText}>Swipe to rip!</Text>
+          </View>
+        )}
+      </PulsingOutline>
+    </View>
+  );
+
   if (!isActive) {
     return renderCalendarPreview();
   }
@@ -176,61 +301,10 @@ const CalendarItem: CalendarItemComponent = ({
         <View style={[calendarStyles.modalWrapper]}>
           <YStack style={calendarStyles.modalContent}>
             <View style={calendarStyles.calendarContainer}>
-              <Animated.View
-                {...panResponder.panHandlers}
-                style={[
-                  calendarStyles.calendarView,
-                  {
-                    transform: isRipping ? animation.getTranslateTransform() : [],
-                    zIndex: 2,
-                  },
-                ]}
-              >
-                <Text style={calendarStyles.monthText}>
-                  {format(currentDate, "MMMM")}
-                </Text>
-                <Text style={calendarStyles.dayText}>
-                  {format(currentDate, "d")}
-                </Text>
-                <View style={calendarStyles.eventListContainer}>
-                  {currentEvents.map((event, index) => (
-                    <Text key={index} style={calendarStyles.eventListText}>
-                      {event.title}
-                    </Text>
-                  ))}
-                </View>
-              </Animated.View>
-              <View
-                style={[
-                  calendarStyles.calendarView,
-                  calendarStyles.nextCalendarView,
-                  { zIndex: 1 },
-                ]}
-              >
-                <Text style={calendarStyles.monthText}>
-                  {format(nextDate, "MMMM")}
-                </Text>
-                <Text style={calendarStyles.dayText}>
-                  {format(nextDate, "d")}
-                </Text>
-                <View style={calendarStyles.eventListContainer}>
-                  {events
-                    .filter((event) => isSameDay(parseISO(event.date), nextDate))
-                    .map((event, index) => (
-                      <Text key={index} style={calendarStyles.eventListText}>
-                        {event.title}
-                      </Text>
-                    ))}
-                </View>
-              </View>
+              {renderCalendarView()}
             </View>
             <XStack space justifyContent="center" marginVertical="$4">
-              <Button
-                onPress={() => setIsRipMode(!isRipMode)}
-                backgroundColor={isRipMode ? "$blue8" : "$blue10"}
-              >
-                {isRipMode ? "Cancel Rip" : "Rip Calendar"}
-              </Button>
+              {renderRipButton()}
               <Button
                 onPress={() => setIsAddEventModalVisible(true)}
                 backgroundColor="$green10"

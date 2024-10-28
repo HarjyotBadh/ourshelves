@@ -5,14 +5,21 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const calendarStyles = StyleSheet.create({
   previewContainer: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "100%",
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
+  },
+  previewInner: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 8,
   },
   monthText: {
     fontSize: 16,
@@ -85,12 +92,11 @@ export const calendarStyles = StyleSheet.create({
   calendarView: {
     backgroundColor: 'white',
     padding: 16,
-    width: 300, // Set a fixed width
-    height: 300, // Set the same fixed height to make it a square
-    alignSelf: 'center', // Center the view horizontally
-    borderRadius: 10, // Add some border radius for better aesthetics
-    elevation: 3, // Add shadow for Android
-    shadowColor: '#000', // Add shadow for iOS
+    width: 300,
+    height: 300,
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -104,5 +110,23 @@ export const calendarStyles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
+  },
+  ripIndicator: {
+    position: 'absolute',
+    right: 20,
+    top: '50%',
+    transform: [{ translateY: -15 }],
+    zIndex: 3,
+  },
+  ripText: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  ripButton: {
+    borderWidth: 2,
+    borderColor: '#FFD700',
   },
 });
