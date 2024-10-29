@@ -45,7 +45,7 @@ const LetterBoard: LetterBoardComponent = ({
   const [gridValues, setGridValues] = useState(Array(8).fill('').map(() => Array(3).fill('')))
   const [storedGridVals, setStoredGrid] = useState<string[]>([]);
   const [boardChanged, setBoardChanged] = useState(false);
-
+  const [boardInit, setBoardinit] = useState(true); // TODO this might need to be changed to make it truly asynchronous
   const toast = useToastController();
 
   // Opens dialog when item is active/clicked
@@ -54,20 +54,15 @@ const LetterBoard: LetterBoardComponent = ({
       setDialogOpen(true);
     }
 
-    // TODO edit this so it uses a local variable instead of itemData
-    if (itemData.gridData !== undefined) {
-      convertTo2DArray(itemData.gridData, itemData.numColumns)
+    if (itemData.gridData !== undefined && boardInit) {
+      convertTo2DArray(itemData.gridData, itemData.numColumns);
+      setBoardinit(false);
     }
   }, [isActive]);
 
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    // TODO, get the grid to save the data and have it persist
-    console.log(itemData.id)
-    console.log(gridValues[0].length)
-    console.log(gridValues)
-    console.log(storedGridVals)
     onDataUpdate({...itemData, gridData: storedGridVals, numColumns: gridValues[0].length})
     if (boardChanged) {
       earnCoins(auth.currentUser.uid, 10);
