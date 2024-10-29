@@ -29,7 +29,7 @@ interface LetterBoardProps {
 }
 
 interface LetterBoardComponent extends React.FC<LetterBoardProps> {
-  getInitialData: () => {gridData: string[][]};
+  getInitialData: () => {gridData: string[]};
 }
 
 const LetterBoard: LetterBoardComponent = ({
@@ -54,6 +54,7 @@ const LetterBoard: LetterBoardComponent = ({
       setDialogOpen(true);
     }
 
+    // TODO 
     if (itemData.gridData !== undefined && boardInit) {
       convertTo2DArray(itemData.gridData, itemData.numColumns);
       setBoardinit(false);

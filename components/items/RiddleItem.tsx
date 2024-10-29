@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, styled, YStack } from "tamagui";
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
+import { auth } from "firebaseConfig";
 
 interface RiddleItemProps {
   itemData: {
@@ -12,14 +13,8 @@ interface RiddleItemProps {
     [key: string]: any; // any other properties (do not change)
 
     // add custom properties below ------
-    clickCount?: number;
-    color: string;
-
     riddleAnswer: string;
-    riddleAttempts: number;
-    riddleSolved: boolean;
-    riddleWinner: string;
-
+    usersSolved: string[];
     // ---------------------------------
   };
   onDataUpdate: (newItemData: Record<string, any>) => void; // updates item data when called (do not change)
@@ -34,7 +29,7 @@ interface RiddleItemProps {
 }
 
 interface RiddleItemComponent extends React.FC<RiddleItemProps> {
-  getInitialData: () => { color: string; clickCount: number };
+  getInitialData: () => {usersSolved: string[]};
 }
 
 // Styling for placeholder item (remove this)
@@ -54,8 +49,11 @@ const RiddleItem: RiddleItemComponent = ({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Custom properties (remove these)
-  const [clickCount, setClickCount] = useState(itemData.clickCount || 0);
-  const [color, setColor] = useState(itemData.color || "red");
+  const [riddleAnswer, setRiddleAnswer] =  useState(itemData.riddleAnswer || '');
+  const [solvedUsers, setSolvedUsers] = useState<string[]>(itemData.usersSolved || []); // All the users who solved the riddle
+  const profileId = auth.currentUser?.uid; // Current user's profile id
+
+
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
@@ -63,12 +61,6 @@ const RiddleItem: RiddleItemComponent = ({
       setDialogOpen(true);
     }
   }, [isActive]);
-
-  const handleColorSelect = (newColor: string) => {
-    setClickCount(clickCount + 1);
-    setColor(newColor);
-    onDataUpdate({ ...itemData, color: newColor, clickCount: clickCount }); // updates item data when called
-  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -88,23 +80,10 @@ const RiddleItem: RiddleItemComponent = ({
   // Renders item when active/clicked
   // (item is clicked and dialog is open, feel free to change this return)
   return (
-    <YStack flex={1}>
-      <PlaceholderItemView backgroundColor={color} />
-      <ColorSelectionDialog
-        open={dialogOpen}
-        onOpenChange={(isOpen) => {
-          setDialogOpen(isOpen);
-          if (!isOpen) {
-            handleDialogClose();
-          }
-        }}
-        onColorSelect={handleColorSelect}
-      />
-    </YStack>
   );
 };
 
 // Initializes item data (default values)
-RiddleItem.getInitialData = () => ({ color: "red", clickCount: 0 });
+RiddleItem.getInitialData = () => ({ usersSolved: [] });
 
 export default RiddleItem; // do not remove the export (but change the name of the Item to match the name of the file)
