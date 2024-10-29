@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, styled, YStack, Text, Dialog, Button, XStack } from "tamagui";
 import { Timestamp } from "firebase/firestore";
 import { RefreshCw } from "@tamagui/lucide-icons";
@@ -16,6 +16,7 @@ interface DailyQuoteItemProps {
     currentQuote?: {
       quote: string;
       author: string;
+      lastRefreshed?: number; // Unix timestamp in milliseconds
     };
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
@@ -86,13 +87,42 @@ interface DailyQuoteItemComponent extends React.FC<DailyQuoteItemProps> {
     currentQuote: {
       quote: string;
       author: string;
+      lastRefreshed: number;
     };
   };
 }
 
+const REFRESH_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+const useCountdown = (targetTime?: number) => {
+    const [timeLeft, setTimeLeft] = useState("");
+
+    useEffect(() => {
+      if (!targetTime) return;
+
+      const calculateTimeLeft = () => {
+        const difference = targetTime + REFRESH_INTERVAL - Date.now();
+        if (difference <= 0) return "Time to refresh!";
+
+        const hours = Math.floor(difference / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        return `${hours}h ${minutes}m until next quote`;
+      };
+
+      setTimeLeft(calculateTimeLeft());
+      const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000); // Update every minute
+
+      return () => clearInterval(timer);
+    }, [targetTime]);
+
+    return timeLeft;
+  };
+
 const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isActive, onClose }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const timeLeft = useCountdown(itemData.currentQuote?.lastRefreshed);
 
   useEffect(() => {
     if (isActive && !dialogOpen) {
@@ -101,13 +131,13 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
   }, [isActive]);
 
   useEffect(() => {
-    // If there's no quote or it's empty, fetch one
-    if (!itemData.currentQuote?.quote) {
+    if (!itemData.currentQuote?.quote || shouldRefreshQuote(itemData.currentQuote?.lastRefreshed)) {
       fetchNewQuote();
     }
   }, []);
 
   const fetchNewQuote = async () => {
+    console.log(itemData.id);
     setIsLoading(true);
     try {
       console.log('Fetching new quote...');
@@ -117,14 +147,13 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
       
       // Check if the response has the expected structure
       if (Array.isArray(quoteData) && quoteData[0] && quoteData[0].q && quoteData[0].a) {
-        const newQuote = {
-          quote: quoteData[0].q,
-          author: quoteData[0].a,
-        };
-        
         onDataUpdate({
           ...itemData,
-          currentQuote: newQuote
+          currentQuote: {
+            quote: quoteData[0].q,
+            author: quoteData[0].a,
+            lastRefreshed: Date.now(),
+          }
         });
       } else {
         // Use fallback if API response is not in expected format
@@ -133,6 +162,7 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
           currentQuote: {
             quote: "The only way to do great work is to love what you do.",
             author: "Steve Jobs",
+            lastRefreshed: Date.now(),
           }
         });
       }
@@ -145,6 +175,7 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
           currentQuote: {
             quote: "The only way to do great work is to love what you do.",
             author: "Steve Jobs",
+            lastRefreshed: Date.now(),
           }
         });
       }
@@ -156,6 +187,14 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
   const truncateQuote = (quote: string, maxLength: number) => {
     return quote.length > maxLength ? `${quote.substring(0, maxLength)}...` : quote;
   };
+
+  const shouldRefreshQuote = (lastRefreshed?: number) => {
+    if (!lastRefreshed) return true;
+    const timeSinceLastRefresh = Date.now() - lastRefreshed;
+    return timeSinceLastRefresh >= REFRESH_INTERVAL;
+  };
+
+  
 
   if (!isActive) {
     return (
@@ -209,6 +248,10 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
                 </Text>
               </YStack>
 
+              <Text fontSize="$2" color="$blue8" textAlign="center">
+                {timeLeft}
+              </Text>
+
               <StyledButton 
                 onPress={fetchNewQuote} 
                 disabled={isLoading}
@@ -234,8 +277,9 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
 
 DailyQuoteItem.getInitialData = () => ({
   currentQuote: {
-    quote: "",  // Empty initially
+    quote: "",
     author: "",
+    lastRefreshed: Date.now(),
   }
 });
 
