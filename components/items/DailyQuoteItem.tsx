@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, Text, Dialog, Button } from "tamagui";
+import { View, styled, YStack, Text, Dialog, Button, XStack } from "tamagui";
 import { Timestamp } from "firebase/firestore";
 import { RefreshCw } from "@tamagui/lucide-icons";
 
@@ -12,11 +12,10 @@ interface DailyQuoteItemProps {
     placedUserId: string;
     [key: string]: any;
 
+    // Custom properties
     currentQuote?: {
       quote: string;
       author: string;
-      category: string;
-      lastUpdated: Timestamp;
     };
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
@@ -87,8 +86,6 @@ interface DailyQuoteItemComponent extends React.FC<DailyQuoteItemProps> {
     currentQuote: {
       quote: string;
       author: string;
-      category: string;
-      lastUpdated: Timestamp;
     };
   };
 }
@@ -103,28 +100,54 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
     }
   }, [isActive]);
 
+  useEffect(() => {
+    // If there's no quote or it's empty, fetch one
+    if (!itemData.currentQuote?.quote) {
+      fetchNewQuote();
+    }
+  }, []);
+
   const fetchNewQuote = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://api.api-ninjas.com/v1/quotes?category=inspirational', {
-        headers: {
-          'X-Api-Key': 'Wm3OyBRMHTqd1kVQIqpQlA==Nya1opSU7fWyJcqZ'
-        }
-      });
+      console.log('Fetching new quote...');
+      const response = await fetch("https://zenquotes.io/api/random");
+      const quoteData = await response.json();
+      console.log('Quote data received:', quoteData, itemData.id);
       
-      const [quoteData] = await response.json();
-      
-      onDataUpdate({
-        ...itemData,
-        currentQuote: {
-          quote: quoteData.quote,
-          author: quoteData.author,
-          category: quoteData.category,
-          lastUpdated: Timestamp.now()
-        }
-      });
+      // Check if the response has the expected structure
+      if (Array.isArray(quoteData) && quoteData[0] && quoteData[0].q && quoteData[0].a) {
+        const newQuote = {
+          quote: quoteData[0].q,
+          author: quoteData[0].a,
+        };
+        
+        onDataUpdate({
+          ...itemData,
+          currentQuote: newQuote
+        });
+      } else {
+        // Use fallback if API response is not in expected format
+        onDataUpdate({
+          ...itemData,
+          currentQuote: {
+            quote: "The only way to do great work is to love what you do.",
+            author: "Steve Jobs",
+          }
+        });
+      }
     } catch (error) {
       console.error('Error fetching quote:', error);
+      // Only update with fallback if there's no existing quote
+      if (!itemData.currentQuote?.quote) {
+        onDataUpdate({
+          ...itemData,
+          currentQuote: {
+            quote: "The only way to do great work is to love what you do.",
+            author: "Steve Jobs",
+          }
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -184,9 +207,6 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
                 <Text fontSize="$3" color="$blue9" textAlign="right">
                   - {itemData.currentQuote?.author}
                 </Text>
-                <Text fontSize="$2" color="$blue8" textAlign="right">
-                  Category: {itemData.currentQuote?.category}
-                </Text>
               </YStack>
 
               <StyledButton 
@@ -214,10 +234,8 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
 
 DailyQuoteItem.getInitialData = () => ({
   currentQuote: {
-    quote: "Loading your first daily quote...",
+    quote: "",  // Empty initially
     author: "",
-    category: "",
-    lastUpdated: Timestamp.now()
   }
 });
 
