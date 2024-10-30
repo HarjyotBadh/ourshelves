@@ -99,12 +99,6 @@ const LetterBoard: LetterBoardComponent = ({
     convertTo1DArray()
     renderLetterBoardPreview()
     setBoardChanged(true) // Checking for board interaction so we could reward coins
-    console.log(gridValues)
-  }
-
-  // Function to print grid values
-  const handlePrintGridValues = () => {
-    console.log("Grid Values:", gridValues);
   }
 
   // What the letterboard looks like when sitting on the shelf
@@ -214,12 +208,6 @@ const LetterBoard: LetterBoardComponent = ({
                 </XStack>
               ))}
             </YStack>
-          </YStack>
-
-            
-          {/* TODO Get rid of this */}
-          <YStack padding={2}>
-            <Button onPress={handlePrintGridValues}>Print Grid Values</Button>
           </YStack>
 
           <Dialog.Close displayWhenAdapted asChild>

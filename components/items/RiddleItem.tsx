@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, XStack, Label, Dialog, Button, H3, Input, TextArea, Popover, Adapt, Image, ScrollView, PopoverProps } from "tamagui";
+import { View, styled, YStack, XStack, Label, Dialog, Button, H3, H4, Input, Text, Popover, Adapt, Image, ScrollView, PopoverProps } from "tamagui";
 import {Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert} from 'react-native'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from '@tamagui/lucide-icons'
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
@@ -16,6 +16,7 @@ interface RiddleItemProps {
 
     // add custom properties below ------
     riddleAnswer: string;
+    riddlePrompt: string;
     usersSolved: string[];
     // ---------------------------------
   };
@@ -49,16 +50,17 @@ const RiddleItem: RiddleItemComponent = ({
   roomInfo,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [userListOpen, setUserListOpen] = useState(false);
 
   // Custom properties (remove these)
-  const [riddleAnswer, setRiddleAnswer] =  useState('');
-  const [riddlePrompt, setRiddlePrompt] = useState('');
-  const [inputText, setInputText] = useState("");
+  const [shouldAdapt, setShouldAdapt] = useState(true)
+  const [riddleAnswer, setRiddleAnswer] =  useState(itemData.riddleAnswer || '');
+  const [riddlePrompt, setRiddlePrompt] = useState(itemData.riddlePrompt || '');
   const [solvedUsers, setSolvedUsers] = useState<string[]>(itemData.usersSolved || []); // All the users who solved the riddle
   const profileId = auth.currentUser?.uid; // Current user's profile id
   const riddleImage = itemData.imageUri;
 
-  const [shouldAdapt, setShouldAdapt] = useState(true)
+
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
@@ -70,11 +72,6 @@ const RiddleItem: RiddleItemComponent = ({
   const handleDialogClose = () => {
     setDialogOpen(false);
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
-  };
-
-  const handleButtonPress = () => {
-    //setRiddleAnswer(inputText); // Update display text with input text
-    //setInputText(""); // Clear input field
   };
 
   // What the user sees if they are making the riddle
@@ -93,10 +90,13 @@ const RiddleItem: RiddleItemComponent = ({
               {/* Input and Button */}
 
                 <XStack gap="$3">
-                  <Button onPress={handleButtonPress} color="white">
-                      Edit Riddle
-                  </Button>
-                  <Demo
+                  {/*<Demo2
+                    shouldAdapt={shouldAdapt}
+                    placement="top"
+                    Icon={ChevronUp}
+                    Name="top-popover"
+                  />*/}
+                  <Demo1
                     shouldAdapt={shouldAdapt}
                     placement="top"
                     Icon={ChevronUp}
@@ -107,6 +107,32 @@ const RiddleItem: RiddleItemComponent = ({
                     setRiddleChange={setRiddlePrompt}
                   />
                 </XStack>
+          </YStack>
+      </TouchableWithoutFeedback>
+  );
+
+  const riddleSolverPreview = () => (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$3">
+            <H4>Solve the Following Riddle:</H4>
+              {/* Displayed Text at the Top */}
+              <ScrollView
+              maxHeight={350}
+              width={250}
+              backgroundColor="#474747"
+              padding="$4"
+              borderRadius="$4"
+              ><H3>{riddlePrompt}</H3></ScrollView>
+
+              {/* Input and Button */}
+
+              <XStack gap="$2">
+                <Label size="$3">
+                  Change Riddle Answer:
+                </Label>
+                <Input f={1} size="$3" onChangeText={setRiddleAnswer} placeholder={riddleAnswer}/>
+              </XStack>
+                <Button> Submit Answer </Button>
           </YStack>
       </TouchableWithoutFeedback>
   );
@@ -145,11 +171,8 @@ const RiddleItem: RiddleItemComponent = ({
           height={650}
         >
           <Dialog.Title>Riddle Item:</Dialog.Title>
-          <Dialog.Description>
-            Craft a Riddle for room members to attempt. You can check their progress with the button below
-          </Dialog.Description>
+          {profileId != itemData.placedUserId ? (riddleMakerPreview()) : (riddleSolverPreview())}
 
-          {riddleMakerPreview()}
 
           <Dialog.Close displayWhenAdapted asChild>
             <Button onPress={handleDialogClose} theme="alt1" aria-label="Close">
@@ -165,7 +188,7 @@ const RiddleItem: RiddleItemComponent = ({
 // Initializes item data (default values)
 RiddleItem.getInitialData = () => ({ usersSolved: [] });
 
-export function Demo({
+export function Demo1({
   Icon,
   Name,
   shouldAdapt,
@@ -254,5 +277,81 @@ export function Demo({
   )
 }
 
+export function Demo2({
+  Icon,
+  Name,
+  shouldAdapt,
+  Users,
+  ...props
+}: PopoverProps & { Icon?: any; Name?: string; shouldAdapt?: boolean; Users?: string[]}) {
+  return (
+    <Popover size="$5" allowFlip {...props}>
+      <Popover.Trigger asChild>
+        <Button> User Progress </Button>
+      </Popover.Trigger>
+
+      {shouldAdapt && (
+        <Adapt when="sm" platform="touch">
+          <Popover.Sheet modal dismissOnSnapToBottom>
+            <Popover.Sheet.Frame padding="$4">
+              <Adapt.Contents />
+            </Popover.Sheet.Frame>
+            <Popover.Sheet.Overlay
+              animation="lazy"
+              enterStyle={{ opacity: 0 }}
+              exitStyle={{ opacity: 0 }}
+            />
+          </Popover.Sheet>
+        </Adapt>
+      )}
+
+      <Popover.Content
+        borderWidth={1}
+        borderColor="$borderColor"
+        enterStyle={{ y: -10, opacity: 0 }}
+        exitStyle={{ y: -10, opacity: 0 }}
+        elevate
+        animation={[
+          'quick',
+          {
+            opacity: {
+              overshootClamping: true,
+            },
+          },
+        ]}
+      >
+        <Popover.Arrow borderWidth={1} borderColor="$borderColor" />
+
+        <YStack gap="$3">
+         
+        <ScrollView
+          flex={1}
+          backgroundColor="white" // You can set a background color here
+          padding="$4"
+          >
+          <YStack space="$2"> {/* Adds spacing between user items */}
+            {Users?.map((user, index) => (
+              <Text key={index} fontSize="$5" color="black"> {/* Customize font size and color */}
+                {user}
+              </Text>
+            ))}
+          </YStack>
+        </ScrollView>
+
+          <Popover.Close asChild>
+            <Button
+              size="$3"
+              onPress={() => {
+
+              }}
+            >
+              Submit New Changes
+            </Button>
+          </Popover.Close>
+        </YStack>
+      </Popover.Content>
+    </Popover>
+  )
+}
 
 export default RiddleItem; // do not remove the export (but change the name of the Item to match the name of the file)
