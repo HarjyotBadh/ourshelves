@@ -82,8 +82,6 @@ const RiddleItem: RiddleItemComponent = ({
     if (riddleAttempt == riddleAnswer) {
         if (!solvedUsers.includes(profileId)) {
           setSolvedUsers((prevSolvedUsers) => [...prevSolvedUsers, profileId]);
-          console.log(solvedUsers)
-          console.log(itemData.usersSolved)
           onDataUpdate({...itemData, usersSolved: solvedUsers})
           toast.show("YOU SOLVED THE RIDDLE!\n--AWARDED 150 COINS--", {
             duration: 3000,
@@ -210,7 +208,7 @@ const RiddleItem: RiddleItemComponent = ({
           height={650}
         >
           <Dialog.Title>Riddle Item:</Dialog.Title>
-          {profileId != itemData.placedUserId ? (riddleMakerPreview()) : (riddleSolverPreview())}
+          {profileId == itemData.placedUserId ? (riddleMakerPreview()) : (riddleSolverPreview())}
 
 
           <Dialog.Close displayWhenAdapted asChild>
