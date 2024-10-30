@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, XStack, Label, Dialog, Button, H2, Input, TextArea, Popover, Adapt, Image, ScrollView, PopoverProps } from "tamagui";
+import { View, styled, YStack, XStack, Label, Dialog, Button, H3, Input, TextArea, Popover, Adapt, Image, ScrollView, PopoverProps } from "tamagui";
 import {Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert} from 'react-native'
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from '@tamagui/lucide-icons'
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
@@ -52,6 +52,7 @@ const RiddleItem: RiddleItemComponent = ({
 
   // Custom properties (remove these)
   const [riddleAnswer, setRiddleAnswer] =  useState('');
+  const [riddlePrompt, setRiddlePrompt] = useState('');
   const [inputText, setInputText] = useState("");
   const [solvedUsers, setSolvedUsers] = useState<string[]>(itemData.usersSolved || []); // All the users who solved the riddle
   const profileId = auth.currentUser?.uid; // Current user's profile id
@@ -76,6 +77,40 @@ const RiddleItem: RiddleItemComponent = ({
     //setInputText(""); // Clear input field
   };
 
+  // What the user sees if they are making the riddle
+  const riddleMakerPreview = () => (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$4">
+              {/* Displayed Text at the Top */}
+              <ScrollView
+              maxHeight={350}
+              width={250}
+              backgroundColor="#474747"
+              padding="$4"
+              borderRadius="$4"
+              ><H3>{riddlePrompt}</H3></ScrollView>
+
+              {/* Input and Button */}
+
+                <XStack gap="$3">
+                  <Button onPress={handleButtonPress} color="white">
+                      Edit Riddle
+                  </Button>
+                  <Demo
+                    shouldAdapt={shouldAdapt}
+                    placement="top"
+                    Icon={ChevronUp}
+                    Name="top-popover"
+                    riddleAnswer={riddleAnswer}
+                    setAnsChange={setRiddleAnswer}
+                    riddlePrompt={riddlePrompt}
+                    setRiddleChange={setRiddlePrompt}
+                  />
+                </XStack>
+          </YStack>
+      </TouchableWithoutFeedback>
+  );
+
   // Renders item when not active/clicked
   // (default state of item on shelf)
   if (!isActive) {
@@ -84,7 +119,6 @@ const RiddleItem: RiddleItemComponent = ({
             source={{ uri: riddleImage }} // Replace with a valid camel image URL or local file path
             width={100}
             height={100}
-            resizeMode="contain"
       />
     );
   }
@@ -112,38 +146,10 @@ const RiddleItem: RiddleItemComponent = ({
         >
           <Dialog.Title>Riddle Item:</Dialog.Title>
           <Dialog.Description>
-            Enter a riddle you'd like those in the room to solve:
+            Craft a Riddle for room members to attempt. You can check their progress with the button below
           </Dialog.Description>
 
-          {/* Button to print grid values */}
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <YStack flex={1} alignItems="center" justifyContent="center" padding="$4" space="$4">
-              {/* Displayed Text at the Top */}
-              <ScrollView
-              maxHeight={300}
-              width={250}
-              backgroundColor="#474747"
-              padding="$4"
-              borderRadius="$4"
-              ><H2>{riddleAnswer}</H2></ScrollView>
-
-              {/* Input and Button */}
-              <YStack space="$3" width="80%" alignItems="center">
-              
-              <Button onPress={handleButtonPress} backgroundColor="blue" color="white">
-                  Create Riddle
-              </Button>
-              <Demo
-                shouldAdapt={shouldAdapt}
-                placement="top"
-                Icon={ChevronUp}
-                Name="top-popover"
-                riddleAnswer={riddleAnswer}
-                onRiddleChange={setRiddleAnswer}
-              />
-              </YStack>
-          </YStack>
-        </TouchableWithoutFeedback>
+          {riddleMakerPreview()}
 
           <Dialog.Close displayWhenAdapted asChild>
             <Button onPress={handleDialogClose} theme="alt1" aria-label="Close">
@@ -164,13 +170,18 @@ export function Demo({
   Name,
   shouldAdapt,
   riddleAnswer,
-  onRiddleChange,
+  setAnsChange,
+  riddlePrompt,
+  setRiddleChange,
   ...props
-}: PopoverProps & { Icon?: any; Name?: string; shouldAdapt?: boolean; riddleAnswer?: string; onRiddleChange?: ((text:string) => void)}) {
+}: PopoverProps & { Icon?: any; Name?: string; shouldAdapt?: boolean; riddleAnswer?: string; riddlePrompt?: string;
+  setRiddleChange?: ((text:string) => void); 
+  setAnsChange?: ((text:string) => void)
+}) {
   return (
     <Popover size="$5" allowFlip {...props}>
       <Popover.Trigger asChild>
-        <Button icon={Icon} />
+        <Button> Edit Riddle </Button>
       </Popover.Trigger>
 
       {shouldAdapt && (
@@ -216,24 +227,25 @@ export function Demo({
             value={riddleAnswer} 
             onChangeText={onRiddleChange}
             borderWidth={2}/> */}
-            <Input f={1} size="$3" id={Name} onChangeText={onRiddleChange} placeholder={riddleAnswer} />
+            <Input f={1} size="$3" id={Name} onChangeText={setRiddleChange} placeholder={riddlePrompt} />
           </XStack>
 
           <XStack gap="$3">
             <Label size="$3" htmlFor={Name}>
               Change Riddle Answer:
             </Label>
-            <Input f={1} size="$3" id={Name} onChangeText={onRiddleChange} placeholder={riddleAnswer}/>
+            <Input f={1} size="$3" id={Name} onChangeText={setAnsChange} placeholder={riddleAnswer}/>
           </XStack>
 
           <Popover.Close asChild>
             <Button
               size="$3"
               onPress={() => {
-                onRiddleChange
+                setRiddleChange;
+                setAnsChange;
               }}
             >
-              Submit
+              Submit New Changes
             </Button>
           </Popover.Close>
         </YStack>
