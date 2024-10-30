@@ -150,6 +150,12 @@ const RiddleItem: RiddleItemComponent = ({
             <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$3">
             <ToastViewport width={500}/>
             <H4>Solve the Following Riddle:</H4>
+            <XStack gap="$2">
+                <Label size="$3">
+                  Enter Riddle Answer:
+                </Label>
+                <Input f={1} size="$3" onChangeText={setRiddleAttempt}/>
+              </XStack>
               {/* Displayed Text at the Top */}
               <ScrollView
               maxHeight={350}
@@ -158,15 +164,6 @@ const RiddleItem: RiddleItemComponent = ({
               padding="$4"
               borderRadius="$4"
               ><H3>{riddlePrompt}</H3></ScrollView>
-
-              {/* Input and Button */}
-
-              <XStack gap="$2">
-                <Label size="$3">
-                  Change Riddle Answer:
-                </Label>
-                <Input f={1} size="$3" onChangeText={setRiddleAttempt}/>
-              </XStack>
                 <Button
                   onPress={handleRiddleAttempt}
                 > Submit Answer </Button>
