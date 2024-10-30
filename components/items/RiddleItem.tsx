@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack } from "tamagui";
+import { View, styled, YStack, Dialog, Button, H2, Input } from "tamagui";
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
 import { auth } from "firebaseConfig";
 
@@ -50,6 +50,7 @@ const RiddleItem: RiddleItemComponent = ({
 
   // Custom properties (remove these)
   const [riddleAnswer, setRiddleAnswer] =  useState(itemData.riddleAnswer || '');
+  const [inputText, setInputText] = useState("");
   const [solvedUsers, setSolvedUsers] = useState<string[]>(itemData.usersSolved || []); // All the users who solved the riddle
   const profileId = auth.currentUser?.uid; // Current user's profile id
 
@@ -67,19 +68,75 @@ const RiddleItem: RiddleItemComponent = ({
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
 
+  const handleButtonPress = () => {
+    setRiddleAnswer(inputText); // Update display text with input text
+    setInputText(""); // Clear input field
+  };
+
   // Renders item when not active/clicked
   // (default state of item on shelf)
   if (!isActive) {
     return (
-      <YStack flex={1}>
-        <PlaceholderItemView backgroundColor={color}></PlaceholderItemView>
-      </YStack>
+      <Button> Hi! </Button>
     );
   }
 
   // Renders item when active/clicked
   // (item is clicked and dialog is open, feel free to change this return)
   return (
+    <Dialog modal open={isActive} onOpenChange={onClose}>
+      <Dialog.Portal>
+        <Dialog.Overlay key="overlay" />
+        <Dialog.Content
+          bordered
+          elevate
+          key="content"
+          animation={[
+            'quick',
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          width={300}
+          height={650}
+        >
+          <Dialog.Title>Letterboard</Dialog.Title>
+          <Dialog.Description>
+            Edit what letters you want displayed:
+          </Dialog.Description>
+
+          {/* Button to print grid values */}
+          <YStack flex={1} alignItems="center" justifyContent="center" padding="$4" space="$4">
+        {/* Displayed Text at the Top */}
+        <H2>{inputText}</H2>
+
+            {/* Input and Button */}
+            <YStack space="$3" width="80%" alignItems="center">
+            <Input
+                placeholder="Enter text here"
+                value={inputText}
+                onChangeText={setInputText}
+                width="100%"
+                borderWidth={1}
+                borderColor="black"
+                padding="$2"
+            />
+            <Button onPress={handleButtonPress} backgroundColor="blue" color="white">
+                Update Text
+            </Button>
+            </YStack>
+        </YStack>
+
+          <Dialog.Close displayWhenAdapted asChild>
+            <Button onPress={handleDialogClose} theme="alt1" aria-label="Close">
+              Exit
+            </Button>
+          </Dialog.Close>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
   );
 };
 

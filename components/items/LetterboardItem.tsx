@@ -216,7 +216,8 @@ const LetterBoard: LetterBoardComponent = ({
             </YStack>
           </YStack>
 
-          {/* Button to print grid values */}
+            
+          {/* TODO Get rid of this */}
           <YStack padding={2}>
             <Button onPress={handlePrintGridValues}>Print Grid Values</Button>
           </YStack>
