@@ -6,7 +6,7 @@ import { Avatar, styled, TextArea, Button, Text, H2, H4, Spinner, XStack, YStack
 import {  doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateProfileAbtMe } from 'project-functions/profileFunctions';
-import { Wrench, LogOut } from '@tamagui/lucide-icons'
+import { Wrench, LogOut, AlignJustify } from '@tamagui/lucide-icons'
 import { auth } from "firebaseConfig";
 import { deleteUser, reauthenticateWithCredential, EmailAuthProvider, signOut } from "firebase/auth";
 
@@ -37,6 +37,8 @@ export default function ProfilePage() {
   const { iconId } = useLocalSearchParams(); // Getting Local Query Data
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const router = useRouter();
+
+  const [showAddTagsDialog, setShowAddTagsDialog] = useState(false); 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -166,6 +168,10 @@ export default function ProfilePage() {
     }
   };
 
+  const addTags = async () => {
+    setShowAddTagsDialog(true); // Open Add Tags popup
+  };
+
   const HeaderRight = () => (
       <Button
           size="$4"
@@ -180,11 +186,26 @@ export default function ProfilePage() {
       </Button>
   );
 
+  const HeaderLeft = () => (
+    <Button
+      size="$4"
+      icon={<AlignJustify size="4" />}
+      onPress={() => addTags()}
+      marginRight={10}
+      animation="bouncy"
+      backgroundColor="transparent" // Make background transparent
+      borderWidth={0} // Ensure no border
+      borderColor="transparent" // Ensure no border color shows
+      pressStyle={{ scale: 0.9, backgroundColor: "transparent" }} // Transparent when pressed
+    />
+  );
+
   return (
   <>
       <Stack.Screen
           options={{
             headerRight: () => <HeaderRight />,
+            headerLeft: () => <HeaderLeft />,
             title: "Profile",
           }}
       />
@@ -225,6 +246,53 @@ export default function ProfilePage() {
             <Dialog.Close asChild>
               <Button theme="red" onPress={handleSignOut}>Sign Out</Button>
             </Dialog.Close>
+          </XStack>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+
+
+     {/* Add Tags Dialog */}
+     <Dialog open={showAddTagsDialog} onOpenChange={setShowAddTagsDialog}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+        <Dialog.Content
+          bordered
+          elevate
+          key="content"
+          animation={[
+            'quick',
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          gap="$4"
+        >
+          <Dialog.Title>Add Tags</Dialog.Title>
+          <Dialog.Description>
+            Enter the tags you want to add to your profile.
+          </Dialog.Description>
+          <TextArea height={100} width={300} placeholder="Enter tags here..." />
+          <XStack gap="$3" justifyContent="flex-end">
+            <Dialog.Close asChild>
+              <Button theme="alt1">Cancel</Button>
+            </Dialog.Close>
+            <Button theme="blue" onPress={() => {
+              // Handle tag addition logic here
+              setShowAddTagsDialog(false); // Close the dialog after adding tags
+            }}>
+              Add Tags
+            </Button>
           </XStack>
         </Dialog.Content>
       </Dialog.Portal>
