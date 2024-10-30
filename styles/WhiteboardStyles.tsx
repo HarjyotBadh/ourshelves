@@ -1,6 +1,6 @@
 import { styled, Button, View } from "tamagui";
 import { StyleSheet } from "react-native";
-export const colors = ["black", "red", "blue", "green", "purple", "yellow"];
+export const colors = ["black", "red", "blue", "green"];
 
 export const ColorButton = styled(Button, {
   width: 30,

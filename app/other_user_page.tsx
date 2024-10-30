@@ -127,7 +127,6 @@ export default function ProfilePage() {
             circular
             onPress={() => setIsAddToRoomDialogOpen(true)}
             color="$white"
-            borderRadius="50%"
             justifyContent="center"
             alignItems="center"
             display="flex"
