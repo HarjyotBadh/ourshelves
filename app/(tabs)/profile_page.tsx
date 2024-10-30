@@ -5,10 +5,16 @@ import { useRouter, Link, useLocalSearchParams, Stack} from "expo-router";
 import { Avatar, styled, TextArea, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Dialog } from 'tamagui'
 import {  doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { updateProfileAbtMe } from 'project-functions/profileFunctions';
+import { updateProfileAbtMe, updateProfileTags } from 'project-functions/profileFunctions';
 import { Wrench, LogOut, AlignJustify } from '@tamagui/lucide-icons'
 import { auth } from "firebaseConfig";
 import { deleteUser, reauthenticateWithCredential, EmailAuthProvider, signOut } from "firebase/auth";
+
+
+import { Check as CheckIcon } from '@tamagui/lucide-icons'
+import type { CheckboxProps } from 'tamagui'
+import { Checkbox, Label } from 'tamagui'
+
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -16,6 +22,7 @@ interface ProfilePage {
   profilePicture: string;
   rooms: string;
   displayName: string
+  tags: string[]
 }
 
 const LoadingContainer = styled(YStack, {
@@ -37,6 +44,11 @@ export default function ProfilePage() {
   const { iconId } = useLocalSearchParams(); // Getting Local Query Data
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const router = useRouter();
+  const [checkedTags, setCheckedTags] = useState({
+    closeCommunity: false,
+    zanyShenanigans: false,
+    familyFriendly: false,
+  });
 
   const [showAddTagsDialog, setShowAddTagsDialog] = useState(false); 
 
@@ -55,11 +67,15 @@ export default function ProfilePage() {
               aboutMe: aboutMe,
               profilePicture: profilePageData.profilePicture,
               rooms: profilePageData.rooms,
-              displayName: profilePageData.displayName
+              displayName: profilePageData.displayName,
+              tags: profilePageData.tags
             });
 
             setIcon(profilePageData.profilePicture);
             setAboutMe(aboutMe);
+
+            // Grabbing tag information
+
 
           } else {
             throw new Error('User not found');
@@ -199,6 +215,7 @@ export default function ProfilePage() {
       pressStyle={{ scale: 0.9, backgroundColor: "transparent" }} // Transparent when pressed
     />
   );
+  
 
   return (
   <>
@@ -282,17 +299,46 @@ export default function ProfilePage() {
           <Dialog.Description>
             Enter the tags you want to add to your profile.
           </Dialog.Description>
-          <TextArea height={100} width={300} placeholder="Enter tags here..." />
+          <YStack width={300} alignItems="center" gap="$1">
+          <CheckboxWithLabel
+            size="$4"
+            label="Close Community"
+            checked={checkedTags.closeCommunity}
+            onChange={(checked) => setCheckedTags((prev) => ({ ...prev, closeCommunity: checked }))}
+          />
+          <CheckboxWithLabel
+            size="$4"
+            label="Zany Shenanigans"
+            checked={checkedTags.zanyShenanigans}
+            onChange={(checked) => setCheckedTags((prev) => ({ ...prev, zanyShenanigans: checked }))}
+          />
+          <CheckboxWithLabel
+            size="$4"
+            label="Family Friendly"
+            checked={checkedTags.familyFriendly}
+            onChange={(checked) => setCheckedTags((prev) => ({ ...prev, familyFriendly: checked }))}
+          />
+          </YStack>
+
           <XStack gap="$3" justifyContent="flex-end">
             <Dialog.Close asChild>
               <Button theme="alt1">Cancel</Button>
             </Dialog.Close>
-            <Button theme="blue" onPress={() => {
-              // Handle tag addition logic here
-              setShowAddTagsDialog(false); // Close the dialog after adding tags
-            }}>
+            <Button
+              theme="blue"
+              onPress={() => {
+                const selectedTags = Object.entries(checkedTags)
+                  .filter(([, isChecked]) => isChecked)
+                  .map(([tag]) => tag); // Extracting the tag names
+
+                // Here you can use `selectedTags` array as needed
+                console.log("Selected Tags:", selectedTags); // Replace with your logic to use these tags
+                updateProfileTags(selectedTags);
+                setShowAddTagsDialog(false); // Close the dialog after adding tags
+              }}
+            >
               Add Tags
-            </Button>
+          </Button>
           </XStack>
         </Dialog.Content>
       </Dialog.Portal>
@@ -386,4 +432,33 @@ export default function ProfilePage() {
     </SafeAreaView>
   </>
   )
+}
+
+export function CheckboxWithLabel({
+  size,
+  label = 'Accept terms and conditions',
+  checked,
+  onChange,
+  ...checkboxProps
+}: CheckboxProps & { label?: string; checked?: boolean; onChange?: (checked: boolean) => void }) {
+  const id = `checkbox-${(size || '').toString().slice(1)}`;
+  return (
+    <XStack width={300} alignItems="center" gap="$4">
+      <Checkbox
+        id={id}
+        size={size}
+        checked={checked}
+        onCheckedChange={onChange}
+        {...checkboxProps}
+      >
+        <Checkbox.Indicator>
+          <CheckIcon />
+        </Checkbox.Indicator>
+      </Checkbox>
+
+      <Label size={size} htmlFor={id}>
+        {label}
+      </Label>
+    </XStack>
+  );
 }
