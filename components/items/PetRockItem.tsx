@@ -282,6 +282,7 @@ const PetRockItem: PetRockItemComponent = ({
       velocityY.value = 0;
     })
     .onUpdate((event) => {
+      console.log(event.absoluteX, event.absoluteY);
       if (!isEditMode) {
         translateX.value = clamp(
           event.absoluteX - ROCK_SIZE / 2,

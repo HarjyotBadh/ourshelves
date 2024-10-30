@@ -94,7 +94,6 @@ const ClockItem: ClockItemComponent = ({
         );
     }
 
-    console.log(itemData.placedUserId);
 
     // Renders item when active/clicked
     // (item is clicked and dialog is open, feel free to change this return)

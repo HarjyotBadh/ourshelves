@@ -1,51 +1,29 @@
-import { Check, ChevronDown, ChevronUp } from '@tamagui/lucide-icons';
+import { Timestamp } from 'firebase/firestore';
 import React from 'react';
-import { Dialog, Button, XStack, YStack, Label, Switch, Select, Separator, Text, Adapt, Sheet } from 'tamagui';
+import { Dialog, Button, XStack, YStack, Label, Switch, Select, Separator, Text, Adapt, Sheet, Input, Anchor } from 'tamagui';
+import { Trash, CirclePlus, CircleMinus, ChevronDown, ChevronUp, Check } from "@tamagui/lucide-icons";
+import { Alert } from 'react-native';
 import { LinearGradient } from 'tamagui/linear-gradient'
 
-interface ClockDialogProps {
+
+interface VotingBoxVoteDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onClockOptionsSelect: (isAnalog: boolean, timeZone: number) => void;
-    defaultIsAnalog: boolean;
-    defaultTimeZone: number;
+    topic: string;
+    voteOptions: string[];
+    submitVote: (option: string) => void;
 }
 
-const items = ["Samoa Standard Time (UTC-11:00)",
-    "Hawaiian Time (UTC-10:00)",
-    "Alaskan Time (UTC-09:00)",
-    "US Pacific Time (UTC-08:00)",
-    "US Mountain Time (UTC-07:00)",
-    "US Central Time (UTC-06:00)",
-    "US Eastern Time (UTC-05:00)",
-    "Venezuelan Time (UTC-04:00)",
-    "Brazilian Time (UTC-03:00)",
-    "South Georgia Time (UTC-02:00)",
-    "Azores Time (UTC-01:00)",
-    "Greenwich Mean Time (UTC+00:00)",
-    "Central European Time (UTC+01:00)",
-    "Eastern European Time (UTC+02:00)",
-    "East Africa Time (UTC+03:00)",
-    "Gulf Standard Time (UTC+04:00)",
-    "Pakistan Standard Time (UTC+05:00)",
-    "Bangladesh Standard Time (UTC+06:00)",
-    "Indochina Time (UTC+07:00)",
-    "China Standard Time (UTC+08:00)",
-    "Japan Standard Time (UTC+09:00)",
-    "Australian Eastern Time (UTC+10:00)",
-    "New Caledonia Time (UTC+11:00)",
-    "New Zealand Standard Time (UTC+12:00)"].map((name) => ({ name }));
-
-export const ClockDialog: React.FC<ClockDialogProps> = ({
+export const VotingBoxVoteDialog: React.FC<VotingBoxVoteDialogProps> = ({
     open,
     onOpenChange,
-    onClockOptionsSelect,
-    defaultIsAnalog,
-    defaultTimeZone
+    topic,
+    voteOptions,
+    submitVote
 }) => {
 
-    const [selectedIsAnalog, setSelectedIsAnalog] = React.useState(defaultIsAnalog);
-    const [selectedTimeZone, setSelectedTimeZone] = React.useState(defaultTimeZone);
+
+    const [vote, setVote] = React.useState('');
 
     return (
         <Dialog modal open={open} onOpenChange={onOpenChange}>
@@ -54,6 +32,7 @@ export const ClockDialog: React.FC<ClockDialogProps> = ({
                 <Dialog.Content
                     bordered
                     elevate
+                    width={380}
                     key="content"
                     animation={[
                         'quick',
@@ -64,43 +43,24 @@ export const ClockDialog: React.FC<ClockDialogProps> = ({
                         },
                     ]}
                 >
-                    <Dialog.Title>Clock Options</Dialog.Title>
+                    <Dialog.Title>Select Voting Options</Dialog.Title>
 
-                    <YStack padding="$4" gap="$4">
-                        <XStack width={200} alignItems="center" gap="$4">
-                            <Label
-                                paddingRight="$0"
-                                minWidth={90}
-                                justifyContent="flex-end"
-                            >
-                                Analog clock?
-                            </Label>
-                            <Separator minHeight={20} vertical />
-                            <Switch
-                                checked={selectedIsAnalog}
-                                onCheckedChange={(checked) => {
-                                    setSelectedIsAnalog(checked);
-                                }}
-                            >
-                                <Switch.Thumb animation="quicker" />
-                            </Switch>
+                    <YStack marginTop="$3" marginBottom="$3" gap="$2">
+                        <XStack>
+                            <Text fontWeight="bold">{topic}</Text>
                         </XStack>
-                        <XStack width={280} alignItems="center" gap="$4">
+                        <XStack width="100%" alignItems="center" gap="$4">
                             <Label
                                 paddingRight="$0"
-                                minWidth={90}
+                                minWidth={40}
                                 justifyContent="flex-end"
                             >
-                                Time zone
+                                Vote
                             </Label>
                             <Separator minHeight={20} vertical />
-
-
                             <Select onValueChange={(value) => {
-                                const selectedValue = items.findIndex(item => item.name.toLowerCase() === value);
-                                setSelectedTimeZone(selectedValue);
-                                console.log(selectedValue);
-}}>
+                                setVote(value);
+                            }}>
                                 <Select.Trigger width={150} iconAfter={ChevronDown}>
                                     <Select.Value />
                                 </Select.Trigger>
@@ -149,34 +109,27 @@ export const ClockDialog: React.FC<ClockDialogProps> = ({
                                         />
                                     </Select.ScrollUpButton>
 
-                                    <Select.Viewport
-                                    // to do animations:
-                                    // animation="quick"
-                                    // animateOnly={['transform', 'opacity']}
-                                    // enterStyle={{ o: 0, y: -10 }}
-                                    // exitStyle={{ o: 0, y: 10 }}
-                                    // minWidth={100}
-                                    >
+                                    <Select.Viewport>
                                         <Select.Group>
                                             <Select.Label>Time Zones</Select.Label>
                                             {/* for longer lists memoizing these is useful */}
                                             {React.useMemo(
                                                 () =>
-                                                    items.map((item, i) => {
+                                                    voteOptions.map((item, i) => {
                                                         return (
                                                             <Select.Item
                                                                 index={i}
-                                                                key={item.name}
-                                                                value={item.name.toLowerCase()}
+                                                                key={item}
+                                                                value={item}
                                                             >
-                                                                <Select.ItemText>{item.name}</Select.ItemText>
+                                                                <Select.ItemText>{item}</Select.ItemText>
                                                                 <Select.ItemIndicator marginLeft="auto">
                                                                     <Check size={16} />
                                                                 </Select.ItemIndicator>
                                                             </Select.Item>
                                                         )
                                                     }),
-                                                [items]
+                                                [voteOptions]
                                             )}
                                         </Select.Group>
                                     </Select.Viewport>
@@ -201,22 +154,17 @@ export const ClockDialog: React.FC<ClockDialogProps> = ({
                                     </Select.ScrollDownButton>
                                 </Select.Content>
                             </Select>
-
-
                         </XStack>
                     </YStack>
 
-                    <Dialog.Close displayWhenAdapted asChild>
-                        <Button
-                            onPress={() => {
-                                onClockOptionsSelect(selectedIsAnalog, selectedTimeZone);
-                                onOpenChange(false);
-                            }}
-                            theme="alt1"
-                            aria-label="Save">
-                            Save
-                        </Button>
-                    </Dialog.Close>
+                    <Button
+                        onPress={() => {
+                            submitVote(vote);
+                        }}
+                        theme="alt1"
+                        aria-label="Save">
+                        Save
+                    </Button>
                 </Dialog.Content>
             </Dialog.Portal>
         </Dialog>
