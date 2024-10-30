@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { View, Image, YStack, Button, Pressable } from "tamagui";
+import { View, Image, YStack, Button } from "tamagui";
 import { notifyRoomUsers } from "project-functions/roomFunctions";
+import { useToastController } from "@tamagui/toast";
+import { Audio } from 'expo-av';
+
+const soundEffectUrl = "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/sound-effects%2Fbell-ring.wav?alt=media&token=81ceadc0-0102-4a80-9a1b-28d77051ec06";
 
 interface BellItemProps {
   itemData: {
-    id: string; // unique id of the placed item (do not change)
-    itemId: string; // id of the item (do not change)
-    name: string; // name of the item (do not change)
-    imageUri: string; // picture uri of the item (do not change)
-    placedUserId: string; // user who placed the item (do not change)
-    [key: string]: any; // any other properties (do not change)
-
-    // add custom properties below ------
-
-    // ---------------------------------
+    id: string;
+    itemId: string;
+    name: string;
+    imageUri: string;
+    placedUserId: string;
+    [key: string]: any;
   };
-  onDataUpdate: (newItemData: Record<string, any>) => void; // updates item data when called (do not change)
-  isActive: boolean; // whether item is active/clicked (do not change)
-  onClose: () => void; // called when dialog is closed (important, as it will unlock the item) (do not change)
+  onDataUpdate: (newItemData: Record<string, any>) => void;
+  isActive: boolean;
+  onClose: () => void;
   roomInfo: {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
     roomId: string;
-  }; // various room info (do not change)
+  };
 }
 
 interface BellItemComponent extends React.FC<BellItemProps> {
@@ -38,37 +38,81 @@ const BellItem: BellItemComponent = ({
   roomInfo,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [soundEffect, setSoundEffect] = useState<Audio.Sound | null>(null);
+  const toast = useToastController();
+
+  // Load sound effect
+  useEffect(() => {
+    const loadSoundEffect = async () => {
+      if (soundEffectUrl) {
+        try {
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: soundEffectUrl },
+            { shouldPlay: false }
+          );
+          setSoundEffect(sound);
+        } catch (error) {
+          console.error("Error loading sound effect:", error);
+        }
+      }
+    };
+
+    loadSoundEffect();
+
+    return () => {
+      if (soundEffect) {
+        soundEffect.unloadAsync();
+      }
+    };
+  }, []);
 
   // When the bell is "rung"
-  const handlePress = () => {
-    notifyRoomUsers(roomInfo.roomId)
+  const handlePress = async () => {
+    try {
+      // Play sound effect
+      if (soundEffect) {
+        await soundEffect.replayAsync();
+      }
+      
+      // Notify users
+      await notifyRoomUsers(roomInfo.roomId);
+      
+      // Show toast
+      toast.show("Bell rung!", {
+        message: "Other users in the room have been notified",
+      });
+    } catch (error) {
+      console.error("Error ringing bell:", error);
+      toast.show("Error", {
+        message: "Failed to ring the bell",
+      });
+    }
   };
-
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
     }
-  }, [isActive]);  
+  }, [isActive]);
 
-  // Renders item when active/clicked
-  // (item is clicked and dialog is open, feel free to change this return)
   return (
     <YStack flex={1} alignItems="center" justifyContent="center">
-       {/* Camel Button */}
-       <Button 
-          onPress={handlePress}     
-          backgroundColor="black" 
-          padding={1} 
-          height = {100}
-          borderRadius="$3">
-          <Image
-            source={{ uri: itemData.imageUri }} // Replace with a valid camel image URL or local file path
-            width={100}
-            height={120}
-          />
-        </Button>
+      <Button 
+        onPress={handlePress}     
+        padding={0}
+        height={100}
+        backgroundColor="transparent"
+        borderRadius="$3"
+        pressStyle={{
+          backgroundColor: 'transparent'
+        }}>
+        <Image
+          source={{ uri: itemData.imageUri }}
+          width={100}
+          height={120}
+        />
+      </Button>
     </YStack>
   );
 };
@@ -76,4 +120,4 @@ const BellItem: BellItemComponent = ({
 // Initializes item data (default values)
 BellItem.getInitialData = () => ({});
 
-export default BellItem; // do not remove the export (but change the name of the Item to match the name of the file)
+export default BellItem;
