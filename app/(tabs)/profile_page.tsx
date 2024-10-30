@@ -78,7 +78,7 @@ export default function ProfilePage() {
             setCheckedTags({
               closeCommunity: profilePageData.tags.includes("closeCommunity"),
               zanyShenanigans: profilePageData.tags.includes("zanyShenanigans"),
-              familyFriendly: profilePageData.includes("familyFriendly"),
+              familyFriendly: profilePageData.tags.includes("familyFriendly"),
             });
 
           } else {
