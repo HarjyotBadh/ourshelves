@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Modal, View, StyleSheet, PanResponder, PanResponderGestureState } from 'react-native';
+import { Modal, View, StyleSheet, PanResponder } from 'react-native';
 import { Button, YStack, XStack, Text } from 'tamagui';
 import { Canvas, Rect, LinearGradient as SkiaLinearGradient, vec } from '@shopify/react-native-skia';
 import tinycolor from 'tinycolor2';

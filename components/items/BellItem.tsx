@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Image, YStack, Button } from "tamagui";
+import { Image, YStack, Button } from "tamagui";
 import { notifyRoomUsers } from "project-functions/roomFunctions";
 import { useToastController } from "@tamagui/toast";
 import { Audio } from 'expo-av';

@@ -18,7 +18,7 @@ import { Timestamp } from "firebase/firestore";
 import { earnCoins } from "project-functions/shopFunctions";
 import { auth } from "firebaseConfig";
 import { FoodShopDialog } from "../PetItem/FoodShopDialog";
-import { FoodItem, FOOD_ITEMS } from "models/FoodItem";
+import { FOOD_ITEMS } from "models/FoodItem";
 
 const styles = StyleSheet.create({
   petContainer: {

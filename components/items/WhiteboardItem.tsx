@@ -1,38 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, YStack, XStack, Button, Image, Text } from "tamagui";
-import {
-  Canvas,
-  Path,
-  useCanvasRef,
-  Rect,
-  Circle,
-  useImage,
-  Image as SkiaImage,
-  Group,
-  Skia,
-} from "@shopify/react-native-skia";
-import {
-  PanResponder,
-  GestureResponderEvent,
-  Dimensions,
-  Modal,
-  StyleSheet,
-} from "react-native";
-import {
-  ref,
-  onValue,
-  push,
-  set,
-  remove,
-  off,
-  onDisconnect,
-} from "firebase/database";
+import { View, YStack, Button } from "tamagui";
+import { Canvas, Path, useCanvasRef, Rect, Circle, Skia } from "@shopify/react-native-skia";
+import { PanResponder, GestureResponderEvent, Dimensions, Modal } from "react-native";
+import { ref, onValue, push, set, remove, off, onDisconnect } from "firebase/database";
 import { rtdb } from "firebaseConfig";
-import {
-  WhiteboardItemComponent,
-  PathData,
-  EraserIcon,
-} from "models/WhiteboardModel";
+import { WhiteboardItemComponent, PathData, EraserIcon } from "models/WhiteboardModel";
 import {
   colors,
   ColorButton,
@@ -43,8 +15,7 @@ import {
   BottomBar,
   styles,
 } from "styles/WhiteboardStyles";
-import { auth, db } from "firebaseConfig";
-import { doc, increment, updateDoc } from "firebase/firestore";
+import { auth } from "firebaseConfig";
 import { ToastViewport, useToastController } from "@tamagui/toast";
 import ColorPickerModal from "components/ColorPickerModal";
 import { PlusCircle } from "@tamagui/lucide-icons";
@@ -136,20 +107,13 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const handleClose = useCallback(async () => {
     try {
       if (hasChanges) {
-        // const userDocRef = doc(db, "Users", auth.currentUser.uid);
-        // await updateDoc(userDocRef, {
-        //   coins: increment(10),
-        // });
-        //
         earnCoins(auth.currentUser.uid, 10);
         toast.show("You earned 10 coins for your drawing!", {
           duration: 3000,
         });
         setHasChanges(false);
       }
-      //if (hasChanges) {
       onDataUpdate({ ...itemData, paths });
-      //}
       onClose();
 
       if (disconnectRef.current) {
@@ -167,11 +131,13 @@ const WhiteboardItem: WhiteboardItemComponent = ({
     onPanResponderGrant: (event: GestureResponderEvent) => {
       const { locationX, locationY } = event.nativeEvent;
       const dotSize = isErasing ? ERASER_STROKE_WIDTH : NORMAL_STROKE_WIDTH;
-      const dotPath = `M${locationX} ${locationY} L${locationX + dotSize} ${locationY} L${locationX + dotSize} ${locationY + dotSize} L${locationX} ${locationY + dotSize} Z`;
-      
+      const dotPath = `M${locationX} ${locationY} L${locationX + dotSize} ${locationY} L${
+        locationX + dotSize
+      } ${locationY + dotSize} L${locationX} ${locationY + dotSize} Z`;
+
       currentPathRef.current = dotPath;
       isDrawing.current = true;
-      
+
       addPathToRealtimeDB({
         path: dotPath,
         color: currentColor,
@@ -211,13 +177,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   const renderWhiteboardPreview = () => (
     <View style={{ padding: PREVIEW_PADDING }}>
       <Canvas style={{ width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }}>
-        <Rect
-          x={0}
-          y={0}
-          width={PREVIEW_WIDTH}
-          height={PREVIEW_HEIGHT}
-          color="white"
-        />
+        <Rect x={0} y={0} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT} color="white" />
         {itemData.paths &&
           itemData.paths.map((pathData: PathData, index: number) => {
             const scaledPath = scalePath(pathData.path, SCALE_FACTOR);
@@ -230,8 +190,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
                 strokeWidth={
                   pathData.color === ERASER_COLOR
                     ? ERASER_STROKE_WIDTH * SCALE_FACTOR
-                    : (pathData.strokeWidth || NORMAL_STROKE_WIDTH) *
-                      SCALE_FACTOR
+                    : (pathData.strokeWidth || NORMAL_STROKE_WIDTH) * SCALE_FACTOR
                 }
               />
             );
@@ -241,7 +200,6 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   );
 
   const handleCustomColorSelect = (color: string) => {
-    console.log(color);
     setCustomColor(color);
     setCurrentColor(color);
     setIsErasing(false);
@@ -256,12 +214,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
   }
 
   return (
-    <Modal
-      visible={isActive}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={isActive} transparent={true} animationType="fade" onRequestClose={handleClose}>
       <YStack
         flex={1}
         backgroundColor="rgba(0,0,0,0.5)"
@@ -280,13 +233,7 @@ const WhiteboardItem: WhiteboardItemComponent = ({
             {...panResponder.panHandlers}
           >
             <Canvas style={{ flex: 1 }} ref={canvasRef}>
-              <Rect
-                x={0}
-                y={0}
-                width={WHITEBOARD_WIDTH}
-                height={WHITEBOARD_HEIGHT}
-                color="white"
-              />
+              <Rect x={0} y={0} width={WHITEBOARD_WIDTH} height={WHITEBOARD_HEIGHT} color="white" />
               {paths.map((pathData, index) => (
                 <Path
                   key={index}
@@ -326,28 +273,15 @@ const WhiteboardItem: WhiteboardItemComponent = ({
               borderWidth={2}
               icon={PlusCircle}
             ></Button>
-            <ColorButton
-              backgroundColor="white"
-              onPress={toggleEraser}
-              selected={isErasing}
-            >
+            <ColorButton backgroundColor="white" onPress={toggleEraser} selected={isErasing}>
               <EraserIcon />
             </ColorButton>
           </ButtonContainer>
           <ButtonContainer>
-            <Button
-              onPress={handleClear}
-              backgroundColor="$red10"
-              color="white"
-            >
+            <Button onPress={handleClear} backgroundColor="$red10" color="white">
               Clear
             </Button>
-            <Button
-              onPress={handleClose}
-              backgroundColor="$blue10"
-              color="white"
-              marginLeft="$4"
-            >
+            <Button onPress={handleClose} backgroundColor="$blue10" color="white" marginLeft="$4">
               Close
             </Button>
           </ButtonContainer>

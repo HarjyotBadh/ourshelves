@@ -1,6 +1,6 @@
 import "../tamagui-web.css";
 
-import React, { useEffect, useState, useRef, createContext, useContext } from "react";
+import React, { useEffect, useState, useRef, createContext } from "react";
 import { useColorScheme, LogBox, Platform } from "react-native";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
@@ -11,7 +11,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import { TamaguiProvider } from "@tamagui/core";
 import { ToastProvider } from "@tamagui/toast";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { AudioProvider } from "components/AudioContext";
 import config from "tamagui.config";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
@@ -103,11 +102,11 @@ export default function RootLayout() {
     registerForPushNotificationsAsync().then((token) => token && setExpoPushToken(token));
 
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      console.log("Notification received:", notification);
+      // console.log("Notification received:", notification);
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log("Notification response:", response);
+      // console.log("Notification response:", response);
     });
 
     return () => {

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Dialog, YStack, XStack, Input, Button } from "tamagui";
+import { Dialog, YStack, XStack, Input, Button } from "tamagui";
 import { earnCoins } from "project-functions/shopFunctions";
-import { auth, db } from "firebaseConfig";
-import { ToastViewport, useToastController } from "@tamagui/toast";
-import { set } from "date-fns";
+import { auth } from "firebaseConfig";
+import { useToastController } from "@tamagui/toast";
 
 
 interface LetterBoardProps {
@@ -64,10 +63,6 @@ const LetterBoard: LetterBoardComponent = ({
   const handleDialogClose = () => {
     setDialogOpen(false);
     // TODO, get the grid to save the data and have it persist
-    console.log(itemData.id)
-    console.log(gridValues[0].length)
-    console.log(gridValues)
-    console.log(storedGridVals)
     onDataUpdate({...itemData, gridData: storedGridVals, numColumns: gridValues[0].length})
     if (boardChanged) {
       earnCoins(auth.currentUser.uid, 10);
@@ -103,7 +98,6 @@ const LetterBoard: LetterBoardComponent = ({
     convertTo1DArray()
     renderLetterBoardPreview()
     setBoardChanged(true) // Checking for board interaction so we could reward coins
-    console.log(gridValues)
   }
 
   // Function to print grid values
