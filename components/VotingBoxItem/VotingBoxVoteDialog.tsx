@@ -22,7 +22,6 @@ export const VotingBoxVoteDialog: React.FC<VotingBoxVoteDialogProps> = ({
     submitVote
 }) => {
 
-    console.log(topic)
 
     const [vote, setVote] = React.useState('');
 
@@ -61,7 +60,6 @@ export const VotingBoxVoteDialog: React.FC<VotingBoxVoteDialogProps> = ({
                             <Separator minHeight={20} vertical />
                             <Select onValueChange={(value) => {
                                 setVote(value);
-                                console.log(value);
                             }}>
                                 <Select.Trigger width={150} iconAfter={ChevronDown}>
                                     <Select.Value />

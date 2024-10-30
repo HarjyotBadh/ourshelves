@@ -20,7 +20,6 @@ export const VotingBoxResultsDialog: React.FC<VotingBoxResultsDialogProps> = ({
     votes
 }) => {
 
-    console.log(topic)
 
     const winner = options.reduce((prev, current) => (prev.votes > current.votes) ? prev : current);
 

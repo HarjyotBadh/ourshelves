@@ -80,7 +80,6 @@ export const ClockDialog: React.FC<ClockDialogProps> = ({
                                 checked={selectedIsAnalog}
                                 onCheckedChange={(checked) => {
                                     setSelectedIsAnalog(checked);
-                                    console.log(selectedIsAnalog);
                                 }}
                             >
                                 <Switch.Thumb animation="quicker" />
@@ -98,7 +97,6 @@ export const ClockDialog: React.FC<ClockDialogProps> = ({
 
 
                             <Select onValueChange={(value) => {
-                                // console.log(value);
                                 const selectedValue = items.findIndex(item => item.name.toLowerCase() === value);
                                 setSelectedTimeZone(selectedValue);
                                 console.log(selectedValue);

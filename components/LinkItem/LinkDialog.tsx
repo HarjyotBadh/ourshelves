@@ -94,7 +94,6 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
                     <Dialog.Close displayWhenAdapted asChild>
                         <Button
                             onPress={() => {
-                                console.log(selectedLink);
                                 onLinkSelect(selectedLinkName, selectedLink);
                                 onOpenChange(false);
                             }}
