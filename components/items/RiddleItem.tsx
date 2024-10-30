@@ -4,6 +4,8 @@ import {Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert} from 're
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from '@tamagui/lucide-icons'
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
 import { auth } from "firebaseConfig";
+import { ToastViewport, useToastController } from "@tamagui/toast";
+import { earnCoins } from "project-functions/shopFunctions";
 
 interface RiddleItemProps {
   itemData: {
@@ -51,11 +53,13 @@ const RiddleItem: RiddleItemComponent = ({
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [userListOpen, setUserListOpen] = useState(false);
+  const toast = useToastController();
 
   // Custom properties (remove these)
   const [shouldAdapt, setShouldAdapt] = useState(true)
   const [riddleAnswer, setRiddleAnswer] =  useState(itemData.riddleAnswer || '');
   const [riddlePrompt, setRiddlePrompt] = useState(itemData.riddlePrompt || '');
+  const [riddleAttempt, setRiddleAttempt] = useState('');
   const [solvedUsers, setSolvedUsers] = useState<string[]>(itemData.usersSolved || []); // All the users who solved the riddle
   const profileId = auth.currentUser?.uid; // Current user's profile id
   const riddleImage = itemData.imageUri;
@@ -74,10 +78,41 @@ const RiddleItem: RiddleItemComponent = ({
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
 
+  const handleRiddleAttempt = () => {
+    if (riddleAttempt == riddleAnswer) {
+        if (!solvedUsers.includes(profileId)) {
+          setSolvedUsers((prevSolvedUsers) => [...prevSolvedUsers, profileId]);
+          console.log(solvedUsers)
+          console.log(itemData.usersSolved)
+          onDataUpdate({...itemData, usersSolved: solvedUsers})
+          toast.show("YOU SOLVED THE RIDDLE!\n--AWARDED 150 COINS--", {
+            duration: 3000,
+          });
+          earnCoins(auth.currentUser.uid, 150);
+      } else {
+        toast.show("You already solved this riddle, no coins rewarded", {
+          duration: 3000,
+        });
+      }
+    } 
+    else {
+      toast.show("Solve Attempt Unsuccessful", {
+        duration: 3000,
+      });
+    }
+  };
+
+  // What happens when the user edits a riddle
+  const handleRiddleMade = () => {
+    setSolvedUsers([]); // Resetting what users solved the riddles since the list was changed
+    onDataUpdate({...itemData, riddleAnswer: riddleAnswer, riddlePrompt: riddlePrompt, usersSolved: solvedUsers})
+  };
+ 
   // What the user sees if they are making the riddle
   const riddleMakerPreview = () => (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$4">
+            <H4>Craft a Riddle for the Room:</H4>
               {/* Displayed Text at the Top */}
               <ScrollView
               maxHeight={350}
@@ -105,6 +140,7 @@ const RiddleItem: RiddleItemComponent = ({
                     setAnsChange={setRiddleAnswer}
                     riddlePrompt={riddlePrompt}
                     setRiddleChange={setRiddlePrompt}
+                    handleChange={handleRiddleMade}
                   />
                 </XStack>
           </YStack>
@@ -114,6 +150,7 @@ const RiddleItem: RiddleItemComponent = ({
   const riddleSolverPreview = () => (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$3">
+            <ToastViewport width={500}/>
             <H4>Solve the Following Riddle:</H4>
               {/* Displayed Text at the Top */}
               <ScrollView
@@ -130,9 +167,11 @@ const RiddleItem: RiddleItemComponent = ({
                 <Label size="$3">
                   Change Riddle Answer:
                 </Label>
-                <Input f={1} size="$3" onChangeText={setRiddleAnswer} placeholder={riddleAnswer}/>
+                <Input f={1} size="$3" onChangeText={setRiddleAttempt}/>
               </XStack>
-                <Button> Submit Answer </Button>
+                <Button
+                  onPress={handleRiddleAttempt}
+                > Submit Answer </Button>
           </YStack>
       </TouchableWithoutFeedback>
   );
@@ -196,10 +235,12 @@ export function Demo1({
   setAnsChange,
   riddlePrompt,
   setRiddleChange,
+  handleChange,
   ...props
 }: PopoverProps & { Icon?: any; Name?: string; shouldAdapt?: boolean; riddleAnswer?: string; riddlePrompt?: string;
   setRiddleChange?: ((text:string) => void); 
   setAnsChange?: ((text:string) => void)
+  handleChange?: (() => void)
 }) {
   return (
     <Popover size="$5" allowFlip {...props}>
@@ -263,10 +304,7 @@ export function Demo1({
           <Popover.Close asChild>
             <Button
               size="$3"
-              onPress={() => {
-                setRiddleChange;
-                setAnsChange;
-              }}
+              onPress={handleChange}
             >
               Submit New Changes
             </Button>
