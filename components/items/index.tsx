@@ -12,6 +12,8 @@ const items = {
     'r0bLQwyspeXIKE5d6fzg': lazy(() => import("./PlantItem")),
     'qWoaz1vNrtW9If87Tq8l': lazy(() => import("./ClockItem")),
     'I0QidjqKST8Q7jDT3ByX': lazy(() => import("./PetItem")),
+  KSYt5m7vrjsFsGQIwwrI: lazy(() => import('./PictureFrameItem')),
+  VKUYqstHB85LyrmRWmDB: lazy(() => import('./MoodMeterItem')),
   "1xFx35XueUeIA8JEI2Xu": lazy(() => import("./CalendarItem")),
   "lfRPa063ZysWizht5XiU": lazy(() => import("./DailyQuoteItem")),
   // Add new items here, for example:
