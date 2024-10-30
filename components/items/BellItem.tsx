@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack } from "tamagui";
-import { ColorSelectionDialog } from "../ColorSelectionDialog";
+import { View, Image, YStack, Button, Pressable } from "tamagui";
+import { notifyRoomUsers } from "project-functions/roomFunctions";
 
 interface BellItemProps {
   itemData: {
@@ -30,14 +30,7 @@ interface BellItemComponent extends React.FC<BellItemProps> {
   getInitialData: () => {};
 }
 
-// Styling for placeholder item (remove this)
-const PlaceholderItemView = styled(View, {
-  width: "100%",
-  height: "100%",
-  borderRadius: "$2",
-});
-
-const PlaceholderItem: BellItemComponent = ({
+const BellItem: BellItemComponent = ({
   itemData,
   onDataUpdate,
   isActive,
@@ -46,7 +39,10 @@ const PlaceholderItem: BellItemComponent = ({
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Custom properties (remove these)
+  // When the bell is "rung"
+  const handlePress = () => {
+    notifyRoomUsers(roomInfo.roomId)
+  };
 
 
   // Opens dialog when item is active/clicked
@@ -54,26 +50,30 @@ const PlaceholderItem: BellItemComponent = ({
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
     }
-  }, [isActive]);
-
-
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
-  };
-
-  
+  }, [isActive]);  
 
   // Renders item when active/clicked
   // (item is clicked and dialog is open, feel free to change this return)
   return (
-    <YStack flex={1}>
-
+    <YStack flex={1} alignItems="center" justifyContent="center">
+       {/* Camel Button */}
+       <Button 
+          onPress={handlePress}     
+          backgroundColor="black" 
+          padding={1} 
+          height = {100}
+          borderRadius="$3">
+          <Image
+            source={{ uri: itemData.imageUri }} // Replace with a valid camel image URL or local file path
+            width={100}
+            height={120}
+          />
+        </Button>
     </YStack>
   );
 };
 
 // Initializes item data (default values)
-PlaceholderItem.getInitialData = () => ({});
+BellItem.getInitialData = () => ({});
 
-export default PlaceholderItem; // do not remove the export (but change the name of the Item to match the name of the file)
+export default BellItem; // do not remove the export (but change the name of the Item to match the name of the file)
