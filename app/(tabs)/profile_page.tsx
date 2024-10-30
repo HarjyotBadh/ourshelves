@@ -75,7 +75,12 @@ export default function ProfilePage() {
             setAboutMe(aboutMe);
 
             // Grabbing tag information
-
+            // Initialize checkedTags state based on fetched tags
+            setCheckedTags({
+              closeCommunity: profilePageData.tags.includes("closeCommunity"),
+              zanyShenanigans: profilePageData.tags.includes("zanyShenanigans"),
+              familyFriendly: profilePageData.includes("familyFriendly"),
+            });
 
           } else {
             throw new Error('User not found');
@@ -337,7 +342,7 @@ export default function ProfilePage() {
                 setShowAddTagsDialog(false); // Close the dialog after adding tags
               }}
             >
-              Add Tags
+              Update Tags
           </Button>
           </XStack>
         </Dialog.Content>
