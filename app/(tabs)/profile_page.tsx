@@ -75,7 +75,6 @@ export default function ProfilePage() {
             setAboutMe(aboutMe);
 
             // Grabbing tag information
-            // Initialize checkedTags state based on fetched tags
             setCheckedTags({
               closeCommunity: profilePageData.tags.includes("closeCommunity"),
               zanyShenanigans: profilePageData.tags.includes("zanyShenanigans"),
