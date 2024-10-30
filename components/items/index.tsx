@@ -8,6 +8,9 @@ const items = {
     'VZGFAsog1SRzWcn2fPde': lazy(() => import('./PetRockItem')),
     'r0bLQwyspeXIKE5d6fzg': lazy(() => import('./PlantItem')),
     'qWoaz1vNrtW9If87Tq8l': lazy(() => import('./ClockItem')),
+    'vyvdVS3vtZhzv5oqhmY4': lazy(() => import('./LinkItem')),
+    'WN3gKAlxR2ImFMGh4Iop': lazy(() => import('./NoteBoxItem')),
+    '3u3CsWfAQUXUxSBFqJ1u': lazy(() => import('./VotingBoxItem')),
     // Add new items here, for example:
     // '{ID of item from Firestore (in the Items collection) }': lazy(() => import('./{Name of file}')),
 };
