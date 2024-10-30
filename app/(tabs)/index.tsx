@@ -2,7 +2,7 @@ import { StyleSheet, Alert } from "react-native";
 import { View, ScrollView, styled } from "tamagui";
 import HomeTile from "../../components/HomeTile";
 import CreateHomeTile from "../../components/CreateHomeTile";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { auth } from "firebaseConfig";
 import {
   getRooms,
@@ -14,6 +14,7 @@ import {
   deleteRoom,
 } from "project-functions/homeFunctions";
 import { useRouter } from "expo-router";
+import { PushTokenContext } from "../_layout";
 
 const HomeScreen = () => {
   interface Room {
@@ -27,6 +28,7 @@ const HomeScreen = () => {
   const [tagsList, setTagsList] = useState<string[]>([]);
   const [tagIdsList, setTagIdsList] = useState<string[]>([]);
   const router = useRouter();
+  const pushToken = useContext(PushTokenContext);
 
   const homeSetRooms = async () => {
     if (!auth.currentUser) {
@@ -127,6 +129,12 @@ const HomeScreen = () => {
       setTagIdsList(result.tagIds);
     });
   }, []);
+
+  useEffect(() => {
+    if (pushToken) {
+      console.log("Push Token for this device:", pushToken);
+    }
+  }, [pushToken]);
 
   const HomePageContainer = styled(View, {
     backgroundColor: "#fff2cf",

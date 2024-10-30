@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, Alert } from "react-native";
 import {
   YStack,
@@ -49,6 +49,8 @@ import {
   SafeAreaWrapper,
   Container,
 } from "../../styles/RoomStyles";
+import { Audio } from "expo-av";
+import { useAudio } from "../../components/AudioContext";
 
 // ==================================================== //
 
@@ -91,6 +93,9 @@ const RoomScreen = () => {
     description: string;
     roomId: string;
   }>({ name: "", users: [], description: "", roomId: "" });
+  const [backgroundMusic, setBackgroundMusic] = useState<Audio.Sound | null>(null);
+  const roomRef = useRef(doc(db, 'Rooms', roomId));
+  const { stop, tracks } = useAudio();
 
   /**
    * Initializes shelves for a new room.
@@ -562,7 +567,17 @@ const RoomScreen = () => {
     setIsEditMode(false);
   };
 
+  const handleLeaveMusic = async () => {
+    // await stop();
+    for (const itemId in tracks) {
+      if (tracks[itemId].isPlaying) {
+        await stop(itemId);
+      }
+    }
+  };
+
   const handleGoBack = () => {
+    handleLeaveMusic();
     if (router.canGoBack()) {
       router.back();
     } else {

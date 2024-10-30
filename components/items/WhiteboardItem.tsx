@@ -166,8 +166,17 @@ const WhiteboardItem: WhiteboardItemComponent = ({
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (event: GestureResponderEvent) => {
       const { locationX, locationY } = event.nativeEvent;
-      currentPathRef.current = `M${locationX} ${locationY}`;
+      const dotSize = isErasing ? ERASER_STROKE_WIDTH : NORMAL_STROKE_WIDTH;
+      const dotPath = `M${locationX} ${locationY} L${locationX + dotSize} ${locationY} L${locationX + dotSize} ${locationY + dotSize} L${locationX} ${locationY + dotSize} Z`;
+      
+      currentPathRef.current = dotPath;
       isDrawing.current = true;
+      
+      addPathToRealtimeDB({
+        path: dotPath,
+        color: currentColor,
+        strokeWidth: isErasing ? ERASER_STROKE_WIDTH : NORMAL_STROKE_WIDTH,
+      });
     },
     onPanResponderMove: (event: GestureResponderEvent) => {
       if (isDrawing.current) {
