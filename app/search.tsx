@@ -67,7 +67,6 @@ export default function NameList() {
             size="$6"
             borderWidth={1}
             borderColor="$gray8"
-            borderRadius="$2"
             marginBottom="$4"
             placeholder="Search for a user"
             value={searchQuery}

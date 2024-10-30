@@ -8,7 +8,6 @@ export const StyledDialogContent = styled(Dialog.Content, {
   maxHeight: 600,
   padding: "$4",
   backgroundColor: "$background",
-  borderRadius: "$4",
 });
 
 export const DialogTitle = styled(Text, {
@@ -66,7 +65,6 @@ export const StyledAlertDialogContent = styled(AlertDialog.Content, {
   width: "90%",
   maxWidth: 340,
   backgroundColor: "$background",
-  borderRadius: "$4",
   padding: "$4",
 });
 

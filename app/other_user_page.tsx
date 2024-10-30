@@ -16,8 +16,9 @@ import {
 } from "tamagui";
 import { doc, getDoc } from "firebase/firestore";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Plus } from "@tamagui/lucide-icons";
+import { Plus, Tag } from "@tamagui/lucide-icons";
 import AddUserToRoomDialog from "../components/AddUserToRoomDialog";
+import TagsModal from './TagsModal'; // Import the TagsModal
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -25,6 +26,7 @@ interface ProfilePage {
   profilePicture: string;
   rooms: string;
   displayName: string;
+  tags: string[];
 }
 
 const LoadingContainer = styled(YStack, {
@@ -44,6 +46,7 @@ export default function ProfilePage() {
   const { profileId } = useLocalSearchParams<{ profileId: string }>();
   const router = useRouter();
   const [isAddToRoomDialogOpen, setIsAddToRoomDialogOpen] = useState(false);
+  const [showTagsModal, setShowTagsModal] = useState(false); // State for showing tags modal
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,6 +66,7 @@ export default function ProfilePage() {
               profilePicture: profilePageData?.profilePicture || "",
               rooms: profilePageData?.rooms || [],
               displayName: profilePageData?.displayName || "Unknown User",
+              tags: profilePageData.tags || [],
             });
             setAboutMe(profilePageData?.aboutMe || "N/A");
             setIcon(profilePageData?.profilePicture || "");
@@ -94,6 +98,13 @@ export default function ProfilePage() {
     );
   }
 
+  // Function to handle viewing tags
+  const viewTags = () => {
+    if (profilePage) {
+      setShowTagsModal(true); // Show the modal
+    }
+  };
+
   return (
     <>
       <Stack.Screen
@@ -122,17 +133,30 @@ export default function ProfilePage() {
             </SizableText>
           </XStack>
 
-          <Button
-            size="$7"
-            circular
-            onPress={() => setIsAddToRoomDialogOpen(true)}
-            color="$white"
-            borderRadius="50%"
-            justifyContent="center"
-            alignItems="center"
-            display="flex"
-            icon={<Plus size="$4" />}
-          />
+          <XStack gap={10}>
+            <Button
+              size="$7"
+              circular
+              onPress={() => setIsAddToRoomDialogOpen(true)}
+              color="$white"
+              justifyContent="center"
+              alignItems="center"
+              display="flex"
+              icon={<Plus size="$4" />}
+            />
+
+            <Button
+              size="$7"
+              circular
+              onPress={viewTags} // Show tags modal
+              color="$white"
+              justifyContent="center"
+              alignItems="center"
+              display="flex"
+              icon={<Tag size="$4" />}
+            />
+          </XStack>
+
           <AddUserToRoomDialog
             open={isAddToRoomDialogOpen}
             onOpenChange={setIsAddToRoomDialogOpen}
@@ -141,6 +165,13 @@ export default function ProfilePage() {
           />
         </YStack>
       </SafeAreaView>
+
+      {/* Tags Modal */}
+      <TagsModal
+        visible={showTagsModal}
+        onClose={() => setShowTagsModal(false)}
+        tags={profilePage?.tags || []}
+      />
     </>
   );
 }

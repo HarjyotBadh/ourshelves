@@ -103,3 +103,33 @@ export const getAdminRooms = async (currentUserId: string): Promise<Room[]> => {
 
   return [];
 }
+
+// function to update user's tags
+export const updateProfileTags = async (updatedTags: string[]): Promise<{ success: boolean; message: string }> => {
+  const profileId = auth.currentUser?.uid;
+  if (!profileId) {
+    throw new Error("User is not authenticated");
+  }
+  const profileRef = doc(db, "Users", profileId);
+
+  try {
+    const result = await runTransaction(db, async (transaction) => {
+      const profileDoc = await transaction.get(profileRef);
+
+      if (!profileDoc.exists()) {
+        return { success: false, message: "User not found." };
+      }
+
+      transaction.update(profileRef, {
+        tags:updatedTags
+      });
+
+      return { success: true, message: 'Successfully updated user tags' };
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error when updating profile:", error);
+    return { success: false, message: "Failed to update profile. Please try again later." };
+  }
+};

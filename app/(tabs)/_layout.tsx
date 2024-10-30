@@ -37,7 +37,6 @@ export default function TabLayout() {
                   size="$3.5" // Adjust size as needed
                   circular
                   color="$white"
-                  borderRadius="50%" // Ensure the button is circular
                   justifyContent="center"
                   alignItems="center"
                   display="flex" // Use flex to ensure alignment works
