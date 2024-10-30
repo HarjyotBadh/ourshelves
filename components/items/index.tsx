@@ -16,6 +16,9 @@ const items = {
   VKUYqstHB85LyrmRWmDB: lazy(() => import('./MoodMeterItem')),
   "1xFx35XueUeIA8JEI2Xu": lazy(() => import("./CalendarItem")),
   "lfRPa063ZysWizht5XiU": lazy(() => import("./DailyQuoteItem")),
+    'vyvdVS3vtZhzv5oqhmY4': lazy(() => import('./LinkItem')),
+    'WN3gKAlxR2ImFMGh4Iop': lazy(() => import('./NoteBoxItem')),
+    '3u3CsWfAQUXUxSBFqJ1u': lazy(() => import('./VotingBoxItem')),
   // Add new items here, for example:
   // '{ID of item from Firestore (in the Items collection) }': lazy(() => import('./{Name of file}')),
 
