@@ -4,6 +4,8 @@ import { View, YStack, Button, Image, Text } from "tamagui";
 import * as ImagePicker from 'expo-image-picker';
 import { ToastViewport, useToastController } from "@tamagui/toast";
 import { PictureFrameItemComponent } from "models/PictureFrameModel";
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage, auth } from 'firebaseConfig';
 
 import {
   PictureFrameView,
@@ -13,11 +15,10 @@ import {
   BottomBar,
   styles,
 } from "styles/PictureFrameStyles";
-import { auth } from "firebaseConfig";
 import { earnCoins } from "project-functions/shopFunctions";
 
 const { width: screenWidth } = Dimensions.get("window");
-const FRAME_WIDTH = screenWidth * 1; // 70% of screen width
+const FRAME_WIDTH = screenWidth * 1;
 const FRAME_HEIGHT = FRAME_WIDTH * 1;
 
 const PREVIEW_WIDTH = 100;
@@ -27,7 +28,9 @@ const PREVIEW_PADDING = 5;
 interface DefaultItemData {
   imageUri: string;
 }
-
+interface RoomInfo {
+  roomId: string;
+}
 const defaultItemData: DefaultItemData = {
   imageUri: ""
 };
@@ -37,35 +40,78 @@ const PictureFrameItem: PictureFrameItemComponent = ({
   onDataUpdate = () => {},
   isActive = false,
   onClose = () => {},
-  roomInfo = {}
+  roomInfo = {}  as RoomInfo
 }) => {
   const [imageUri, setImageUri] = useState(itemData.imageUri || "");
   const [hasChanges, setHasChanges] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const toast = useToastController();
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+  const uploadImage = async (uri: string) => {
+    if (!roomInfo.roomId) {
+      toast.show('Room ID is missing', {
+        duration: 3000,
+      });
+      return;
+    }
 
-    if (!result.canceled) {
-      handleImageUriChange(result.assets[0].uri);
+    setIsUploading(true);
+    try {
+      // Convert URI to blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Create unique filename
+      const filename = `pictures/${roomInfo.roomId}/${Date.now()}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload to Firebase Storage
+      await uploadBytes(storageRef, blob);
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      // Update state and parent component with the storage URL
+      setImageUri(downloadUrl);
+      setHasChanges(true);
+      onDataUpdate({ ...itemData, imageUri: downloadUrl });
+
+      toast.show('Image uploaded successfully!', {
+        duration: 3000,
+      });
+
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.show('Failed to upload image', {
+        duration: 3000,
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleImageUriChange = (uri: string) => {
-    setImageUri(uri);
-    setHasChanges(true);
-    onDataUpdate({ ...itemData, imageUri: uri });
+  const pickImage = async () => {
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        await uploadImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      toast.show('Failed to pick image', {
+        duration: 3000,
+      });
+    }
   };
 
   const handleClose = useCallback(async () => {
     try {
       if (hasChanges) {
-        earnCoins(auth.currentUser.uid, 10);
+        await earnCoins(auth.currentUser.uid, 10);
         toast.show("You earned 10 coins for updating the picture!", {
           duration: 3000,
         });
@@ -74,6 +120,9 @@ const PictureFrameItem: PictureFrameItemComponent = ({
       onClose();
     } catch (error) {
       console.error("Error closing picture frame:", error);
+      toast.show("Error while closing", {
+        duration: 3000,
+      });
     }
   }, [itemData, imageUri, onDataUpdate, onClose, hasChanges]);
 
@@ -145,14 +194,16 @@ const PictureFrameItem: PictureFrameItemComponent = ({
               color="white"
               size="$3"
               marginRight="$2"
+              disabled={isUploading}
             >
-              Pick an image
+              {isUploading ? 'Uploading...' : 'Pick an image'}
             </Button>
             <Button
               onPress={handleClose}
               backgroundColor="$blue10"
               color="white"
               size="$3"
+              disabled={isUploading}
             >
               Close
             </Button>
@@ -167,5 +218,4 @@ const PictureFrameItem: PictureFrameItemComponent = ({
 
 PictureFrameItem.getInitialData = () => defaultItemData;
 
-const ExportedPictureFrameItem: PictureFrameItemComponent = PictureFrameItem;
-export default ExportedPictureFrameItem;
+export default PictureFrameItem;
