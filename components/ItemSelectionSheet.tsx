@@ -1,6 +1,16 @@
 import React, { useState } from "react";
-import { Sheet, YStack, XStack, ScrollView, Text, styled, AnimatePresence, Button } from "tamagui";
-import { ChevronDown, ChevronUp, ShoppingBag } from "@tamagui/lucide-icons";
+import {
+  Sheet,
+  YStack,
+  XStack,
+  ScrollView,
+  Text,
+  styled,
+  AnimatePresence,
+  Button,
+  Input,
+} from "tamagui";
+import { ChevronDown, ChevronUp, ShoppingBag, Search } from "@tamagui/lucide-icons";
 import { useRouter } from "expo-router";
 import Item, { ItemData } from "./item";
 
@@ -55,6 +65,20 @@ const EmptyStateContainer = styled(YStack, {
   marginTop: 20,
 });
 
+const SearchContainer = styled(XStack, {
+  backgroundColor: "#d2b48c",
+  borderRadius: 8,
+  padding: 12,
+  marginBottom: 16,
+  alignItems: "center",
+  gap: 8,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 2,
+});
+
 const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
   isOpen,
   onClose,
@@ -62,6 +86,7 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
   items,
 }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   const toggleItem = (itemId: string) => {
@@ -75,6 +100,12 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
     router.push("/(tabs)/shop");
   };
 
+  const sortedAndFilteredItems = React.useMemo(() => {
+    return items
+      .filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [items, searchQuery]);
+
   return (
     <Sheet modal open={isOpen} onOpenChange={onClose} snapPoints={[90]}>
       <Sheet.Overlay />
@@ -82,8 +113,23 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
         <Sheet.Handle />
         <ScrollView>
           <YStack padding="$4" gap="$4">
-            {items && items.length > 0 ? (
-              items.map((item) => (
+            <SearchContainer>
+              <Search size={20} color="#8b4513" />
+              <Input
+                flex={1}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search items..."
+                borderWidth={0}
+                backgroundColor="transparent"
+                fontSize={16}
+                color="#8b4513"
+                placeholderTextColor="#8b4513aa"
+              />
+            </SearchContainer>
+
+            {sortedAndFilteredItems.length > 0 ? (
+              sortedAndFilteredItems.map((item) => (
                 <ShelfContainer key={item.itemId}>
                   <CategoryHeader onPress={() => toggleItem(item.itemId)}>
                     <Text fontSize={18} fontWeight="bold">
