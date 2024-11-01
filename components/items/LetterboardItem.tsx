@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Dialog, YStack, XStack, Input, Button } from "tamagui";
 import { earnCoins } from "project-functions/shopFunctions";
 import { auth, db } from "firebaseConfig";
+import {Dimensions} from 'react-native'
 import { ToastViewport, useToastController } from "@tamagui/toast";
 import { set } from "date-fns";
 
@@ -47,6 +48,7 @@ const LetterBoard: LetterBoardComponent = ({
   const [boardChanged, setBoardChanged] = useState(false);
   const [boardInit, setBoardinit] = useState(true); // TODO this might need to be changed to make it truly asynchronous
   const toast = useToastController();
+  const { width, height } = Dimensions.get('window');
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
@@ -103,17 +105,19 @@ const LetterBoard: LetterBoardComponent = ({
 
   // What the letterboard looks like when sitting on the shelf
   const renderLetterBoardPreview = () => (
-    <YStack flex={1} alignItems="center" justifyContent="center" padding={5} backgroundColor="#ddd">
-      <YStack 
-        position="absolute" 
-        backgroundColor="black" 
-        height={120} 
-        width={120}
-        borderRadius="$1" 
-        alignItems="center"
-        justifyContent="center"
-      />
-      <YStack padding={5} space="$1">
+    
+<YStack flex={1} alignItems="center" justifyContent="center" padding={5} backgroundColor="#ddd">
+    <YStack 
+      position="absolute" 
+      backgroundColor="black" 
+      height={height * 0.15}  // Adjusts to 20% of the screen height
+      width={width * 0.307}    // Adjusts to 30% of the screen width
+      borderRadius="$1" 
+      alignItems="center"
+      justifyContent="center"
+    />
+    <View>
+      <YStack padding={5} gap="$1">
         {gridValues.map((row, rowIndex) => (
           <XStack key={rowIndex} space="$1">
             {row.map((value, colIndex) => (
@@ -123,8 +127,8 @@ const LetterBoard: LetterBoardComponent = ({
                 value={value}
                 onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
                 maxLength={1}
-                width={38} 
-                height={12}
+                width={width * 0.099}   // Adjust width proportionally
+                height={height * 0.015} // Adjust height proportionally
                 textAlign="center"
                 fontSize={10}
                 fontWeight="bold"
@@ -137,6 +141,7 @@ const LetterBoard: LetterBoardComponent = ({
           </XStack>
         ))}
       </YStack>
+    </View>
     </YStack>
   );
 
