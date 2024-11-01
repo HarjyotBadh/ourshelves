@@ -60,6 +60,10 @@ const NoteBoxItem: NoteBoxItemComponent = ({
         }
     }, [isActive]);
 
+    useEffect(() => {
+        setNotes(itemData.notes || []);
+    }, [itemData]);
+
     const handleAddNote = (body: string) => {
         const sender = auth.currentUser.displayName;
 

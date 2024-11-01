@@ -55,6 +55,11 @@ const ClockItem: ClockItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     }
   }, [isActive]);
 
+  useEffect(() => {
+    setIsAnalog(itemData.isAnalog !== undefined ? itemData.isAnalog : true);
+    setTimeZone(itemData.timeZone || 4);
+  }, [itemData]);
+
   const handleClockOptionsSelect = (isAnalogOption: boolean, timeZoneOption: number) => {
     setIsAnalog(isAnalogOption);
     setTimeZone(timeZoneOption);
