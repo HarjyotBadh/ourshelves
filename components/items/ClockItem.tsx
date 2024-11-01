@@ -53,7 +53,6 @@ const ClockItem: ClockItemComponent = ({
     const [dialogOpen, setDialogOpen] = useState(false);
 
     const [isAnalog, setIsAnalog] = useState(itemData.isAnalog !== undefined ? itemData.isAnalog : true);
-    // const [isAnalog, setIsAnalog] = useState(itemData.isAnalog);
     const [timeZone, setTimeZone] = useState(itemData.timeZone || 4);
 
     // Opens dialog when item is active/clicked
@@ -62,6 +61,11 @@ const ClockItem: ClockItemComponent = ({
             setDialogOpen(true);
         }
     }, [isActive]);
+
+    useEffect(() => {
+        setIsAnalog(itemData.isAnalog !== undefined ? itemData.isAnalog : true);
+        setTimeZone(itemData.timeZone || 4);
+    }, [itemData]);
 
     const handleClockOptionsSelect = (isAnalogOption: boolean, timeZoneOption: number) => {
         setIsAnalog(isAnalogOption);

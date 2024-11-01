@@ -66,6 +66,12 @@ const VotingBoxItem: VotingBoxItemComponent = ({
         }
     }, [isActive]);
 
+    useEffect(() => {
+        setTopic(itemData.topic || "");
+        setOptions(itemData.options || []);
+        setVotes(itemData.votes || []);
+    }, [itemData]);
+
     const handleDialogClose = () => {
         setDialogOpen(false);
         onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
