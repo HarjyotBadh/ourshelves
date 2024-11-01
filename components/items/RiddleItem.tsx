@@ -78,6 +78,12 @@ const RiddleItem: RiddleItemComponent = ({
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
 
+  // Updating data in realtime
+  useEffect(() => {
+    setRiddlePrompt(itemData.riddlePrompt);
+    setRiddleAnswer(itemData.riddleAnswer);
+  }, [itemData]);
+
   const handleRiddleAttempt = () => {
     if (riddleAttempt == riddleAnswer) {
         if (!solvedUsers.includes(profileId)) {

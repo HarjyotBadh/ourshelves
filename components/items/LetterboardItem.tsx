@@ -63,6 +63,7 @@ const LetterBoard: LetterBoardComponent = ({
     }
   }, [isActive]);
 
+  // Updating data in realtime
   useEffect(() => {
     convertTo2DArray(itemData.gridData, itemData.numColumns);
   }, [itemData]);
