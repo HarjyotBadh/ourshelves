@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Image, YStack, Button, Text, XStack } from "tamagui";
+import { Image, YStack, Button, Text } from "tamagui";
 import { notifyRoomUsers } from "project-functions/roomFunctions";
 import { useToastController } from "@tamagui/toast";
 import { Audio } from "expo-av";
 import { Timestamp } from "firebase/firestore";
-import { Bell, Circle as CircleIcon } from "@tamagui/lucide-icons";
 import { AnimatePresence } from "tamagui";
-import { Svg, Circle, G } from "react-native-svg";
+import { Svg, Circle } from "react-native-svg";
 
 const soundEffectUrl =
   "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/sound-effects%2Fbell-ring.wav?alt=media&token=81ceadc0-0102-4a80-9a1b-28d77051ec06";
@@ -79,7 +78,6 @@ const CooldownIndicator = ({ lastRung }: { lastRung: Timestamp }) => {
   return (
     <YStack position="absolute" top={0} left={0} right={0} bottom={0}>
       <Svg width={size} height={size}>
-        {/* Background circle */}
         <Circle
           stroke="rgba(0, 0, 0, 0.1)"
           fill="none"
@@ -88,7 +86,6 @@ const CooldownIndicator = ({ lastRung }: { lastRung: Timestamp }) => {
           r={radius}
           strokeWidth={strokeWidth}
         />
-        {/* Progress circle */}
         <Circle
           stroke={progress === 1 ? "#FFB800" : "#666"}
           fill="none"
@@ -130,7 +127,6 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
   const [lastRung, setLastRung] = useState(itemData.lastRung || Timestamp.now());
   const toast = useToastController();
 
-  // Add this effect to initialize the bell if needed
   useEffect(() => {
     if (!itemData.lastRung) {
       const initialData = BellItem.getInitialData();
@@ -142,7 +138,6 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
     }
   }, []);
 
-  // Load sound effect
   useEffect(() => {
     const loadSoundEffect = async () => {
       if (soundEffectUrl) {
@@ -167,7 +162,6 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
     };
   }, []);
 
-  // Check if bell can be rung
   useEffect(() => {
     const updateRingAvailability = () => {
       const now = Timestamp.now();
@@ -180,7 +174,6 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
     return () => clearInterval(interval);
   }, [lastRung]);
 
-  // When the bell is "rung"
   const handlePress = async () => {
     if (!canRing) {
       toast.show("Bell is on cooldown!", {
@@ -190,15 +183,12 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
     }
 
     try {
-      // Play sound effect
       if (soundEffect) {
         await soundEffect.replayAsync();
       }
 
-      // Notify users
       await notifyRoomUsers(roomInfo.roomId);
 
-      // Update lastRung time
       const now = Timestamp.now();
       setLastRung(now);
       setCanRing(false);
@@ -207,7 +197,6 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
         lastRung: now.toDate(),
       });
 
-      // Show toast
       toast.show("Bell rung!", {
         message: "Other users in the room have been notified",
       });
@@ -219,7 +208,6 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
     }
   };
 
-  // Opens dialog when item is active/clicked
   useEffect(() => {
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
@@ -250,7 +238,6 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
   }
 };
 
-// Initializes item data (default values)
 BellItem.getInitialData = () => {
   const now = Timestamp.now();
   const threeHoursAgo = new Timestamp(now.seconds - 3 * 60 * 60, now.nanoseconds);
