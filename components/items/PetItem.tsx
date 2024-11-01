@@ -260,11 +260,14 @@ const NameInput = styled(Input, {
 });
 
 const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
+  const now = Timestamp.now();
+  const defaultLastFed = new Timestamp(now.seconds - 24 * 60 * 60, now.nanoseconds);
+  const defaultLastPlayed = new Timestamp(now.seconds - 12 * 60 * 60, now.nanoseconds);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [hungerLevel, setHungerLevel] = useState(itemData.hungerLevel || 0);
-  const [happinessLevel, setHappinessLevel] = useState(itemData.happinessLevel || 0);
-  const [lastFed, setLastFed] = useState(itemData.lastFed || Timestamp.now());
-  const [lastPlayed, setLastPlayed] = useState(itemData.lastPlayed || Timestamp.now());
+  const [hungerLevel, setHungerLevel] = useState(itemData.hungerLevel ?? 50);
+  const [happinessLevel, setHappinessLevel] = useState(itemData.happinessLevel ?? 50);
+  const [lastFed, setLastFed] = useState(itemData.lastFed || defaultLastFed);
+  const [lastPlayed, setLastPlayed] = useState(itemData.lastPlayed || defaultLastPlayed);
   const [canFeed, setCanFeed] = useState(false);
   const [canPlay, setCanPlay] = useState(false);
   const [isFeeding, setIsFeeding] = useState(false);
@@ -281,14 +284,14 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
   const [isEditingName, setIsEditingName] = useState(false);
   const [petName, setPetName] = useState(itemData.petName || "Unnamed Pet");
   const [isFoodShopOpen, setIsFoodShopOpen] = useState(false);
-  const [selectedFoodId, setSelectedFoodId] = useState<string>(itemData.selectedFoodId || "basic_kibble");
+  const [selectedFoodId, setSelectedFoodId] = useState<string>(
+    itemData.selectedFoodId || "basic_kibble"
+  );
 
-  // Add this helper function near the top of the component
   const getSelectedFood = useMemo(() => {
     return FOOD_ITEMS.find((food) => food.id === selectedFoodId) || FOOD_ITEMS[0];
   }, [selectedFoodId]);
 
-  // Create a wrapper function for setSelectedFoodId that also updates Firestore
   const handleFoodSelection = (foodId: string) => {
     setSelectedFoodId(foodId);
     onDataUpdate({
@@ -381,7 +384,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
   const handlePlay = useCallback(() => {
     if (!canPlay || happinessLevel >= 100) return;
 
-    const newHappinessLevel = Math.min(happinessLevel + 5, 100); // Changed from 15 to 5
+    const newHappinessLevel = Math.min(happinessLevel + 5, 100);
     setHappinessLevel(newHappinessLevel);
     setLastPlayed(Timestamp.now());
     setCanPlay(false);
@@ -433,14 +436,13 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
   );
 
   useEffect(() => {
-    if (!itemData.lastFed) {
-      const now = Timestamp.now();
+    if (itemData.hungerLevel === undefined || itemData.happinessLevel === undefined) {
       const initialData = {
         ...itemData,
         hungerLevel: 50,
         happinessLevel: 50,
-        lastFed: now,
-        lastPlayed: now,
+        lastFed: defaultLastFed,
+        lastPlayed: defaultLastPlayed,
       };
       onDataUpdate(initialData);
     }
@@ -477,6 +479,46 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
       setPetName("Unnamed Pet");
     }
     setIsEditingName(false);
+  };
+
+  const handleTimeAdjust = (hoursToAdjust: number) => {
+    const secondsToAdjust = hoursToAdjust * 60 * 60;
+    const newLastFed = new Timestamp(lastFed.seconds - secondsToAdjust, lastFed.nanoseconds);
+    const newLastPlayed = new Timestamp(
+      lastPlayed.seconds - secondsToAdjust,
+      lastPlayed.nanoseconds
+    );
+
+    setLastFed(newLastFed);
+    setLastPlayed(newLastPlayed);
+
+    // Calculate new levels based on the time change
+    const { newHunger, newHappiness } = calculateDecayedLevels(
+      newLastFed,
+      newLastPlayed,
+      hungerLevel,
+      happinessLevel
+    );
+
+    setHungerLevel(newHunger);
+    setHappinessLevel(newHappiness);
+
+    onDataUpdate({
+      ...itemData,
+      lastFed: newLastFed,
+      lastPlayed: newLastPlayed,
+      hungerLevel: newHunger,
+      happinessLevel: newHappiness,
+    });
+
+    toast.show(
+      `Time ${hoursToAdjust > 0 ? "fast-forwarded" : "rewound"} by ${Math.abs(
+        hoursToAdjust
+      )} hours!`,
+      {
+        backgroundColor: "$purple9",
+      }
+    );
   };
 
   // Renders item when not active/clicked
@@ -627,9 +669,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                 </InfoText>
               </YStack>
               <YStack alignItems="center" gap="$2" width="100%">
-                <InfoText>
-                  🎯 Drag {getSelectedFood.name} to feed your pet! 🎯
-                </InfoText>
+                <InfoText>🎯 Drag {getSelectedFood.name} to feed your pet! 🎯</InfoText>
                 <Animated.View
                   {...panResponder.panHandlers}
                   style={[
@@ -656,6 +696,20 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                   flex={1}
                 >
                   <StyledButtonText>🛍️ Food Shop</StyledButtonText>
+                </StyledButton>
+                <StyledButton
+                  onPress={() => handleTimeAdjust(-6)}
+                  backgroundColor="$purple9"
+                  flex={1}
+                >
+                  <StyledButtonText>⏪ -6h</StyledButtonText>
+                </StyledButton>
+                <StyledButton
+                  onPress={() => handleTimeAdjust(6)}
+                  backgroundColor="$purple9"
+                  flex={1}
+                >
+                  <StyledButtonText>⏩ +6h</StyledButtonText>
                 </StyledButton>
               </XStack>
               <FoodShopDialog
@@ -689,7 +743,7 @@ PetItem.getInitialData = () => {
     happinessLevel: 50,
     lastFed: twentyFourHoursAgo,
     lastPlayed: twelveHoursAgo,
-    selectedFoodId: "basic_kibble", // Add this line
+    selectedFoodId: "basic_kibble",
   };
 };
 

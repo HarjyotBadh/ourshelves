@@ -75,6 +75,7 @@
     "react-native-webview": "13.8.6",
     "styled-components": "^6.1.13",
     "tamagui": "^1.110.5",
+    "tinycolor2": "^1.6.0",
     "unimodules": "^1.0.0",
     "validator": "^13.12.0"
   },
@@ -87,6 +88,7 @@
     "@types/expo": "^33.0.1",
     "@types/react": "~18.2.79",
     "@types/react-native": "^0.73.0",
+    "@types/tinycolor2": "^1",
     "@types/validator": "^13",
     "eslint": "^9.10.0",
     "typescript": "~5.3.3"
