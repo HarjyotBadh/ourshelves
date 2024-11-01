@@ -94,6 +94,19 @@ const CalendarItem: CalendarItemComponent = ({
     }
   }, [isActive]);
 
+  // useEffect(() => {
+  //   if (itemData.currentDate) {
+  //     try {
+  //       const parsedDate = parseISO(itemData.currentDate);
+  //       setCurrentDate(parsedDate);
+  //       setNextDate(addDays(parsedDate, 1));
+  //     } catch (error) {
+  //       console.error("Error parsing date:", error);
+  //     }
+  //   }
+  // }, [itemData.currentDate]);
+
+  
   useEffect(() => {
     if (itemData.currentDate) {
       try {
@@ -104,7 +117,13 @@ const CalendarItem: CalendarItemComponent = ({
         console.error("Error parsing date:", error);
       }
     }
-  }, [itemData.currentDate]);
+    // Update events if they exist in itemData
+    if (itemData.events) {
+      setEvents(itemData.events);
+    }
+  }, [itemData]);
+
+  
 
   useEffect(() => {
     const newDate = addDays(currentDate, 1);
