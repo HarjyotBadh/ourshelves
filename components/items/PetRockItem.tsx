@@ -89,6 +89,17 @@ const PetRockItem: PetRockItemComponent = ({
   }, [isActive]);
 
   useEffect(() => {
+    // Update outfits if they exist in itemData
+    if (itemData.outfits) {
+      setOutfits(itemData.outfits);
+    }
+    // Update currentOutfitIndex if it exists in itemData
+    if (itemData.currentOutfitIndex !== undefined) {
+      setCurrentOutfitIndex(itemData.currentOutfitIndex);
+    }
+  }, [itemData]);
+
+  useEffect(() => {
     if (outfits.length > 0 && currentOutfitIndex === -1) {
       setCurrentOutfitIndex(0);
       onDataUpdate({ ...itemData, currentOutfitIndex: 0 });
