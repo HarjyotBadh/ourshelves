@@ -15,33 +15,68 @@ import {
 } from "project-functions/homeFunctions";
 import { useRouter } from "expo-router";
 import { PushTokenContext } from "../_layout";
+import { doc, onSnapshot, getDoc } from "firebase/firestore";
+import { db } from "firebaseConfig";
+
+interface RoomData {
+  name: string;
+  admins: { path: string }[];
+  tags?: string[];
+}
+
+interface Room {
+  id: string;
+  name: string;
+  isAdmin: boolean;
+  tags: string[];
+}
 
 const HomeScreen = () => {
-  interface Room {
-    id: string;
-    name: string;
-    isAdmin: boolean;
-    tags: string[];
-  }
-
   const [rooms, setRooms] = useState<Room[]>([]);
   const [tagsList, setTagsList] = useState<string[]>([]);
   const [tagIdsList, setTagIdsList] = useState<string[]>([]);
   const router = useRouter();
   const pushToken = useContext(PushTokenContext);
 
-  const homeSetRooms = async () => {
+  const homeSetRooms = () => {
     if (!auth.currentUser) {
       return;
     }
-    const result = await getRooms(auth.currentUser.uid);
-    const roomsData: Room[] = result.rooms.map((room: any) => ({
-      id: room.id,
-      name: room.name,
-      isAdmin: room.isAdmin,
-      tags: room.tags,
-    }));
-    setRooms(roomsData);
+
+    const userRef = doc(db, "Users", auth.currentUser.uid);
+
+    const unsubscribe = onSnapshot(userRef, async (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const userData = docSnapshot.data();
+        const roomRefs = userData.rooms || [];
+
+        const roomsData = await Promise.all(
+          roomRefs.map(async (roomRef) => {
+            const roomDoc = await getDoc(roomRef);
+
+            if (roomDoc.exists()) {
+              const roomData = roomDoc.data() as RoomData;
+              const isAdmin = roomData.admins.some((adminRef) =>
+                adminRef.path.includes(auth.currentUser!.uid)
+              );
+
+              return {
+                id: roomDoc.id,
+                name: roomData.name,
+                isAdmin: isAdmin,
+                tags: roomData.tags || [],
+              };
+            }
+            return null;
+          })
+        );
+
+        const validRooms = roomsData.filter((room): room is Room => room !== null);
+        setRooms(validRooms);
+      }
+    });
+
+    return unsubscribe;
   };
 
   const homeLeaveRoom = async (roomId: string, roomName: string) => {
@@ -75,26 +110,12 @@ const HomeScreen = () => {
     const result = await createRoom(roomName, roomDescription);
 
     if (result.success) {
-      const getRoomResult = await getRoomById(result.message);
-
-      if (getRoomResult.success) {
-        setRooms((prevRooms) => [
-          ...prevRooms,
-          {
-            id: getRoomResult.room.id,
-            name: getRoomResult.room.name,
-            isAdmin: true,
-            tags: getRoomResult.room.tags,
-          },
-        ]);
-
-        Alert.alert("Room Created", `Room "${getRoomResult.room.name}" created.`);
-      } else {
-        Alert.alert(
-          "Error",
-          `An error occurred while creating the room. Yell this to Jack: \n\n${result.message}`
-        );
-      }
+      Alert.alert("Room Created", `Room "${roomName}" created.`);
+    } else {
+      Alert.alert(
+        "Error",
+        `An error occurred while creating the room. Yell this to Jack: \n\n${result.message}`
+      );
     }
   };
 
@@ -122,12 +143,23 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    homeSetRooms();
+    let unsubscribe: (() => void) | undefined;
 
-    getTags().then((result) => {
-      setTagsList(result.tagNames);
-      setTagIdsList(result.tagIds);
-    });
+    if (auth.currentUser) {
+      unsubscribe = homeSetRooms();
+
+      getTags().then((result) => {
+        setTagsList(result.tagNames);
+        setTagIdsList(result.tagIds);
+      });
+    }
+
+    // Cleanup function
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   useEffect(() => {

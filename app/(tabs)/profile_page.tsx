@@ -1,28 +1,44 @@
 import React, { useState, useEffect } from "react";
 import { Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert } from "react-native";
 import { db } from "firebaseConfig";
-import { useRouter, Link, useLocalSearchParams, Stack} from "expo-router";
-import { Avatar, styled, TextArea, Button, Text, H2, H4, Spinner, XStack, YStack, SizableText, Dialog } from 'tamagui'
-import {  doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { updateProfileAbtMe, updateProfileTags } from 'project-functions/profileFunctions';
-import { Wrench, LogOut, AlignJustify } from '@tamagui/lucide-icons'
+import { useRouter, Link, useLocalSearchParams, Stack } from "expo-router";
+import {
+  Avatar,
+  styled,
+  TextArea,
+  Button,
+  Text,
+  H2,
+  H4,
+  Spinner,
+  XStack,
+  YStack,
+  SizableText,
+  Dialog,
+} from "tamagui";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { updateProfileAbtMe, updateProfileTags } from "project-functions/profileFunctions";
+import { Wrench, LogOut, AlignJustify } from "@tamagui/lucide-icons";
 import { auth } from "firebaseConfig";
-import { deleteUser, reauthenticateWithCredential, EmailAuthProvider, signOut } from "firebase/auth";
+import {
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  signOut,
+} from "firebase/auth";
 
-
-import { Check as CheckIcon } from '@tamagui/lucide-icons'
-import type { CheckboxProps } from 'tamagui'
-import { Checkbox, Label } from 'tamagui'
-
+import { Check as CheckIcon } from "@tamagui/lucide-icons";
+import type { CheckboxProps } from "tamagui";
+import { Checkbox, Label } from "tamagui";
 
 // Data for profile page to be queried from db
 interface ProfilePage {
   aboutMe: string;
   profilePicture: string;
   rooms: string;
-  displayName: string
-  tags: string[]
+  displayName: string;
+  tags: string[];
 }
 
 const LoadingContainer = styled(YStack, {
@@ -50,7 +66,7 @@ export default function ProfilePage() {
     familyFriendly: false,
   });
 
-  const [showAddTagsDialog, setShowAddTagsDialog] = useState(false); 
+  const [showAddTagsDialog, setShowAddTagsDialog] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,7 +84,7 @@ export default function ProfilePage() {
               profilePicture: profilePageData.profilePicture,
               rooms: profilePageData.rooms,
               displayName: profilePageData.displayName,
-              tags: profilePageData.tags
+              tags: profilePageData.tags,
             });
 
             setIcon(profilePageData.profilePicture);
@@ -80,7 +96,6 @@ export default function ProfilePage() {
               zanyShenanigans: profilePageData.tags.includes("zanyShenanigans"),
               familyFriendly: profilePageData.tags.includes("familyFriendly"),
             });
-
           } else {
             throw new Error("User not found");
           }
@@ -213,16 +228,15 @@ export default function ProfilePage() {
       pressStyle={{ scale: 0.9, backgroundColor: "transparent" }} // Transparent when pressed
     />
   );
-  
 
   return (
     <>
       <Stack.Screen
-          options={{
-            headerRight: () => <HeaderRight />,
-            headerLeft: () => <HeaderLeft />,
-            title: "Profile",
-          }}
+        options={{
+          headerRight: () => <HeaderRight />,
+          headerLeft: () => <HeaderLeft />,
+          title: "Profile",
+        }}
       />
 
       <Dialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
@@ -266,94 +280,99 @@ export default function ProfilePage() {
         </Dialog.Portal>
       </Dialog>
 
-
-     {/* Add Tags Dialog */}
-     <Dialog open={showAddTagsDialog} onOpenChange={setShowAddTagsDialog}>
-      <Dialog.Portal>
-        <Dialog.Overlay
-          key="overlay"
-          animation="quick"
-          opacity={0.5}
-          enterStyle={{ opacity: 0 }}
-          exitStyle={{ opacity: 0 }}
-        />
-        <Dialog.Content
-          bordered
-          elevate
-          key="content"
-          animation={[
-            'quick',
-            {
-              opacity: {
-                overshootClamping: true,
+      {/* Add Tags Dialog */}
+      <Dialog open={showAddTagsDialog} onOpenChange={setShowAddTagsDialog}>
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
               },
-            },
-          ]}
-          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-          gap="$4"
-        >
-          <Dialog.Title>Add Tags</Dialog.Title>
-          <Dialog.Description>
-            Enter the tags you want to add to your profile.
-          </Dialog.Description>
-          <YStack width={300} alignItems="center" gap="$1">
-          <CheckboxWithLabel
-            size="$4"
-            label="Close Community"
-            checked={checkedTags.closeCommunity}
-            onChange={(checked) => setCheckedTags((prev) => ({ ...prev, closeCommunity: checked }))}
-          />
-          <CheckboxWithLabel
-            size="$4"
-            label="Zany Shenanigans"
-            checked={checkedTags.zanyShenanigans}
-            onChange={(checked) => setCheckedTags((prev) => ({ ...prev, zanyShenanigans: checked }))}
-          />
-          <CheckboxWithLabel
-            size="$4"
-            label="Family Friendly"
-            checked={checkedTags.familyFriendly}
-            onChange={(checked) => setCheckedTags((prev) => ({ ...prev, familyFriendly: checked }))}
-          />
-          </YStack>
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            gap="$4"
+          >
+            <Dialog.Title>Add Tags</Dialog.Title>
+            <Dialog.Description>Enter the tags you want to add to your profile.</Dialog.Description>
+            <YStack width={300} alignItems="center" gap="$1">
+              <CheckboxWithLabel
+                id="closeCommunity"
+                size="$4"
+                label="Close Community"
+                checked={checkedTags.closeCommunity}
+                onChange={(checked) =>
+                  setCheckedTags((prev) => ({ ...prev, closeCommunity: checked }))
+                }
+              />
+              <CheckboxWithLabel
+                id="zanyShenanigans"
+                size="$4"
+                label="Zany Shenanigans"
+                checked={checkedTags.zanyShenanigans}
+                onChange={(checked) =>
+                  setCheckedTags((prev) => ({ ...prev, zanyShenanigans: checked }))
+                }
+              />
+              <CheckboxWithLabel
+                id="familyFriendly"
+                size="$4"
+                label="Family Friendly"
+                checked={checkedTags.familyFriendly}
+                onChange={(checked) =>
+                  setCheckedTags((prev) => ({ ...prev, familyFriendly: checked }))
+                }
+              />
+            </YStack>
 
-          <XStack gap="$3" justifyContent="flex-end">
-            <Dialog.Close asChild>
-              <Button theme="alt1">Cancel</Button>
-            </Dialog.Close>
-            <Button
-              theme="blue"
-              onPress={() => {
-                const selectedTags = Object.entries(checkedTags)
-                  .filter(([, isChecked]) => isChecked)
-                  .map(([tag]) => tag); // Extracting the tag names
+            <XStack gap="$3" justifyContent="flex-end">
+              <Dialog.Close asChild>
+                <Button theme="alt1">Cancel</Button>
+              </Dialog.Close>
+              <Button
+                theme="blue"
+                onPress={() => {
+                  const selectedTags = Object.entries(checkedTags)
+                    .filter(([, isChecked]) => isChecked)
+                    .map(([tag]) => tag); // Extracting the tag names
 
-                // Here you can use `selectedTags` array as needed
-                console.log("Selected Tags:", selectedTags); // Replace with your logic to use these tags
-                updateProfileTags(selectedTags);
-                setShowAddTagsDialog(false); // Close the dialog after adding tags
-              }}
-            >
-              Update Tags
-          </Button>
-          </XStack>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog>
+                  // Here you can use `selectedTags` array as needed
+                  console.log("Selected Tags:", selectedTags); // Replace with your logic to use these tags
+                  updateProfileTags(selectedTags);
+                  setShowAddTagsDialog(false); // Close the dialog after adding tags
+                }}
+              >
+                Update Tags
+              </Button>
+            </XStack>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
 
-    <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
-    {!isEditMode ? 
-    (
-    <YStack ai="center" gap="$4" px="$10" pt="$1">
-        <H2>{profilePage?.displayName}</H2>
-        
-        <Avatar circular size="$12">
-          <Avatar.Image
-            accessibilityLabel="profilePicture"
-            src={profileIcon}/>
-          <Avatar.Fallback backgroundColor="$blue10" />
-        </Avatar>
+      <SafeAreaView
+        style={{ flex: 1, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}
+      >
+        {!isEditMode ? (
+          <YStack ai="center" gap="$4" px="$10" pt="$1">
+            <H2>{profilePage?.displayName}</H2>
+
+            <Avatar circular size="$12">
+              <Avatar.Image accessibilityLabel="profilePicture" src={profileIcon} />
+              <Avatar.Fallback backgroundColor="$blue10" />
+            </Avatar>
 
             <H4>About Me:</H4>
             <TextArea
@@ -389,68 +408,61 @@ export default function ProfilePage() {
             <YStack ai="center" gap="$4" px="$10" pt="$1">
               <H2>{profilePage?.displayName}</H2>
               <Avatar circular size="$12">
-                <Avatar.Image accessibilityLabel="profilePicture" src={profileIcon} />
+                <Avatar.Image accessibilityLabel="profilePicture2" src={profileIcon} />
                 <Avatar.Fallback backgroundColor="$blue10" />
               </Avatar>
 
               <Link href="/profile-icons" asChild>
                 <Button mr="$2" bg="$yellow8" color="$yellow12">
                   Select Picture Icon
+                </Button>
+              </Link>
+
+              <TextArea
+                height={170}
+                width={300}
+                value={aboutMeText}
+                onChangeText={setAboutMe}
+                borderWidth={2}
+              />
+              <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
+                Update About Me
               </Button>
-          </Link>
-          
-          <TextArea height={170} width={300} value={aboutMeText} 
-            onChangeText={setAboutMe}
-            borderWidth={2}/>
-          <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
-            Update About Me        
-          </Button>
-          <Button
-              onPress={handleDeleteAccount}
-              bg="$yellow8"
-              color="$yellow12"
-              mr="$2"
-            >
-              Delete Account
-            </Button>
-          <Button
-            size="$7"
-            circular
-            onPress={() => {
-              setIsEditMode(false);
-            }}
-            bg="$yellow8"
-            color="$white"
-            justifyContent="center"
-            alignItems="center"
-            display="flex"
-            icon={<Wrench size="$4" />}>
-          </Button>
-      </YStack>
-    </TouchableWithoutFeedback>
-    )}
-    </SafeAreaView>
-  </>
-  )
+              <Button onPress={handleDeleteAccount} bg="$yellow8" color="$yellow12" mr="$2">
+                Delete Account
+              </Button>
+              <Button
+                size="$7"
+                circular
+                onPress={() => {
+                  setIsEditMode(false);
+                }}
+                bg="$yellow8"
+                color="$white"
+                justifyContent="center"
+                alignItems="center"
+                display="flex"
+                icon={<Wrench size="$4" />}
+              ></Button>
+            </YStack>
+          </TouchableWithoutFeedback>
+        )}
+      </SafeAreaView>
+    </>
+  );
 }
 
 export function CheckboxWithLabel({
   size,
-  label = 'Accept terms and conditions',
+  label = "Accept terms and conditions",
   checked,
   onChange,
   ...checkboxProps
 }: CheckboxProps & { label?: string; checked?: boolean; onChange?: (checked: boolean) => void }) {
-  const id = `checkbox-${(size || '').toString().slice(1)}`;
+  const id = `checkbox-${(size || "").toString().slice(1)}`;
   return (
     <XStack width={300} alignItems="center" gap="$4">
-      <Checkbox
-        id={id}
-        size={size}
-        checked={checked}
-        onCheckedChange={onChange}
-        {...checkboxProps}
-      >
+      <Checkbox id={id} size={size} checked={checked} onCheckedChange={onChange} {...checkboxProps}>
         <Checkbox.Indicator>
           <CheckIcon />
         </Checkbox.Indicator>
