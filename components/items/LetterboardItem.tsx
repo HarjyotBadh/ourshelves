@@ -57,11 +57,15 @@ const LetterBoard: LetterBoardComponent = ({
     }
 
     // TODO 
-    if (itemData.gridData !== undefined && boardInit) {
+    if (itemData.gridData !== undefined /*&& boardInit*/) {
       convertTo2DArray(itemData.gridData, itemData.numColumns);
-      setBoardinit(false);
+      //setBoardinit(false);
     }
   }, [isActive]);
+
+  useEffect(() => {
+    convertTo2DArray(itemData.gridData, itemData.numColumns);
+  }, [itemData]);
 
 
   const handleDialogClose = () => {
@@ -107,42 +111,55 @@ const LetterBoard: LetterBoardComponent = ({
   const renderLetterBoardPreview = () => (
     
 <YStack flex={1} alignItems="center" justifyContent="center" padding={5} backgroundColor="#ddd">
-    <YStack 
-      position="absolute" 
-      backgroundColor="black" 
-      height={height * 0.15}  // Adjusts to 20% of the screen height
-      width={width * 0.307}    // Adjusts to 30% of the screen width
-      borderRadius="$1" 
-      alignItems="center"
-      justifyContent="center"
-    />
-    <View>
-      <YStack padding={5} gap="$1">
-        {gridValues.map((row, rowIndex) => (
-          <XStack key={rowIndex} space="$1">
-            {row.map((value, colIndex) => (
-              <Input
-                key={`${rowIndex}-${colIndex}`}
-                editable={false}
-                value={value}
-                onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
-                maxLength={1}
-                width={width * 0.099}   // Adjust width proportionally
-                height={height * 0.015} // Adjust height proportionally
-                textAlign="center"
-                fontSize={10}
-                fontWeight="bold"
-                backgroundColor="#000"
-                color="#fff"
-                borderWidth={0.25}
-                borderRadius="$1"
-              />
-            ))}
-          </XStack>
+  {/* Transparent overlay */}
+  <View
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'transparent',
+    }}
+    pointerEvents="box-none"  // Ensures that only empty areas capture taps
+  />
+
+  <YStack 
+    position="absolute" 
+    backgroundColor="black" 
+    height={height * 0.15}     // Adjusts to 15% of the screen height
+    width={width * 0.307}      // Adjusts to 30.7% of the screen width
+    borderRadius="$1" 
+    alignItems="center"
+    justifyContent="center"
+  />
+  
+  <YStack padding={5} gap="$1">
+    {gridValues.map((row, rowIndex) => (
+      <XStack key={rowIndex} space="$1">
+        {row.map((value, colIndex) => (
+          <Input
+            key={`${rowIndex}-${colIndex}`}
+            editable={false}
+            value={value}
+            onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
+            maxLength={1}
+            width={width * 0.099}   // Adjust width proportionally
+            height={height * 0.015} // Adjust height proportionally
+            textAlign="center"
+            fontSize={10}
+            fontWeight="bold"
+            backgroundColor="#000"
+            color="#fff"
+            borderWidth={0.25}
+            borderRadius="$1"
+          />
         ))}
-      </YStack>
-    </View>
-    </YStack>
+      </XStack>
+    ))}
+  </YStack>
+</YStack>
+
   );
 
   // Renders item when not active/clicked
