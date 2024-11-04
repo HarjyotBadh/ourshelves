@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sheet,
   YStack,
@@ -87,7 +87,16 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
 }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (isOpen) {
+      setExpandedItems([]);
+      setSearchQuery("");
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }
+  }, [isOpen]);
 
   const toggleItem = (itemId: string) => {
     setExpandedItems((prev) =>
@@ -106,12 +115,21 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [items, searchQuery]);
 
+  useEffect(() => {}, [isOpen]);
+
   return (
-    <Sheet modal open={isOpen} onOpenChange={onClose} snapPoints={[90]}>
+    <Sheet
+      modal
+      open={isOpen}
+      onOpenChange={onClose}
+      snapPoints={[90]}
+      dismissOnSnapToBottom
+      zIndex={100000}
+    >
       <Sheet.Overlay />
       <Sheet.Frame backgroundColor="#f5deb3">
         <Sheet.Handle />
-        <ScrollView>
+        <ScrollView ref={scrollViewRef}>
           <YStack padding="$4" gap="$4">
             <SearchContainer>
               <Search size={20} color="#8b4513" />

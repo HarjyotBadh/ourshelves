@@ -152,6 +152,7 @@ const PictureFrameItem: PictureFrameItemComponent = ({
 
       if (!result.canceled && result.assets && result.assets[0]) {
         await uploadImage(result.assets[0].uri);
+        setHasChanges(true);
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -163,13 +164,14 @@ const PictureFrameItem: PictureFrameItemComponent = ({
 
   const handleClose = useCallback(async () => {
     try {
-      if (hasChanges) {
-        await earnCoins(auth.currentUser.uid, 10);
-        toast.show("You earned 10 coins for updating the picture!", {
-          duration: 3000,
-        });
-        setHasChanges(false);
-      }
+      // if (hasChanges) {
+      console.log("Earned 10 coins for updating the picture!");
+      await earnCoins(auth.currentUser.uid, 10);
+      toast.show("You earned 10 coins for updating the picture!", {
+        duration: 3000,
+      });
+      setHasChanges(false);
+      // }
       onClose();
     } catch (error) {
       console.error("Error closing picture frame:", error);

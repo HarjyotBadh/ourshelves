@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, createContext } from "react";
 import { useColorScheme, LogBox, Platform } from "react-native";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack, useRouter } from "expo-router";
+import { Slot, SplashScreen, Stack, useRouter } from "expo-router";
 import { Provider } from "./Provider";
 import { auth } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -157,7 +157,7 @@ export default function RootLayout() {
 
   // Only render the app when we know the auth state
   if (isUserAuthenticated === null) {
-    return null;
+    return <Slot />;
   }
 
   return <RootLayoutNav />;
