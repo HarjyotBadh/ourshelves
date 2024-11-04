@@ -1,26 +1,22 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Modal, View, Animated, PanResponder, Dimensions, StyleSheet, ScrollView } from "react-native";
-import { Button, Text, YStack, XStack, Image } from "tamagui";
+import { Modal, View, Animated, PanResponder, Dimensions, ScrollView } from "react-native";
+import { Button, Text, YStack, XStack } from "tamagui";
 import { useToastController } from "@tamagui/toast";
 import {
   format,
   addDays,
-  isBefore,
   parseISO,
   startOfDay,
   isSameDay,
 } from "date-fns";
 import {
-  CalendarItemProps,
   CalendarItemComponent,
   Event,
 } from "models/CalendarModel";
 import { calendarStyles } from "styles/CalendarStyles";
-import { BOTTOM_BAR_HEIGHT } from "styles/WhiteboardStyles";
 import { AddEventModal } from "components/AddEventModal";
 import { earnCoins } from "project-functions/shopFunctions";
 import { auth } from "firebaseConfig";
-import { ArrowRight } from "@tamagui/lucide-icons";
 
 const PulsingOutline = ({ children, isActive, style }) => {
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
@@ -98,6 +94,19 @@ const CalendarItem: CalendarItemComponent = ({
     }
   }, [isActive]);
 
+  // useEffect(() => {
+  //   if (itemData.currentDate) {
+  //     try {
+  //       const parsedDate = parseISO(itemData.currentDate);
+  //       setCurrentDate(parsedDate);
+  //       setNextDate(addDays(parsedDate, 1));
+  //     } catch (error) {
+  //       console.error("Error parsing date:", error);
+  //     }
+  //   }
+  // }, [itemData.currentDate]);
+
+  
   useEffect(() => {
     if (itemData.currentDate) {
       try {
@@ -108,7 +117,13 @@ const CalendarItem: CalendarItemComponent = ({
         console.error("Error parsing date:", error);
       }
     }
-  }, [itemData.currentDate]);
+    // Update events if they exist in itemData
+    if (itemData.events) {
+      setEvents(itemData.events);
+    }
+  }, [itemData]);
+
+  
 
   useEffect(() => {
     const newDate = addDays(currentDate, 1);

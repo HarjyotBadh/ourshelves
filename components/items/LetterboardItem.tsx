@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { View, Dialog, YStack, XStack, Input, Button } from "tamagui";
 import { earnCoins } from "project-functions/shopFunctions";
-import { auth, db } from "firebaseConfig";
-import { ToastViewport, useToastController } from "@tamagui/toast";
-import { set } from "date-fns";
-
+import { auth } from "firebaseConfig";
+import { Dimensions } from "react-native";
+import { useToastController } from "@tamagui/toast";
 
 interface LetterBoardProps {
   itemData: {
@@ -29,7 +28,7 @@ interface LetterBoardProps {
 }
 
 interface LetterBoardComponent extends React.FC<LetterBoardProps> {
-  getInitialData: () => {gridData: string[]};
+  getInitialData: () => { gridData: string[] };
 }
 
 const LetterBoard: LetterBoardComponent = ({
@@ -42,11 +41,16 @@ const LetterBoard: LetterBoardComponent = ({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Grid of letters to be used for letterboard
-  const [gridValues, setGridValues] = useState(Array(8).fill('').map(() => Array(3).fill('')))
+  const [gridValues, setGridValues] = useState(
+    Array(8)
+      .fill("")
+      .map(() => Array(3).fill(""))
+  );
   const [storedGridVals, setStoredGrid] = useState<string[]>([]);
   const [boardChanged, setBoardChanged] = useState(false);
   const [boardInit, setBoardinit] = useState(true); // TODO this might need to be changed to make it truly asynchronous
   const toast = useToastController();
+  const { width, height } = Dimensions.get("window");
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
@@ -54,68 +58,90 @@ const LetterBoard: LetterBoardComponent = ({
       setDialogOpen(true);
     }
 
-    // TODO 
-    if (itemData.gridData !== undefined && boardInit) {
+    // TODO
+    if (itemData.gridData !== undefined /*&& boardInit*/) {
       convertTo2DArray(itemData.gridData, itemData.numColumns);
-      setBoardinit(false);
+      //setBoardinit(false);
     }
   }, [isActive]);
 
+  // Updating data in realtime
+  useEffect(() => {
+    if (itemData.gridData && Array.isArray(itemData.gridData)) {
+      convertTo2DArray(itemData.gridData, itemData.numColumns);
+    }
+  }, [itemData]);
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    onDataUpdate({...itemData, gridData: storedGridVals, numColumns: gridValues[0].length})
+    onDataUpdate({ ...itemData, gridData: storedGridVals, numColumns: gridValues[0].length });
     if (boardChanged) {
       earnCoins(auth.currentUser.uid, 10);
       toast.show("You earned 10 coins for interacting with the letterboard!", {
-        duration: 3000,
+        duration: 1000,
       });
-      setBoardChanged(false)
+      setBoardChanged(false);
     }
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
 
-   // Convert 2D array to 1D array
-   const convertTo1DArray = () => {
+  // Convert 2D array to 1D array
+  const convertTo1DArray = () => {
     const flatArray = gridValues.flat(); // Flatten the 2D array
     setStoredGrid(flatArray);
   };
 
   // Convert 1D array back to 2D array (with given number of columns)
   const convertTo2DArray = (array1D: string[], numColumns: number) => {
+    if (!array1D || !Array.isArray(array1D)) return;
+
     const array2D: string[][] = [];
     for (let i = 0; i < array1D.length; i += numColumns) {
-      array2D.push(array1D.slice(i, i + numColumns)); // Slice the array into chunks
+      array2D.push(array1D.slice(i, i + numColumns));
     }
     setGridValues(array2D);
   };
 
   // Handler for input changes
   const handleInputChange = (text, rowIndex, colIndex) => {
-    if (text.length > 1) return
-    const newGridValues = [...gridValues]
-    newGridValues[rowIndex][colIndex] = text
-    setGridValues(newGridValues)
-    convertTo1DArray()
-    renderLetterBoardPreview()
-    setBoardChanged(true) // Checking for board interaction so we could reward coins
-  }
+    if (text.length > 1) return;
+    const newGridValues = [...gridValues];
+    newGridValues[rowIndex][colIndex] = text;
+    setGridValues(newGridValues);
+    convertTo1DArray();
+    renderLetterBoardPreview();
+    setBoardChanged(true); // Checking for board interaction so we could reward coins
+  };
 
   // What the letterboard looks like when sitting on the shelf
   const renderLetterBoardPreview = () => (
     <YStack flex={1} alignItems="center" justifyContent="center" padding={5} backgroundColor="#ddd">
-      <YStack 
-        position="absolute" 
-        backgroundColor="black" 
-        height={120} 
-        width={120}
-        borderRadius="$1" 
+      {/* Transparent overlay */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "transparent",
+        }}
+        pointerEvents="box-none"
+      />
+
+      <YStack
+        position="absolute"
+        backgroundColor="black"
+        height={height * 0.12}
+        width={width * 0.307}
+        borderRadius="$1"
         alignItems="center"
         justifyContent="center"
       />
-      <YStack padding={5} space="$1">
+
+      <YStack padding={3} gap="$0.5">
         {gridValues.map((row, rowIndex) => (
-          <XStack key={rowIndex} space="$1">
+          <XStack key={rowIndex} space="$0.5">
             {row.map((value, colIndex) => (
               <Input
                 key={`${rowIndex}-${colIndex}`}
@@ -123,10 +149,10 @@ const LetterBoard: LetterBoardComponent = ({
                 value={value}
                 onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
                 maxLength={1}
-                width={38} 
-                height={12}
+                width={width * 0.095}
+                height={height * 0.013}
                 textAlign="center"
-                fontSize={10}
+                fontSize={8}
                 fontWeight="bold"
                 backgroundColor="#000"
                 color="#fff"
@@ -142,11 +168,7 @@ const LetterBoard: LetterBoardComponent = ({
 
   // Renders item when not active/clicked
   if (!isActive) {
-    return (
-      <YStack flex={1}>
-        {renderLetterBoardPreview()}
-      </YStack>
-    );
+    return <YStack flex={1}>{renderLetterBoardPreview()}</YStack>;
   }
 
   // Renders item when active/clicked
@@ -159,7 +181,7 @@ const LetterBoard: LetterBoardComponent = ({
           elevate
           key="content"
           animation={[
-            'quick',
+            "quick",
             {
               opacity: {
                 overshootClamping: true,
@@ -170,15 +192,19 @@ const LetterBoard: LetterBoardComponent = ({
           height={650}
         >
           <Dialog.Title>Letterboard</Dialog.Title>
-          <Dialog.Description>
-            Edit what letters you want displayed:
-          </Dialog.Description>
+          <Dialog.Description>Edit what letters you want displayed:</Dialog.Description>
 
           {/* Grid of text inputs */}
-          <YStack flex={1} alignItems="center" justifyContent="center" padding={2} backgroundColor="#ddd">
-            <YStack 
-              position="absolute" 
-              backgroundColor="black" 
+          <YStack
+            flex={1}
+            alignItems="center"
+            justifyContent="center"
+            padding={2}
+            backgroundColor="#ddd"
+          >
+            <YStack
+              position="absolute"
+              backgroundColor="black"
               height={460}
               width={200}
               borderRadius="$4"

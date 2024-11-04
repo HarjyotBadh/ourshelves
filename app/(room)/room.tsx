@@ -93,8 +93,6 @@ const RoomScreen = () => {
     description: string;
     roomId: string;
   }>({ name: "", users: [], description: "", roomId: "" });
-  const [backgroundMusic, setBackgroundMusic] = useState<Audio.Sound | null>(null);
-  const roomRef = useRef(doc(db, 'Rooms', roomId));
   const { stop, tracks } = useAudio();
 
   /**

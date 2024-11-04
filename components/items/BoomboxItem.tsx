@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Modal, View, Animated } from "react-native";
-import { Button, Text, YStack, XStack, Image } from "tamagui";
-import { Play, Pause, Music, FileAudio} from "@tamagui/lucide-icons";
+import { Button, YStack, XStack, Image } from "tamagui";
+import { Play, Pause, FileAudio} from "@tamagui/lucide-icons";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "firebaseConfig";
 import { TrackSelectionModal } from "components/TrackSelectionModal";
-import { BoomboxItemProps, BoomboxItemComponent, soundEffectUrl } from "models/BoomboxModel";
+import { BoomboxItemComponent, soundEffectUrl } from "models/BoomboxModel";
 import { useToastController } from "@tamagui/toast";
 import { useAudio } from "components/AudioContext";
 import { AnimatedMusicNotes } from "components/AnimatedMusicNotes";

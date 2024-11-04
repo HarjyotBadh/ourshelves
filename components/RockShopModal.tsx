@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FlatList, Modal, ScrollView, StyleSheet } from "react-native";
+import { Modal, ScrollView } from "react-native";
 import { View, Text, Button, Image, YStack, XStack } from "tamagui";
 import {
   collection,

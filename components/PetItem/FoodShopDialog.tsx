@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, Button, Text, YStack, XStack, Image, ScrollView, styled } from "tamagui";
+import { Dialog, Button, Text, YStack, XStack, ScrollView, styled } from "tamagui";
 import { useToastController } from "@tamagui/toast";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "firebaseConfig";

@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, XStack, Label, Dialog, Button, H3, H4, Input, Text, Popover, Adapt, Image, ScrollView, PopoverProps } from "tamagui";
-import {Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert} from 'react-native'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from '@tamagui/lucide-icons'
+import {
+  View,
+  styled,
+  YStack,
+  XStack,
+  Label,
+  Dialog,
+  Button,
+  H3,
+  H4,
+  Input,
+  Text,
+  Popover,
+  Adapt,
+  Image,
+  ScrollView,
+  PopoverProps,
+} from "tamagui";
+import { Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert } from "react-native";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "@tamagui/lucide-icons";
 import { ColorSelectionDialog } from "../ColorSelectionDialog";
 import { auth } from "firebaseConfig";
 import { ToastViewport, useToastController } from "@tamagui/toast";
@@ -34,7 +51,7 @@ interface RiddleItemProps {
 }
 
 interface RiddleItemComponent extends React.FC<RiddleItemProps> {
-  getInitialData: () => {usersSolved: string[]};
+  getInitialData: () => { usersSolved: string[] };
 }
 
 // Styling for placeholder item (remove this)
@@ -56,15 +73,13 @@ const RiddleItem: RiddleItemComponent = ({
   const toast = useToastController();
 
   // Custom properties (remove these)
-  const [shouldAdapt, setShouldAdapt] = useState(true)
-  const [riddleAnswer, setRiddleAnswer] =  useState(itemData.riddleAnswer || '');
-  const [riddlePrompt, setRiddlePrompt] = useState(itemData.riddlePrompt || '');
-  const [riddleAttempt, setRiddleAttempt] = useState('');
+  const [shouldAdapt, setShouldAdapt] = useState(true);
+  const [riddleAnswer, setRiddleAnswer] = useState(itemData.riddleAnswer || "");
+  const [riddlePrompt, setRiddlePrompt] = useState(itemData.riddlePrompt || "");
+  const [riddleAttempt, setRiddleAttempt] = useState("");
   const [solvedUsers, setSolvedUsers] = useState<string[]>(itemData.usersSolved || []); // All the users who solved the riddle
   const profileId = auth.currentUser?.uid; // Current user's profile id
   const riddleImage = itemData.imageUri;
-
-
 
   // Opens dialog when item is active/clicked
   useEffect(() => {
@@ -78,22 +93,27 @@ const RiddleItem: RiddleItemComponent = ({
     onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
 
+  // Updating data in realtime
+  useEffect(() => {
+    setRiddlePrompt(itemData.riddlePrompt);
+    setRiddleAnswer(itemData.riddleAnswer);
+  }, [itemData]);
+
   const handleRiddleAttempt = () => {
     if (riddleAttempt == riddleAnswer) {
-        if (!solvedUsers.includes(profileId)) {
-          setSolvedUsers((prevSolvedUsers) => [...prevSolvedUsers, profileId]);
-          onDataUpdate({...itemData, usersSolved: solvedUsers})
-          toast.show("YOU SOLVED THE RIDDLE!\n--AWARDED 150 COINS--", {
-            duration: 3000,
-          });
-          earnCoins(auth.currentUser.uid, 150);
+      if (!solvedUsers.includes(profileId)) {
+        setSolvedUsers((prevSolvedUsers) => [...prevSolvedUsers, profileId]);
+        onDataUpdate({ ...itemData, usersSolved: solvedUsers });
+        toast.show("YOU SOLVED THE RIDDLE!\n--AWARDED 150 COINS--", {
+          duration: 3000,
+        });
+        earnCoins(auth.currentUser.uid, 150);
       } else {
         toast.show("You already solved this riddle, no coins rewarded", {
           duration: 3000,
         });
       }
-    } 
-    else {
+    } else {
       toast.show("Solve Attempt Unsuccessful", {
         duration: 3000,
       });
@@ -103,72 +123,77 @@ const RiddleItem: RiddleItemComponent = ({
   // What happens when the user edits a riddle
   const handleRiddleMade = () => {
     setSolvedUsers([]); // Resetting what users solved the riddles since the list was changed
-    onDataUpdate({...itemData, riddleAnswer: riddleAnswer, riddlePrompt: riddlePrompt, usersSolved: solvedUsers})
+    onDataUpdate({
+      ...itemData,
+      riddleAnswer: riddleAnswer,
+      riddlePrompt: riddlePrompt,
+      usersSolved: solvedUsers,
+    });
   };
- 
+
   // What the user sees if they are making the riddle
   const riddleMakerPreview = () => (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$4">
-            <H4>Craft a Riddle for the Room:</H4>
-              {/* Displayed Text at the Top */}
-              <ScrollView
-              maxHeight={350}
-              width={250}
-              backgroundColor="#474747"
-              padding="$4"
-              borderRadius="$4"
-              ><H3>{riddlePrompt}</H3></ScrollView>
+      <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$4">
+        <H4>Craft a Riddle for the Room:</H4>
+        {/* Displayed Text at the Top */}
+        <ScrollView
+          maxHeight={350}
+          width={250}
+          backgroundColor="#474747"
+          padding="$4"
+          borderRadius="$4"
+        >
+          <H3>{riddlePrompt}</H3>
+        </ScrollView>
 
-              {/* Input and Button */}
+        {/* Input and Button */}
 
-                <XStack gap="$3">
-                  {/*<Demo2
+        <XStack gap="$3">
+          {/*<Demo2
                     shouldAdapt={shouldAdapt}
                     placement="top"
                     Icon={ChevronUp}
                     Name="top-popover"
                   />*/}
-                  <Demo1
-                    shouldAdapt={shouldAdapt}
-                    placement="top"
-                    Icon={ChevronUp}
-                    Name="top-popover"
-                    riddleAnswer={riddleAnswer}
-                    setAnsChange={setRiddleAnswer}
-                    riddlePrompt={riddlePrompt}
-                    setRiddleChange={setRiddlePrompt}
-                    handleChange={handleRiddleMade}
-                  />
-                </XStack>
-          </YStack>
-      </TouchableWithoutFeedback>
+          <Demo1
+            shouldAdapt={shouldAdapt}
+            placement="top"
+            Icon={ChevronUp}
+            Name="top-popover"
+            riddleAnswer={riddleAnswer}
+            setAnsChange={setRiddleAnswer}
+            riddlePrompt={riddlePrompt}
+            setRiddleChange={setRiddlePrompt}
+            handleChange={handleRiddleMade}
+          />
+        </XStack>
+      </YStack>
+    </TouchableWithoutFeedback>
   );
 
   const riddleSolverPreview = () => (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$3">
-            <ToastViewport width={500}/>
-            <H4>Solve the Following Riddle:</H4>
-            <XStack gap="$2">
-                <Label size="$3">
-                  Enter Riddle Answer:
-                </Label>
-                <Input f={1} size="$3" onChangeText={setRiddleAttempt}/>
-              </XStack>
-              {/* Displayed Text at the Top */}
-              <ScrollView
-              maxHeight={350}
-              width={250}
-              backgroundColor="#474747"
-              padding="$4"
-              borderRadius="$4"
-              ><H3>{riddlePrompt}</H3></ScrollView>
-                <Button
-                  onPress={handleRiddleAttempt}
-                > Submit Answer </Button>
-          </YStack>
-      </TouchableWithoutFeedback>
+      <YStack flex={1} alignItems="center" justifyContent="center" padding="$1" gap="$3">
+        <ToastViewport width={500} />
+        <H4>Solve the Following Riddle:</H4>
+        <XStack gap="$2">
+          <Label size="$3">Enter Riddle Answer:</Label>
+          <Input f={1} size="$3" onChangeText={setRiddleAttempt} />
+        </XStack>
+        {/* Displayed Text at the Top */}
+        <ScrollView
+          maxHeight={350}
+          width={250}
+          backgroundColor="#474747"
+          padding="$4"
+          borderRadius="$4"
+        >
+          <H3>{riddlePrompt}</H3>
+        </ScrollView>
+        <Button onPress={handleRiddleAttempt}> Submit Answer </Button>
+      </YStack>
+    </TouchableWithoutFeedback>
   );
 
   // Renders item when not active/clicked
@@ -176,9 +201,9 @@ const RiddleItem: RiddleItemComponent = ({
   if (!isActive) {
     return (
       <Image
-            source={{ uri: riddleImage }} // Replace with a valid camel image URL or local file path
-            width={100}
-            height={100}
+        source={{ uri: riddleImage }} // Replace with a valid camel image URL or local file path
+        width={100}
+        height={100}
       />
     );
   }
@@ -194,7 +219,7 @@ const RiddleItem: RiddleItemComponent = ({
           elevate
           key="content"
           animation={[
-            'quick',
+            "quick",
             {
               opacity: {
                 overshootClamping: true,
@@ -205,8 +230,7 @@ const RiddleItem: RiddleItemComponent = ({
           height={650}
         >
           <Dialog.Title>Riddle Item:</Dialog.Title>
-          {profileId == itemData.placedUserId ? (riddleMakerPreview()) : (riddleSolverPreview())}
-
+          {profileId == itemData.placedUserId ? riddleMakerPreview() : riddleSolverPreview()}
 
           <Dialog.Close displayWhenAdapted asChild>
             <Button onPress={handleDialogClose} theme="alt1" aria-label="Close">
@@ -232,10 +256,15 @@ export function Demo1({
   setRiddleChange,
   handleChange,
   ...props
-}: PopoverProps & { Icon?: any; Name?: string; shouldAdapt?: boolean; riddleAnswer?: string; riddlePrompt?: string;
-  setRiddleChange?: ((text:string) => void); 
-  setAnsChange?: ((text:string) => void)
-  handleChange?: (() => void)
+}: PopoverProps & {
+  Icon?: any;
+  Name?: string;
+  shouldAdapt?: boolean;
+  riddleAnswer?: string;
+  riddlePrompt?: string;
+  setRiddleChange?: (text: string) => void;
+  setAnsChange?: (text: string) => void;
+  handleChange?: () => void;
 }) {
   return (
     <Popover size="$5" allowFlip {...props}>
@@ -265,7 +294,7 @@ export function Demo1({
         exitStyle={{ y: -10, opacity: 0 }}
         elevate
         animation={[
-          'quick',
+          "quick",
           {
             opacity: {
               overshootClamping: true,
@@ -277,37 +306,40 @@ export function Demo1({
 
         <YStack gap="$3">
           <XStack gap="$3">
-            <Label size="$3" htmlFor={Name}>
+            <Label size="$3" htmlFor="riddle-prompt">
               Change Riddle:
             </Label>
-            {/* <TextArea 
-            height={170} 
-            width={300} 
-            value={riddleAnswer} 
-            onChangeText={onRiddleChange}
-            borderWidth={2}/> */}
-            <Input f={1} size="$3" id={Name} onChangeText={setRiddleChange} placeholder={riddlePrompt} />
+            <Input
+              f={1}
+              size="$3"
+              id="riddle-prompt"
+              onChangeText={setRiddleChange}
+              placeholder={riddlePrompt}
+            />
           </XStack>
 
           <XStack gap="$3">
-            <Label size="$3" htmlFor={Name}>
+            <Label size="$3" htmlFor="riddle-answer">
               Change Riddle Answer:
             </Label>
-            <Input f={1} size="$3" id={Name} onChangeText={setAnsChange} placeholder={riddleAnswer}/>
+            <Input
+              f={1}
+              size="$3"
+              id="riddle-answer"
+              onChangeText={setAnsChange}
+              placeholder={riddleAnswer}
+            />
           </XStack>
 
           <Popover.Close asChild>
-            <Button
-              size="$3"
-              onPress={handleChange}
-            >
+            <Button size="$3" onPress={handleChange}>
               Submit New Changes
             </Button>
           </Popover.Close>
         </YStack>
       </Popover.Content>
     </Popover>
-  )
+  );
 }
 
 export function Demo2({
@@ -316,7 +348,7 @@ export function Demo2({
   shouldAdapt,
   Users,
   ...props
-}: PopoverProps & { Icon?: any; Name?: string; shouldAdapt?: boolean; Users?: string[]}) {
+}: PopoverProps & { Icon?: any; Name?: string; shouldAdapt?: boolean; Users?: string[] }) {
   return (
     <Popover size="$5" allowFlip {...props}>
       <Popover.Trigger asChild>
@@ -345,7 +377,7 @@ export function Demo2({
         exitStyle={{ y: -10, opacity: 0 }}
         elevate
         animation={[
-          'quick',
+          "quick",
           {
             opacity: {
               overshootClamping: true,
@@ -356,35 +388,33 @@ export function Demo2({
         <Popover.Arrow borderWidth={1} borderColor="$borderColor" />
 
         <YStack gap="$3">
-         
-        <ScrollView
-          flex={1}
-          backgroundColor="white" // You can set a background color here
-          padding="$4"
+          <ScrollView
+            flex={1}
+            backgroundColor="white" // You can set a background color here
+            padding="$4"
           >
-          <YStack space="$2"> {/* Adds spacing between user items */}
-            {Users?.map((user, index) => (
-              <Text key={index} fontSize="$5" color="black"> {/* Customize font size and color */}
-                {user}
-              </Text>
-            ))}
-          </YStack>
-        </ScrollView>
+            <YStack space="$2">
+              {" "}
+              {/* Adds spacing between user items */}
+              {Users?.map((user, index) => (
+                <Text key={index} fontSize="$5" color="black">
+                  {" "}
+                  {/* Customize font size and color */}
+                  {user}
+                </Text>
+              ))}
+            </YStack>
+          </ScrollView>
 
           <Popover.Close asChild>
-            <Button
-              size="$3"
-              onPress={() => {
-
-              }}
-            >
+            <Button size="$3" onPress={() => {}}>
               Submit New Changes
             </Button>
           </Popover.Close>
         </YStack>
       </Popover.Content>
     </Popover>
-  )
+  );
 }
 
 export default RiddleItem; // do not remove the export (but change the name of the Item to match the name of the file)

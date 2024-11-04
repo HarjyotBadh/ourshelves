@@ -5771,13 +5771,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@terrylinla/react-native-sketch-canvas@npm:^0.8.0":
-  version: 0.8.0
-  resolution: "@terrylinla/react-native-sketch-canvas@npm:0.8.0"
-  checksum: 10/669c847690885b1f0b923c9961be57b2718db3506dd1c79129dfc4937ca451e444724b63f129310b78f289c1ed7a63e836c49f80c2aed15e4fba1515365889f7
-  languageName: node
-  linkType: hard
-
 "@types/cookie@npm:^0.6.0":
   version: 0.6.0
   resolution: "@types/cookie@npm:0.6.0"
@@ -5910,16 +5903,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-native-canvas@npm:^0":
-  version: 0.1.13
-  resolution: "@types/react-native-canvas@npm:0.1.13"
-  dependencies:
-    "@types/react": "npm:*"
-    react-native: "npm:*"
-  checksum: 10/bd8011a7f5f214e9bd58be9cdcab90b9a39529f9d39b39356bb55bad47d764c5919ad1fb2d358f1acf276dc88ed75fd2ac5cf6a6a6eb1176cec2580f21babfe0
-  languageName: node
-  linkType: hard
-
 "@types/react-native@npm:^0.73.0":
   version: 0.73.0
   resolution: "@types/react-native@npm:0.73.0"
@@ -5960,6 +5943,13 @@ __metadata:
   version: 4.2.5
   resolution: "@types/stylis@npm:4.2.5"
   checksum: 10/f8dde326432a7047b6684b96442f0e2ade2cfe8c29bf56217fb8cbbe4763997051fa9dc0f8dba4aeed2fddb794b4bc91feba913b780666b3adc28198ac7c63d4
+  languageName: node
+  linkType: hard
+
+"@types/tinycolor2@npm:^1":
+  version: 1.4.6
+  resolution: "@types/tinycolor2@npm:1.4.6"
+  checksum: 10/a662fd177135d27779b7ccba39881a85167f969787c71c7bf51903d288a519ad5b9526e0a4af7bde6444df6b7abe88bae893d569c6d804108c03dfec9509bdf6
   languageName: node
   linkType: hard
 
@@ -7003,13 +6993,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chroma-js@npm:^2.1.0":
-  version: 2.6.0
-  resolution: "chroma-js@npm:2.6.0"
-  checksum: 10/245f0a0b1da7c4cedf30e490db9ab4e9e71fde207cbe1ca05e25ef5ba517df2509b96b29d2c168786237c8162a03dccea38721c4927249cd1d5c5fe0184fc13c
-  languageName: node
-  linkType: hard
-
 "chrome-launcher@npm:^0.15.2":
   version: 0.15.2
   resolution: "chrome-launcher@npm:0.15.2"
@@ -7500,13 +7483,6 @@ __metadata:
   version: 3.1.3
   resolution: "csstype@npm:3.1.3"
   checksum: 10/f593cce41ff5ade23f44e77521e3a1bcc2c64107041e1bf6c3c32adc5187d0d60983292fda326154d20b01079e24931aa5b08e4467cc488b60bb1e7f6d478ade
-  languageName: node
-  linkType: hard
-
-"ctx-polyfill@npm:^1.1.4":
-  version: 1.1.4
-  resolution: "ctx-polyfill@npm:1.1.4"
-  checksum: 10/04dbbc0edb2da2d33285ed176f67390c73b25c0e753be266f2277bb605b08fbf00c36a4783183eaa196f334087ce4222ca8f26a4e94195a1e48f886423439ed8
   languageName: node
   linkType: hard
 
@@ -8562,16 +8538,6 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10/2e05592bd9b3f156f0c5912a5cc152e80e930495d049382e4deec3103601ccc90b2e7cb5c208b51aa9d60386c5b762d40cc74cb2d1256a4605012e03d27be72a
-  languageName: node
-  linkType: hard
-
-"expo-linear-gradient@npm:^8.0.0":
-  version: 8.4.0
-  resolution: "expo-linear-gradient@npm:8.4.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/fa00744e18c4412cd7ba213ceaeaf5ad44cc5505dfeaaed2530138ed98e7ce7f3ab4ef8ba88896db9c783de2161853aca381e0d94f97e62d9bde092e69269e47
   languageName: node
   linkType: hard
 
@@ -12122,11 +12088,10 @@ __metadata:
     "@tamagui/theme-base": "npm:^1.110.5"
     "@tamagui/themes": "npm:^1.110.5"
     "@tamagui/toast": "npm:^1.110.5"
-    "@terrylinla/react-native-sketch-canvas": "npm:^0.8.0"
     "@types/expo": "npm:^33.0.1"
     "@types/react": "npm:~18.2.79"
     "@types/react-native": "npm:^0.73.0"
-    "@types/react-native-canvas": "npm:^0"
+    "@types/tinycolor2": "npm:^1"
     "@types/validator": "npm:^13"
     "@unimodules/core": "npm:7.1.2"
     axios: "npm:^1.7.7"
@@ -12162,26 +12127,19 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-native: "npm:0.74.5"
-    react-native-canvas: "npm:^0.1.40"
-    react-native-clock-analog: "npm:^0.0.3"
-    react-native-color-picker: "npm:^0.6.0"
     react-native-country-picker-modal: "npm:^2.0.0"
     react-native-gesture-handler: "npm:^2.20.0"
-    react-native-hsv-color-picker: "npm:^1.0.2"
     react-native-phone-number-input: "npm:^2.1.0"
     react-native-reanimated: "npm:~3.10.1"
     react-native-safe-area-context: "npm:4.10.5"
     react-native-screens: "npm:~3.31.1"
-    react-native-signature-canvas: "npm:^4.7.2"
     react-native-svg: "npm:^15.8.0"
     react-native-toast-message: "npm:^2.2.1"
     react-native-web: "npm:^0.19.12"
     react-native-webview: "npm:13.8.6"
-    react-native-wheel-color-picker: "npm:^1.3.1"
-    react-sketch-canvas: "npm:^6.2.0"
-    reanimated-color-picker: "npm:^3.0.4"
     styled-components: "npm:^6.1.13"
     tamagui: "npm:^1.110.5"
+    tinycolor2: "npm:^1.6.0"
     typescript: "npm:~5.3.3"
     unimodules: "npm:^1.0.0"
     validator: "npm:^13.12.0"
@@ -12636,7 +12594,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.5.10, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -12845,34 +12803,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-canvas@npm:^0.1.40":
-  version: 0.1.40
-  resolution: "react-native-canvas@npm:0.1.40"
-  dependencies:
-    ctx-polyfill: "npm:^1.1.4"
-  peerDependencies:
-    react-native-webview: ">=5.10.0 || >=6.1.0"
-  checksum: 10/4ccb4e858d18afdfcb1667007c329576f8d0a4b4b3f0f1f7f8b44aaef91738d5d8d4bcce0fd574f9c18c4bbbed93332fa7ab699bcdcaff807d20c1b382008554
-  languageName: node
-  linkType: hard
-
-"react-native-clock-analog@npm:^0.0.3":
-  version: 0.0.3
-  resolution: "react-native-clock-analog@npm:0.0.3"
-  checksum: 10/6cd682d8ef9d83317cc323c4503b02509f668e2e6b976e13586178489826a142e3bc84de65ea0777d3e9cb8906821da790ac35c11f5f8e6986683fc830d7d78c
-  languageName: node
-  linkType: hard
-
-"react-native-color-picker@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "react-native-color-picker@npm:0.6.0"
-  dependencies:
-    prop-types: "npm:^15.5.10"
-    tinycolor2: "npm:^1.4.1"
-  checksum: 10/feaf63a7783f9ce64c48231377cbfdb879f3ce27144e2b115f60774d1f605e95619b93eb3436b5037eadd0bfde665469ebbd8420cb824091f07e09067092287d
-  languageName: node
-  linkType: hard
-
 "react-native-country-picker-modal@npm:^2.0.0":
   version: 2.0.0
   resolution: "react-native-country-picker-modal@npm:2.0.0"
@@ -12915,13 +12845,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-elevation@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "react-native-elevation@npm:1.0.0"
-  checksum: 10/988edf86b441459e65f5121b0f916087c94dc0fb4bf7a36da4718b633644dbf10313054208cc4758302fbaa7e1d7b99d29004efc937466ecd7d66c2372f47129
-  languageName: node
-  linkType: hard
-
 "react-native-gesture-handler@npm:^2.20.0":
   version: 2.20.0
   resolution: "react-native-gesture-handler@npm:2.20.0"
@@ -12947,18 +12870,6 @@ __metadata:
   peerDependencies:
     react: ^16.6.0 || ^17.0.0 || ^18.0.0
   checksum: 10/217bd0eaa61d426a512634369c70c44ce8b92127ec626dc40c65b72b1be1534ed3ed00ba2dd1a9ad77d1716ce8fd1e6db3f7209534303a652d9932a962d2c830
-  languageName: node
-  linkType: hard
-
-"react-native-hsv-color-picker@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "react-native-hsv-color-picker@npm:1.0.2"
-  dependencies:
-    chroma-js: "npm:^2.1.0"
-    expo-linear-gradient: "npm:^8.0.0"
-  peerDependencies:
-    prop-types: ^15.7.2
-  checksum: 10/9bb26749a65d3eae2de74f51334a611a92f5fd4e6224e91cd9a925473e9cf60c096664a619fae7301874ad5c63d3e6c9d3fd130a14a4a06c791e2224067343da
   languageName: node
   linkType: hard
 
@@ -13018,15 +12929,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-signature-canvas@npm:^4.7.2":
-  version: 4.7.2
-  resolution: "react-native-signature-canvas@npm:4.7.2"
-  peerDependencies:
-    react-native-webview: ">=13"
-  checksum: 10/21c883fe89f5ef3ce94fc6016832059c4310129100ddde8a87aa991393ade10da71ead4907d35d7574e4ad3a3937ef190118bf93b5251fcb5e4e30ca243d0f5f
-  languageName: node
-  linkType: hard
-
 "react-native-svg@npm:^15.8.0":
   version: 15.8.0
   resolution: "react-native-svg@npm:15.8.0"
@@ -13080,15 +12982,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/9a510ce0c36e733e565f16b3fd44be29f40aac9518db3550a0213206ad578c41ee7fc71431849f2f72e178098241a8f9f0cd31ebfdf2223fd39d349d2f8b9cd0
-  languageName: node
-  linkType: hard
-
-"react-native-wheel-color-picker@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "react-native-wheel-color-picker@npm:1.3.1"
-  dependencies:
-    react-native-elevation: "npm:^1.0.0"
-  checksum: 10/12477f3f25d55429e0355918eb4c48798538d214a323465ae08969f012c49e05d1c508ca91007e4bb3dca6a9cf2e3324b9203b6eb276bb92b3a3e2d64cc0a9f4
   languageName: node
   linkType: hard
 
@@ -13266,15 +13159,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-sketch-canvas@npm:^6.2.0":
-  version: 6.2.0
-  resolution: "react-sketch-canvas@npm:6.2.0"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 10/43a6acfe862c0443a7bed0e8f45555989815a13b2dff36d0947221f6b98e06e5065f511e030bc63d494d5b3f4bac5c8ed58efa4d2e33754b72d920f63ac1cc78
-  languageName: node
-  linkType: hard
-
 "react-style-singleton@npm:^2.2.1":
   version: 2.2.1
   resolution: "react-style-singleton@npm:2.2.1"
@@ -13349,22 +13233,6 @@ __metadata:
   version: 1.3.0
   resolution: "readline@npm:1.3.0"
   checksum: 10/2cb7c274333fe1ed55e1bd06c670a32bd9eae5324d8e1fafb9af5c128dfde85601d59defe47947788b0682d5e9efeae6b88ea5fe233d5236a02f382a0b0ad4c3
-  languageName: node
-  linkType: hard
-
-"reanimated-color-picker@npm:^3.0.4":
-  version: 3.0.4
-  resolution: "reanimated-color-picker@npm:3.0.4"
-  peerDependencies:
-    expo: ">=44.0.0"
-    react: "*"
-    react-native: "*"
-    react-native-gesture-handler: ">=2.0.0"
-    react-native-reanimated: ^2.0.0 || ^3.0.0
-  peerDependenciesMeta:
-    expo:
-      optional: true
-  checksum: 10/589cdbd8dfe6131d4b60f4a7bb62d79f8e230c8715723f1438edca20f5aa26eba0a876c674124d70ee3e59c2da3d3ece7a0ea997a0c8c757e7a081a7ba74636e
   languageName: node
   linkType: hard
 
@@ -14746,7 +14614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinycolor2@npm:^1.4.1":
+"tinycolor2@npm:^1.6.0":
   version: 1.6.0
   resolution: "tinycolor2@npm:1.6.0"
   checksum: 10/066c3acf4f82b81c58a0d3ab85f49407efe95ba87afc3c7a16b1d77625193dfbe10dd46c26d0a263c1137361dd5a6a68bff2fb71def5fb9b9aec940fb030bcd4

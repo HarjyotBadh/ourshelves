@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { View, styled, YStack, Text, Dialog, Button, XStack } from "tamagui";
-import { Timestamp } from "firebase/firestore";
+import React, { useState, useEffect } from "react";
+import { View, styled, YStack, Text, Dialog, Button } from "tamagui";
 import { RefreshCw } from "@tamagui/lucide-icons";
 
 interface DailyQuoteItemProps {
@@ -95,28 +94,28 @@ interface DailyQuoteItemComponent extends React.FC<DailyQuoteItemProps> {
 const REFRESH_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 const useCountdown = (targetTime?: number) => {
-    const [timeLeft, setTimeLeft] = useState("");
+  const [timeLeft, setTimeLeft] = useState("");
 
-    useEffect(() => {
-      if (!targetTime) return;
+  useEffect(() => {
+    if (!targetTime) return;
 
-      const calculateTimeLeft = () => {
-        const difference = targetTime + REFRESH_INTERVAL - Date.now();
-        if (difference <= 0) return "Time to refresh!";
+    const calculateTimeLeft = () => {
+      const difference = targetTime + REFRESH_INTERVAL - Date.now();
+      if (difference <= 0) return "Time to refresh!";
 
-        const hours = Math.floor(difference / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        return `${hours}h ${minutes}m until next quote`;
-      };
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      return `${hours}h ${minutes}m until next quote`;
+    };
 
-      setTimeLeft(calculateTimeLeft());
-      const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000); // Update every minute
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000); // Update every minute
 
-      return () => clearInterval(timer);
-    }, [targetTime]);
+    return () => clearInterval(timer);
+  }, [targetTime]);
 
-    return timeLeft;
-  };
+  return timeLeft;
+};
 
 const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isActive, onClose }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -137,14 +136,11 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
   }, []);
 
   const fetchNewQuote = async () => {
-    console.log(itemData.id);
     setIsLoading(true);
     try {
-      console.log('Fetching new quote...');
       const response = await fetch("https://zenquotes.io/api/random");
       const quoteData = await response.json();
-      console.log('Quote data received:', quoteData, itemData.id);
-      
+
       // Check if the response has the expected structure
       if (Array.isArray(quoteData) && quoteData[0] && quoteData[0].q && quoteData[0].a) {
         onDataUpdate({
@@ -153,7 +149,7 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
             quote: quoteData[0].q,
             author: quoteData[0].a,
             lastRefreshed: Date.now(),
-          }
+          },
         });
       } else {
         // Use fallback if API response is not in expected format
@@ -163,11 +159,11 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
             quote: "The only way to do great work is to love what you do.",
             author: "Steve Jobs",
             lastRefreshed: Date.now(),
-          }
+          },
         });
       }
     } catch (error) {
-      console.error('Error fetching quote:', error);
+      console.error("Error fetching quote:", error);
       // Only update with fallback if there's no existing quote
       if (!itemData.currentQuote?.quote) {
         onDataUpdate({
@@ -176,7 +172,7 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
             quote: "The only way to do great work is to love what you do.",
             author: "Steve Jobs",
             lastRefreshed: Date.now(),
-          }
+          },
         });
       }
     } finally {
@@ -194,14 +190,12 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
     return timeSinceLastRefresh >= REFRESH_INTERVAL;
   };
 
-  
-
   if (!isActive) {
     return (
       <YStack flex={1}>
         <QuoteContainer>
           <QuoteText>
-            "{truncateQuote(itemData.currentQuote?.quote || 'Loading daily quote...', 50)}"
+            "{truncateQuote(itemData.currentQuote?.quote || "Loading daily quote...", 50)}"
           </QuoteText>
           {itemData.currentQuote?.author && (
             <AuthorText>- {itemData.currentQuote.author}</AuthorText>
@@ -238,7 +232,7 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
                   Daily Quote
                 </Text>
               </Dialog.Title>
-              
+
               <YStack gap="$2" backgroundColor="$blue3" padding="$4" borderRadius="$4">
                 <Text fontSize="$4" color="$blue11" fontStyle="italic" textAlign="center">
                   "{itemData.currentQuote?.quote}"
@@ -252,14 +246,8 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
                 {timeLeft}
               </Text>
 
-              <StyledButton 
-                onPress={fetchNewQuote} 
-                disabled={isLoading}
-                icon={RefreshCw}
-              >
-                <Text color="white">
-                  {isLoading ? "Generating..." : "Generate New Quote"}
-                </Text>
+              <StyledButton onPress={fetchNewQuote} disabled={isLoading} icon={RefreshCw}>
+                <Text color="white">{isLoading ? "Generating..." : "Generate New Quote"}</Text>
               </StyledButton>
 
               <Dialog.Close asChild>
@@ -280,7 +268,7 @@ DailyQuoteItem.getInitialData = () => ({
     quote: "",
     author: "",
     lastRefreshed: Date.now(),
-  }
+  },
 });
 
 export default DailyQuoteItem;

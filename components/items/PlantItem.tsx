@@ -140,6 +140,20 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     return () => clearInterval(interval);
   }, [lastWatered]);
 
+  useEffect(() => {
+    setGrowthStage(itemData.growthStage || 0);
+    setLastWatered(
+      itemData.lastWatered instanceof Timestamp 
+        ? itemData.lastWatered
+        // @ts-ignore
+        : itemData.lastWatered instanceof Date
+          ? Timestamp.fromDate(itemData.lastWatered)
+          : Timestamp.fromDate(subDays(new Date(), 1))
+    );
+    setSeedType(itemData.seedType || "sunflower");
+    setIsWithered(itemData.isWithered || false);
+  }, [itemData]);
+
   const handleWateringZoneLayout = useCallback(() => {
     if (wateringZoneRef.current) {
       wateringZoneRef.current.measureInWindow((x, y, width, height) => {
@@ -183,9 +197,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     const newLastWatered = Timestamp.now();
     setGrowthStage(newGrowthStage);
     setLastWatered(newLastWatered);
-
     setIsWithered(false);
-
     setCanWater(false);
 
     earnCoins(auth.currentUser?.uid, 10);
@@ -197,7 +209,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     const updatedData = {
       ...itemData,
       growthStage: newGrowthStage,
-      lastWatered: newLastWatered.toDate(),
+      lastWatered: newLastWatered,
       isWithered: false,
     };
 
@@ -297,6 +309,20 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
 
     onDataUpdate(updatedData);
   }, [growthStage, itemData, onDataUpdate]);
+
+  const handleTestWither = useCallback(() => {
+    const newLastWatered = Timestamp.fromDate(subDays(new Date(), 4)); // Set watering date to 4 days ago
+    setLastWatered(newLastWatered);
+    setIsWithered(true);
+
+    const updatedData = {
+      ...itemData,
+      lastWatered: newLastWatered,
+      isWithered: true,
+    };
+
+    onDataUpdate(updatedData);
+  }, [itemData, onDataUpdate]);
 
   const PlantComponent = plants[seedType] || plants["sunflower"];
 
@@ -422,6 +448,9 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
 
               <Button onPress={handleTestWater} backgroundColor="$blue3" color="$blue11">
                 <Text>Water (test)</Text>
+              </Button>
+              <Button onPress={handleTestWither} backgroundColor="$red3" color="$red11">
+                <Text>Wither (test)</Text>
               </Button>
 
               {isWatering && (

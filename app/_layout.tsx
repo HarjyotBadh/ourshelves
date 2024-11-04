@@ -1,17 +1,16 @@
 import "../tamagui-web.css";
 
-import React, { useEffect, useState, useRef, createContext, useContext } from "react";
+import React, { useEffect, useState, useRef, createContext } from "react";
 import { useColorScheme, LogBox, Platform } from "react-native";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack, useRouter } from "expo-router";
+import { Slot, SplashScreen, Stack, useRouter } from "expo-router";
 import { Provider } from "./Provider";
 import { auth } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { TamaguiProvider } from "@tamagui/core";
 import { ToastProvider } from "@tamagui/toast";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { AudioProvider } from "components/AudioContext";
 import config from "tamagui.config";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
@@ -99,15 +98,41 @@ export default function RootLayout() {
   const responseListener = useRef<Notifications.Subscription>();
   const router = useRouter();
 
+  // Move auth state listener to top of useEffect hooks
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsUserAuthenticated(!!user);
+
+      try {
+        if (user) {
+          if (!user.displayName) {
+            router.replace("/register-display-name");
+          } else {
+            router.replace("/(tabs)");
+          }
+        } else {
+          // User is signed out
+          router.replace("/(auth)/login");
+        }
+      } catch (error) {
+        console.error("Navigation error:", error);
+        // Force navigation to login as fallback
+        router.replace("/(auth)/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     registerForPushNotificationsAsync().then((token) => token && setExpoPushToken(token));
 
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      console.log("Notification received:", notification);
+      // Handle notification
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log("Notification response:", response);
+      // Handle response
     });
 
     return () => {
@@ -126,32 +151,13 @@ export default function RootLayout() {
     }
   }, [interLoaded, interError]);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsUserAuthenticated(!!user);
-      setTimeout(() => {
-        if (user) {
-          if (!user.displayName) {
-            router.replace("/register-display-name");
-            return;
-          } else {
-            router.replace("/(tabs)");
-          }
-        } else {
-          router.replace("/(auth)/login");
-        }
-      }, 0);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   if (!interLoaded && !interError) {
     return null;
   }
 
+  // Only render the app when we know the auth state
   if (isUserAuthenticated === null) {
-    return null;
+    return <Slot />;
   }
 
   return <RootLayoutNav />;
