@@ -157,7 +157,7 @@ export default function RootLayout() {
 
   // Only render the app when we know the auth state
   if (isUserAuthenticated === null) {
-    return <Slot />;
+    return null;
   }
 
   return <RootLayoutNav />;
