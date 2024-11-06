@@ -10,4 +10,5 @@ export interface PurchasedItem {
   cost: number;
   imageUri: string;
   shouldLock: boolean;
+  styleId: string | null;
 }

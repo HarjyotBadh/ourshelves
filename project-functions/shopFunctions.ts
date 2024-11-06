@@ -63,19 +63,22 @@ export const purchaseItem = async (
       const purchasedItemsQuery = query(
         collection(db, "PurchasedItems"),
         where("userId", "==", userRef.id),
-        where("itemRef", "==", doc(db, "Items", item.itemId))
+        where("itemRef", "==", doc(db, "Items", item.itemId)),
+        where("styleId", "==", item.styleId || null) // Add style check
       );
+      
       const purchasedItemsSnapshot = await getDocs(purchasedItemsQuery);
 
+      // Check if user already owns this specific style of the item
       if (!purchasedItemsSnapshot.empty) {
         return {
           success: false,
-          message: `You already own ${item.name}!`,
+          message: `You already own this version of ${item.name}!`,
           updatedUser: null,
         };
       }
 
-      // Create a new PurchasedItem document
+      // Create a new PurchasedItem document with style information
       const purchasedItemRef = doc(collection(db, "PurchasedItems"));
       const purchasedItemData: PurchasedItem = {
         id: purchasedItemRef.id,
@@ -87,6 +90,7 @@ export const purchaseItem = async (
         cost: item.cost,
         imageUri: item.imageUri,
         shouldLock: item.shouldLock || false,
+        styleId: item.styleId || null,  // Store the style ID if it exists
       };
 
       transaction.set(purchasedItemRef, purchasedItemData);

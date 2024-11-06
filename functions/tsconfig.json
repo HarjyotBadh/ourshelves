@@ -7,17 +7,23 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true
+    "skipLibCheck": true,        // Skip type checking of declaration files
+    "esModuleInterop": true,     // Enable ES Module interop
+    "resolveJsonModule": true,   // Allow importing JSON files
+    "baseUrl": "./",            // Base directory for resolving non-relative module names
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "types": ["node"]           // Only include node types
   },
   "compileOnSave": true,
   "include": [
-    "src/**/*",
-    "*.ts",
-    "*.js"
+    "src"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "lib",
+    "../node_modules",
+    "../src"
   ]
 }
