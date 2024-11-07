@@ -202,9 +202,6 @@ export default function ShopScreen() {
       setNextRefreshTime(nextRefreshDate);
 
       // Fetch items
-      console.log("fetching items");
-      // const refreshShop = httpsCallable(functions, "refreshShopManually");
-      //   await refreshShop();
       const fetchedItems = await Promise.all(
         gottenShopMetadata.items.map(async (itemWithStyle, index) => {
           const itemDoc = await getDoc(itemWithStyle.ref);
@@ -222,6 +219,7 @@ export default function ShopScreen() {
             ? {
                 ...baseItemData,
                 itemId: itemDoc.id,  // Override with doc ID
+                name: itemWithStyle.styleData.name || baseItemData.name,
                 cost: itemWithStyle.styleData.cost,
                 imageUri: itemWithStyle.styleData.imageUri,
                 styleId: itemWithStyle.styleData.id

@@ -3,6 +3,7 @@ import { DocumentReference, Timestamp } from "firebase/firestore";
 interface ShopItemWithStyle {
   ref: DocumentReference;
   styleData: {
+    name: string;
     id: string;
     cost: number;
     imageUri: string;
