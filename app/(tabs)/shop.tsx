@@ -219,7 +219,8 @@ export default function ShopScreen() {
             ? {
                 ...baseItemData,
                 itemId: itemDoc.id,  // Override with doc ID
-                name: itemWithStyle.styleData.name || baseItemData.name,
+                name: baseItemData.name,
+                styleName: itemWithStyle.styleData.styleName,
                 cost: itemWithStyle.styleData.cost,
                 imageUri: itemWithStyle.styleData.imageUri,
                 styleId: itemWithStyle.styleData.id

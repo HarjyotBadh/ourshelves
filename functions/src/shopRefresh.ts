@@ -15,7 +15,7 @@ interface ItemStyle {
   id: string;
   cost: number;
   imageUri: string;
-  name: string;
+  styleName: string;
 }
 
 /**
@@ -113,7 +113,7 @@ async function updateShopWithStyles(
                 id: randomStyle.id,
                 cost: styleData.cost,
                 imageUri: styleData.imageUri,
-                name: styleData.name || styleData.id,
+                styleName: styleData.styleName || styleData.id,
               },
             };
           }

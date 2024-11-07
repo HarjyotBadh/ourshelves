@@ -73,7 +73,7 @@ export const purchaseItem = async (
       if (!purchasedItemsSnapshot.empty) {
         return {
           success: false,
-          message: `You already own this version of ${item.name}!`,
+          message: `You already own this!`,
           updatedUser: null,
         };
       }
