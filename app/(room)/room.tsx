@@ -745,6 +745,7 @@ const RoomScreen = () => {
                     roomInfo={{
                       ...roomInfo,
                     }}
+                    availableItems={availableItems}
                   />
                 ))}
               </YStack>

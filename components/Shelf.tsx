@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { XStack, YStack, Text, Input } from "tamagui";
 import ShelfItems from "./ShelfItems";
-import { PlacedItemData } from "../models/RoomData";
-
+import { PlacedItemData, ItemData } from "../models/RoomData";
 interface ShelfProps {
   shelfId: string;
   shelfNumber: number;
@@ -16,13 +15,14 @@ interface ShelfProps {
     newItemData: Record<string, any>
   ) => void;
   onShelfNameChange: (shelfId: string, newName: string) => void;
-  users: Record<string, any>;
+  users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
   roomInfo: {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
     roomId: string;
   };
+  availableItems: ItemData[];
 }
 
 const Shelf: React.FC<ShelfProps> = ({
@@ -37,6 +37,7 @@ const Shelf: React.FC<ShelfProps> = ({
   onShelfNameChange,
   users,
   roomInfo,
+  availableItems,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(shelfName);
@@ -76,6 +77,7 @@ const Shelf: React.FC<ShelfProps> = ({
           onItemDataUpdate={onItemDataUpdate}
           users={users}
           roomInfo={roomInfo}
+          availableItems={availableItems as ItemData[]}
         />
       </XStack>
       <XStack
