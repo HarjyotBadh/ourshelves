@@ -390,6 +390,8 @@ const RoomScreen = () => {
                   imageUri: purchasedItemData.imageUri,
                   cost: purchasedItemData.cost,
                   shouldLock: purchasedItemData.shouldLock || false,
+                  styleId: purchasedItemData.styleId,
+                  styleName: purchasedItemData.styleName,
                 };
               });
 
@@ -753,7 +755,7 @@ const RoomScreen = () => {
           isOpen={isSheetOpen}
           onClose={() => setIsSheetOpen(false)}
           onSelectItem={handleItemSelect}
-          items={availableItems}
+          items={availableItems as ItemData[]}
         />
         <RoomSettingsDialog
           open={isSettingsOpen}

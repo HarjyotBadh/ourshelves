@@ -8,6 +8,8 @@ export interface ItemData {
   imageUri: string;
   cost: number;
   shouldLock: boolean;
+  styleId: string | null;
+  styleName: string | null;
   [key: string]: any;
 }
 
@@ -18,12 +20,7 @@ interface ItemProps {
   showCost?: boolean;
 }
 
-const Item: React.FC<ItemProps> = ({
-  item,
-  onPress,
-  showName = true,
-  showCost = false,
-}) => {
+const Item: React.FC<ItemProps> = ({ item, onPress, showName = true, showCost = false }) => {
   return (
     <TouchableOpacity onPress={() => onPress && onPress(item)}>
       <View padding="$2" alignItems="center">
