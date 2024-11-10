@@ -76,16 +76,16 @@ export const VotingBoxResultsDialog: React.FC<VotingBoxResultsDialogProps> = ({
                       <Crown color="#FFB74D" size={16} />
                     </XStack>
                     <XStack gap="$2">
-                      <Text color="$gray11">{formatVoteCount(option.votes)}</Text>
-                      <Text color="$gray11">({formatPercentage(option.votes)})</Text>
+                      <Text color="$gray8">{formatVoteCount(option.votes)}</Text>
+                      <Text color="$gray8">({formatPercentage(option.votes)})</Text>
                     </XStack>
                   </WinnerRow>
                 ) : (
                   <ResultRow key={index}>
                     <Text flex={1} fontSize="$4">{option.body}</Text>
                     <XStack gap="$2">
-                      <Text color="$gray11">{formatVoteCount(option.votes)}</Text>
-                      <Text color="$gray11">({formatPercentage(option.votes)})</Text>
+                      <Text color="$gray8">{formatVoteCount(option.votes)}</Text>
+                      <Text color="$gray8">({formatPercentage(option.votes)})</Text>
                     </XStack>
                   </ResultRow>
                 )
@@ -94,7 +94,7 @@ export const VotingBoxResultsDialog: React.FC<VotingBoxResultsDialogProps> = ({
 
             <ResultRow backgroundColor="$yellow9">
               <Text fontWeight="bold" fontSize="$4">Total Votes</Text>
-              <Text fontWeight="bold">{formatVoteCount(totalVotes)}</Text>
+              <Text fontWeight="bold" color="$gray8">{formatVoteCount(totalVotes)}</Text>
             </ResultRow>
 
             <ScrollView maxHeight={200} showsVerticalScrollIndicator={true}>
@@ -102,7 +102,7 @@ export const VotingBoxResultsDialog: React.FC<VotingBoxResultsDialogProps> = ({
                 {votes.map((vote, index) => (
                   <VoteItem key={index}>
                     <Text flex={1}>{vote.voter}</Text>
-                    <Text color="$gray11">{vote.vote}</Text>
+                    <Text color="$gray8">{vote.vote}</Text>
                   </VoteItem>
                 ))}
               </YStack>
