@@ -21,6 +21,11 @@ interface ItemSelectionSheetProps {
   items: ItemData[];
 }
 
+interface GroupedItem {
+  name: string;
+  styles: ItemData[];
+}
+
 const ShelfContainer = styled(YStack, {
   backgroundColor: "#f0e4d7",
   borderRadius: 16,
@@ -79,6 +84,13 @@ const SearchContainer = styled(XStack, {
   elevation: 2,
 });
 
+const GridContainer = styled(XStack, {
+  flexWrap: "wrap",
+  justifyContent: "space-around",
+  gap: "$2",
+  paddingHorizontal: "$2",
+});
+
 const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
   isOpen,
   onClose,
@@ -109,10 +121,28 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
     router.push("/(tabs)/shop");
   };
 
-  const sortedAndFilteredItems = React.useMemo(() => {
-    return items
-      .filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      .sort((a, b) => a.name.localeCompare(b.name));
+  const groupedAndFilteredItems = React.useMemo(() => {
+    const itemGroups = new Map<string, GroupedItem>();
+
+    items.forEach((item) => {
+      if (
+        !searchQuery ||
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.styleName?.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        const existingGroup = itemGroups.get(item.name);
+        if (existingGroup) {
+          existingGroup.styles.push(item);
+        } else {
+          itemGroups.set(item.name, {
+            name: item.name,
+            styles: [item],
+          });
+        }
+      }
+    });
+
+    return Array.from(itemGroups.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [items, searchQuery]);
 
   useEffect(() => {}, [isOpen]);
@@ -146,36 +176,56 @@ const ItemSelectionSheet: React.FC<ItemSelectionSheetProps> = ({
               />
             </SearchContainer>
 
-            {sortedAndFilteredItems.length > 0 ? (
-              sortedAndFilteredItems.map((item) => (
-                <ShelfContainer key={item.itemId}>
-                  <CategoryHeader onPress={() => toggleItem(item.itemId)}>
+            {groupedAndFilteredItems.length > 0 ? (
+              groupedAndFilteredItems.map((group) => (
+                <ShelfContainer key={group.name}>
+                  <CategoryHeader onPress={() => toggleItem(group.name)}>
                     <Text fontSize={18} fontWeight="bold">
-                      {item.name}
+                      {group.name}
                     </Text>
-                    {expandedItems.includes(item.itemId) ? <ChevronUp /> : <ChevronDown />}
+                    {expandedItems.includes(group.name) ? <ChevronUp /> : <ChevronDown />}
                   </CategoryHeader>
                   <AnimatePresence>
-                    {expandedItems.includes(item.itemId) && (
+                    {expandedItems.includes(group.name) && (
                       <YStack
                         animation="lazy"
                         enterStyle={{ opacity: 0, scale: 0.9 }}
                         exitStyle={{ opacity: 0, scale: 0.9 }}
                         opacity={1}
                         scale={1}
+                        gap="$2"
                       >
-                        <ItemWrapper>
-                          <Item
-                            item={item}
-                            onPress={() => {
-                              onSelectItem(item);
-                              onClose();
-                            }}
-                            showName={false}
-                            showCost={false}
-                          />
-                        </ItemWrapper>
-                        <ShelfRow />
+                        <GridContainer>
+                          {group.styles.map((style) => (
+                            <YStack 
+                              key={style.styleId || style.itemId}
+                              width="30%" 
+                              alignItems="center"
+                              marginBottom="$3"
+                            >
+                              <ItemWrapper>
+                                <Item
+                                  item={style}
+                                  onPress={() => {
+                                    onSelectItem(style);
+                                    onClose();
+                                  }}
+                                  showName={false}
+                                  showCost={false}
+                                />
+                              </ItemWrapper>
+                              <Text 
+                                fontSize={14} 
+                                color="#666" 
+                                textAlign="center"
+                                marginTop="$1"
+                              >
+                                {style.styleName || 'Default Style'}
+                              </Text>
+                              <ShelfRow width="80%" marginTop="$2" />
+                            </YStack>
+                          ))}
+                        </GridContainer>
                       </YStack>
                     )}
                   </AnimatePresence>

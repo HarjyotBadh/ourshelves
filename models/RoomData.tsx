@@ -30,7 +30,8 @@ export interface ItemData {
   imageUri: string;
   cost: number;
   shouldLock: boolean;
-  styleId?: string | null;
+  styleId: string | null;
+  styleName: string | null;
   [key: string]: any;
 }
 

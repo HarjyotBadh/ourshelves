@@ -11,4 +11,5 @@ export interface PurchasedItem {
   imageUri: string;
   shouldLock: boolean;
   styleId: string | null;
+  styleName: string | null;
 }

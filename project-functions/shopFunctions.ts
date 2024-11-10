@@ -90,7 +90,8 @@ export const purchaseItem = async (
         cost: item.cost,
         imageUri: item.imageUri,
         shouldLock: item.shouldLock || false,
-        styleId: item.styleId || null,  // Store the style ID if it exists
+        styleId: item.styleId || null,
+        styleName: item.styleName || null,
       };
 
       transaction.set(purchasedItemRef, purchasedItemData);
