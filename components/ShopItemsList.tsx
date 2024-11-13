@@ -9,7 +9,9 @@ interface ShopItemsListProps {
   onPurchase: (item: ItemData) => void;
 }
 
+
 const ShopItemsList: React.FC<ShopItemsListProps> = ({ items, userCoins, onPurchase }) => {
+  
   return (
     <FlatList
       data={items}
