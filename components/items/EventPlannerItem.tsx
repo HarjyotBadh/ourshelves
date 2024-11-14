@@ -11,8 +11,9 @@ import {
   ScrollView,
   Image,
 } from "tamagui";
-import { Search, Calendar, Users, MapPin, X } from "@tamagui/lucide-icons";
+import { Search, Calendar, Users, MapPin, X, AlertTriangle, Filter } from "@tamagui/lucide-icons";
 import Constants from "expo-constants";
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface EventPlannerItemProps {
   itemData: {
@@ -23,7 +24,6 @@ interface EventPlannerItemProps {
     placedUserId: string;
     [key: string]: any;
 
-    // Custom properties for EventPlannerItem
     attendingEvents: Array<{
       id: string;
       name: string;
@@ -93,8 +93,12 @@ const EventPlannerItem: EventPlannerItemComponent = ({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmUnattendEvent, setConfirmUnattendEvent] = useState<Event | null>(null);
+  const [selectedEventAttendees, setSelectedEventAttendees] = useState<Event | null>(null);
+  const [cityFilter, setCityFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Initialize data if needed
   useEffect(() => {
     if (!itemData.hasOwnProperty("attendingEvents")) {
       const initialData = EventPlannerItem.getInitialData();
@@ -105,7 +109,6 @@ const EventPlannerItem: EventPlannerItemComponent = ({
     }
   }, []);
 
-  // Open dialog when item becomes active
   useEffect(() => {
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
@@ -113,17 +116,30 @@ const EventPlannerItem: EventPlannerItemComponent = ({
   }, [isActive]);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() && !cityFilter && !dateFilter) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
+      let searchParams = new URLSearchParams();
+      if (searchQuery.trim()) {
+        searchParams.append("keyword", searchQuery);
+      }
+      if (cityFilter) {
+        searchParams.append("city", cityFilter);
+      }
+      if (dateFilter) {
+        const formattedDate = new Date(dateFilter).toISOString().split('T')[0];
+        searchParams.append("startDateTime", `${formattedDate}T00:00:00Z`);
+        searchParams.append("endDateTime", `${formattedDate}T23:59:59Z`);
+      }
+      searchParams.append("apikey", Constants.expoConfig?.extra?.ticketmasterApiKey);
+      searchParams.append("size", "10");
+      searchParams.append("sort", "date,asc");
+
       const response = await fetch(
-        `https://app.ticketmaster.com/discovery/v2/events.json?` +
-          `keyword=${encodeURIComponent(searchQuery)}` +
-          `&apikey=${Constants.expoConfig?.extra?.ticketmasterApiKey}` +
-          `&size=10&sort=date,asc`
+        `https://app.ticketmaster.com/discovery/v2/events.json?${searchParams.toString()}`
       );
 
       const data = await response.json();
@@ -140,7 +156,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
           image:
             event.images.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url ||
             event.images[0]?.url,
-          attendees: [], // Initialize empty attendees array
+          attendees: [],
         }));
         setSearchResults(formattedEvents);
       } else {
@@ -174,22 +190,23 @@ const EventPlannerItem: EventPlannerItemComponent = ({
     } else {
       updatedEvents.push({
         id: event.id,
-        name: event.name,
-        date: event.date,
-        time: event.time,
-        venue: event.venue,
-        city: event.city,
-        state: event.state,
-        image: event.image,
+        name: event.name || "Untitled Event",
+        date: event.date || "Unknown Date",
+        time: event.time || "",
+        venue: event.venue || "Unknown Venue",
+        city: event.city || "",
+        state: event.state || "",
+        image: event.image || "",
         attendees: [newAttendee],
       });
     }
 
-    // Update the itemData
     const updatedItemData = {
       ...itemData,
       attendingEvents: updatedEvents,
     };
+
+    console.log("updatedItemData", updatedItemData);
 
     onDataUpdate(updatedItemData);
   };
@@ -199,7 +216,67 @@ const EventPlannerItem: EventPlannerItemComponent = ({
     onClose();
   };
 
-  // Render non-active state
+  const handleUnattendEvent = (event: Event) => {
+    const updatedEvents = itemData.attendingEvents.filter((e) => e.id !== event.id);
+
+    const updatedItemData = {
+      ...itemData,
+      attendingEvents: updatedEvents,
+    };
+
+    onDataUpdate(updatedItemData);
+    setConfirmUnattendEvent(null);
+  };
+
+  const searchFiltersJsx = (
+    <>
+      <XStack justifyContent="flex-end">
+        <Button
+          size="$2"
+          icon={Filter}
+          onPress={() => setShowFilters(!showFilters)}
+          backgroundColor={showFilters ? "$blue8" : "transparent"}
+          color={showFilters ? "white" : "$blue11"}
+        >
+          <Text>Filters</Text>
+        </Button>
+      </XStack>
+
+      {showFilters && (
+        <YStack space="$2">
+          <Input
+            placeholder="Filter by city..."
+            value={cityFilter}
+            onChangeText={setCityFilter}
+            backgroundColor="$blue2"
+          />
+          <XStack alignItems="center" space="$2">
+            <Text color="$blue11">Date: </Text>
+            <DateTimePicker
+              value={dateFilter ? new Date(dateFilter) : new Date()}
+              mode="date"
+              onChange={(event, selectedDate) => {
+                if (selectedDate) {
+                  setDateFilter(selectedDate.toISOString().split('T')[0]);
+                }
+              }}
+            />
+            {dateFilter && (
+              <Button
+                size="$2"
+                icon={X}
+                onPress={() => setDateFilter("")}
+                backgroundColor="$red10"
+              >
+                <Text color="white">Clear</Text>
+              </Button>
+            )}
+          </XStack>
+        </YStack>
+      )}
+    </>
+  );
+
   if (!isActive) {
     return (
       <YStack flex={1}>
@@ -293,6 +370,8 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                   </Button>
                 </XStack>
 
+                {searchFiltersJsx}
+
                 {isLoading && (
                   <Text textAlign="center" color="$blue11">
                     Loading...
@@ -326,14 +405,14 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                             {event.name}
                           </Text>
                           <XStack space="$2" alignItems="center">
-                            <Calendar size={16} color="var(--blue11)" />
+                            <Calendar size={16} color="blue" />
                             <Text color="$blue11">
                               {new Date(event.date).toLocaleDateString()}{" "}
                               {event.time && `at ${event.time}`}
                             </Text>
                           </XStack>
                           <XStack space="$2" alignItems="center">
-                            <MapPin size={16} color="var(--blue11)" />
+                            <MapPin size={16} color="blue" />
                             <Text color="$blue11">
                               {event.venue} {event.city && `, ${event.city}`}{" "}
                               {event.state && `, ${event.state}`}
@@ -382,14 +461,14 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                           {event.name}
                         </Text>
                         <XStack space="$2" alignItems="center">
-                          <Calendar size={16} color="var(--blue11)" />
+                          <Calendar size={16} color="blue" />
                           <Text color="$blue11">
                             {new Date(event.date).toLocaleDateString()}{" "}
                             {event.time && `at ${event.time}`}
                           </Text>
                         </XStack>
                         <XStack space="$2" alignItems="center">
-                          <MapPin size={16} color="var(--blue11)" />
+                          <MapPin size={16} color="blue" />
                           <Text color="$blue11">
                             {event.venue} {event.city && `, ${event.city}`}{" "}
                             {event.state && `, ${event.state}`}
@@ -401,7 +480,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                             Attendees
                           </Text>
                           <XStack flexWrap="wrap" gap="$2">
-                            {event.attendees.map((attendee) => (
+                            {event.attendees.slice(0, 2).map((attendee) => (
                               <XStack
                                 key={attendee.userId}
                                 space="$1"
@@ -434,8 +513,42 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                                 <Text color="$blue11">{attendee.displayName}</Text>
                               </XStack>
                             ))}
+                            {event.attendees.length > 2 && (
+                              <Button
+                                size="$3"
+                                backgroundColor="$blue2"
+                                padding="$2"
+                                borderRadius="$4"
+                                onPress={() => setSelectedEventAttendees(event)}
+                              >
+                                <Text color="$blue11">+{event.attendees.length - 2}</Text>
+                              </Button>
+                            )}
                           </XStack>
                         </YStack>
+
+                        <Button
+                          marginTop="$2"
+                          backgroundColor={
+                            event.attendees.some((a) => a.userId === itemData.placedUserId)
+                              ? "$red10"
+                              : "$blue8"
+                          }
+                          color="white"
+                          onPress={() => {
+                            if (event.attendees.some((a) => a.userId === itemData.placedUserId)) {
+                              setConfirmUnattendEvent(event);
+                            } else {
+                              handleMarkAsAttending(event);
+                            }
+                          }}
+                        >
+                          <Text>
+                            {event.attendees.some((a) => a.userId === itemData.placedUserId)
+                              ? "Unattend Event"
+                              : "Mark as Attending"}
+                          </Text>
+                        </Button>
                       </YStack>
                     </YStack>
                   ))}
@@ -445,6 +558,125 @@ const EventPlannerItem: EventPlannerItemComponent = ({
           </YStack>
         </Dialog.Content>
       </Dialog.Portal>
+      <Dialog
+        modal
+        open={!!confirmUnattendEvent}
+        onOpenChange={() => setConfirmUnattendEvent(null)}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="confirm-overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <Dialog.Content
+            bordered
+            elevate
+            key="confirm-content"
+            animation="quick"
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            style={{ maxWidth: 400, width: "90%" }}
+          >
+            <YStack space="$4" padding="$4">
+              <XStack space="$2" alignItems="center">
+                <AlertTriangle color="$red10" />
+                <Dialog.Title>Confirm Unattend</Dialog.Title>
+              </XStack>
+              <Text color="$gray11">
+                Are you sure you want to unattend "{confirmUnattendEvent?.name}"?
+              </Text>
+              <XStack space="$3" justifyContent="flex-end">
+                <Button onPress={() => setConfirmUnattendEvent(null)} backgroundColor="$gray5">
+                  <Text>Cancel</Text>
+                </Button>
+                <Button
+                  onPress={() => handleUnattendEvent(confirmUnattendEvent!)}
+                  backgroundColor="$red10"
+                >
+                  <Text color="white">Unattend</Text>
+                </Button>
+              </XStack>
+            </YStack>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
+      <Dialog
+        modal
+        open={!!selectedEventAttendees}
+        onOpenChange={() => setSelectedEventAttendees(null)}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="attendees-overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <Dialog.Content
+            bordered
+            elevate
+            key="attendees-content"
+            animation="quick"
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            style={{ maxWidth: 500, width: "90%" }}
+          >
+            <YStack space="$4" padding="$4">
+              <XStack justifyContent="space-between" alignItems="center">
+                <Dialog.Title>Event Attendees</Dialog.Title>
+                <Dialog.Close asChild>
+                  <Button size="$3" circular icon={X} />
+                </Dialog.Close>
+              </XStack>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <XStack space="$2" padding="$2">
+                  {selectedEventAttendees?.attendees.map((attendee) => (
+                    <YStack
+                      key={attendee.userId}
+                      space="$2"
+                      alignItems="center"
+                      backgroundColor="$blue2"
+                      padding="$3"
+                      borderRadius="$4"
+                      width={80}
+                    >
+                      {attendee.profilePicture ? (
+                        <Image
+                          source={{ uri: attendee.profilePicture }}
+                          width={50}
+                          height={50}
+                          borderRadius={25}
+                        />
+                      ) : (
+                        <View
+                          width={50}
+                          height={50}
+                          borderRadius={25}
+                          backgroundColor="$blue8"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          <Text color="white" fontSize="$4">
+                            {attendee.displayName.charAt(0)}
+                          </Text>
+                        </View>
+                      )}
+                      <Text color="$blue11" fontSize="$2" textAlign="center" numberOfLines={2}>
+                        {attendee.displayName}
+                      </Text>
+                    </YStack>
+                  ))}
+                </XStack>
+              </ScrollView>
+            </YStack>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
     </Dialog>
   );
 };
