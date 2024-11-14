@@ -13,7 +13,8 @@ import {
 } from "tamagui";
 import { Search, Calendar, Users, MapPin, X, AlertTriangle, Filter } from "@tamagui/lucide-icons";
 import Constants from "expo-constants";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Platform, SafeAreaView, StatusBar } from "react-native";
 
 interface EventPlannerItemProps {
   itemData: {
@@ -55,13 +56,29 @@ interface EventPlannerItemComponent extends React.FC<EventPlannerItemProps> {
   getInitialData: () => { attendingEvents: Array<any> };
 }
 
-const EventPlannerView = styled(View, {
-  width: "100%",
-  height: "100%",
-  backgroundColor: "$blue5",
-  borderRadius: "$2",
-  justifyContent: "center",
+export const BACKGROUND_COLOR = "$yellow2Light";
+export const HEADER_BACKGROUND = "#8B4513";
+
+export const Container = styled(YStack, {
+  flex: 1,
+  backgroundColor: BACKGROUND_COLOR,
+});
+
+export const Content = styled(View, {
+  flex: 1,
+});
+
+export const Header = styled(XStack, {
+  height: 60,
+  backgroundColor: HEADER_BACKGROUND,
   alignItems: "center",
+  paddingHorizontal: "$4",
+});
+
+export const SafeAreaWrapper = styled(SafeAreaView, {
+  flex: 1,
+  backgroundColor: HEADER_BACKGROUND,
+  paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
 });
 
 interface Event {
@@ -80,6 +97,115 @@ interface Event {
   }>;
 }
 
+const StyledDialogContent = styled(Dialog.Content, {
+  backgroundColor: "$yellow2Light",
+  borderRadius: "$6",
+  width: "94%",
+  maxWidth: 600,
+  borderWidth: 2,
+  borderColor: "#8B4513",
+  shadowColor: "$shadowColor",
+  shadowRadius: 26,
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.2,
+});
+
+const StyledHeader = styled(XStack, {
+  height: 60,
+  backgroundColor: "#8B4513",
+  alignItems: "center",
+  paddingHorizontal: "$4",
+  borderTopLeftRadius: "$4",
+  borderTopRightRadius: "$4",
+  marginTop: -20,
+  marginHorizontal: -20,
+});
+
+const StyledTabContainer = styled(XStack, {
+  backgroundColor: "rgba(139, 69, 19, 0.1)",
+  padding: "$2",
+  borderRadius: "$4",
+  space: "$2",
+  marginTop: "$4",
+});
+
+const StyledEventCard = styled(YStack, {
+  backgroundColor: "white",
+  borderRadius: "$4",
+  overflow: "hidden",
+  elevation: 2,
+  borderWidth: 1,
+  borderColor: "#8B4513",
+});
+
+const EventPlannerView = styled(YStack, {
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "$2",
+  backgroundColor: "white",
+  borderRadius: "$4",
+  borderWidth: 1,
+  borderColor: "#8B4513",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  margin: "$1",
+});
+
+const StyledInput = styled(Input, {
+  backgroundColor: "white",
+  borderWidth: 1,
+  borderColor: "#8B4513",
+  color: "black",
+
+  hoverStyle: {
+    borderColor: "#A0522D",
+  },
+  focusStyle: {
+    borderColor: "#A0522D",
+    borderWidth: 2,
+  },
+});
+
+const StyledSearchButton = styled(Button, {
+  backgroundColor: "#8B4513",
+  borderWidth: 1,
+  borderColor: "#6B3410",
+
+  hoverStyle: {
+    backgroundColor: "#A0522D",
+  },
+  pressStyle: {
+    backgroundColor: "#6B3410",
+  },
+});
+
+const StyledFilterButton = styled(Button, {
+  backgroundColor: "transparent",
+  borderWidth: 1,
+  borderColor: "#8B4513",
+  color: "#8B4513",
+
+  variants: {
+    active: {
+      true: {
+        backgroundColor: "#8B4513",
+        color: "white",
+      },
+    },
+  },
+});
+
+const FilterContainer = styled(YStack, {
+  backgroundColor: "rgba(139, 69, 19, 0.08)",
+  padding: "$4",
+  borderRadius: "$4",
+  borderWidth: 1,
+  borderColor: "#8B4513",
+  marginTop: "$2",
+});
+
 const EventPlannerItem: EventPlannerItemComponent = ({
   itemData,
   onDataUpdate,
@@ -97,7 +223,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
   const [selectedEventAttendees, setSelectedEventAttendees] = useState<Event | null>(null);
   const [cityFilter, setCityFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const [filtersDialogOpen, setFiltersDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!itemData.hasOwnProperty("attendingEvents")) {
@@ -115,6 +241,25 @@ const EventPlannerItem: EventPlannerItemComponent = ({
     }
   }, [isActive]);
 
+  useEffect(() => {
+    if (itemData.attendingEvents?.length) {
+      const now = new Date();
+      const filteredEvents = itemData.attendingEvents.filter((event) => {
+        const eventDate = new Date(`${event.date}${event.time ? `T${event.time}` : "T00:00:00"}`);
+        const hoursSinceEvent = (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60);
+        return hoursSinceEvent < 48;
+      });
+
+      if (filteredEvents.length !== itemData.attendingEvents.length) {
+        console.log("An event was removed from the list");
+        onDataUpdate({
+          ...itemData,
+          attendingEvents: filteredEvents,
+        });
+      }
+    }
+  }, [itemData.attendingEvents]);
+
   const handleSearch = async () => {
     if (!searchQuery.trim() && !cityFilter && !dateFilter) return;
 
@@ -130,7 +275,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
         searchParams.append("city", cityFilter);
       }
       if (dateFilter) {
-        const formattedDate = new Date(dateFilter).toISOString().split('T')[0];
+        const formattedDate = new Date(dateFilter).toISOString().split("T")[0];
         searchParams.append("startDateTime", `${formattedDate}T00:00:00Z`);
         searchParams.append("endDateTime", `${formattedDate}T23:59:59Z`);
       }
@@ -228,53 +373,82 @@ const EventPlannerItem: EventPlannerItemComponent = ({
     setConfirmUnattendEvent(null);
   };
 
-  const searchFiltersJsx = (
-    <>
-      <XStack justifyContent="flex-end">
-        <Button
-          size="$2"
-          icon={Filter}
-          onPress={() => setShowFilters(!showFilters)}
-          backgroundColor={showFilters ? "$blue8" : "transparent"}
-          color={showFilters ? "white" : "$blue11"}
-        >
-          <Text>Filters</Text>
-        </Button>
-      </XStack>
+  const openFiltersDialog = () => {
+    setFiltersDialogOpen(true);
+  };
 
-      {showFilters && (
-        <YStack space="$2">
-          <Input
-            placeholder="Filter by city..."
-            value={cityFilter}
-            onChangeText={setCityFilter}
-            backgroundColor="$blue2"
+  const closeFiltersDialog = () => {
+    setFiltersDialogOpen(false);
+  };
+
+  const applyFilters = () => {
+    setFiltersDialogOpen(false);
+    handleSearch();
+  };
+
+  const filtersDialogContent = (
+    <StyledDialogContent>
+      <StyledHeader>
+        <Text color="white" fontSize="$6" flex={1} textAlign="center" fontWeight="bold">
+          Filters
+        </Text>
+        <Dialog.Close asChild>
+          <Button
+            size="$3"
+            circular
+            icon={X}
+            backgroundColor="transparent"
+            hoverStyle={{ backgroundColor: "rgba(255,255,255,0.1)" }}
           />
-          <XStack alignItems="center" space="$2">
-            <Text color="$blue11">Date: </Text>
-            <DateTimePicker
-              value={dateFilter ? new Date(dateFilter) : new Date()}
-              mode="date"
-              onChange={(event, selectedDate) => {
-                if (selectedDate) {
-                  setDateFilter(selectedDate.toISOString().split('T')[0]);
-                }
-              }}
-            />
-            {dateFilter && (
-              <Button
-                size="$2"
-                icon={X}
-                onPress={() => setDateFilter("")}
-                backgroundColor="$red10"
-              >
-                <Text color="white">Clear</Text>
-              </Button>
-            )}
-          </XStack>
-        </YStack>
-      )}
-    </>
+        </Dialog.Close>
+      </StyledHeader>
+
+      <YStack space="$4" padding="$4">
+        <StyledInput
+          placeholder="Filter by city..."
+          value={cityFilter}
+          onChangeText={setCityFilter}
+        />
+        <XStack alignItems="center" space="$2">
+          <Text color="#8B4513">Date: </Text>
+          <DateTimePicker
+            value={dateFilter ? new Date(dateFilter) : new Date()}
+            mode="date"
+            onChange={(event, selectedDate) => {
+              if (selectedDate) {
+                setDateFilter(selectedDate.toISOString().split("T")[0]);
+              }
+            }}
+          />
+          {dateFilter && (
+            <Button size="$2" icon={X} onPress={() => setDateFilter("")} backgroundColor="#8B4513">
+              <Text color="white">Clear</Text>
+            </Button>
+          )}
+        </XStack>
+        <XStack justifyContent="flex-end" space="$2">
+          <Button onPress={closeFiltersDialog} backgroundColor="$gray5">
+            <Text>Cancel</Text>
+          </Button>
+          <Button onPress={applyFilters} backgroundColor="#8B4513">
+            <Text color="white">Apply</Text>
+          </Button>
+        </XStack>
+      </YStack>
+    </StyledDialogContent>
+  );
+
+  const searchFiltersJsx = (
+    <XStack justifyContent="flex-end">
+      <StyledFilterButton
+        size="$2"
+        icon={Filter}
+        onPress={openFiltersDialog}
+        active={filtersDialogOpen}
+      >
+        <Text color={filtersDialogOpen ? "white" : "#8B4513"}>Filters</Text>
+      </StyledFilterButton>
+    </XStack>
   );
 
   if (!isActive) {
@@ -300,7 +474,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
           enterStyle={{ opacity: 0 }}
           exitStyle={{ opacity: 0 }}
         />
-        <Dialog.Content
+        <StyledDialogContent
           bordered
           elevate
           key="content"
@@ -314,60 +488,75 @@ const EventPlannerItem: EventPlannerItemComponent = ({
           ]}
           enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
           exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-          style={{ maxWidth: 600, width: "94%" }}
         >
-          <YStack space="$4" padding="$4">
-            <XStack justifyContent="space-between" alignItems="center">
-              <Dialog.Title color="$blue11" fontSize="$6">
-                <Text>Event Planner</Text>
-              </Dialog.Title>
+          <YStack space="$4">
+            <StyledHeader>
+              <Text color="white" fontSize="$6" flex={1} textAlign="center" fontWeight="bold">
+                Event Planner
+              </Text>
               <Dialog.Close asChild>
-                <Button size="$3" circular icon={X} />
+                <Button
+                  size="$3"
+                  circular
+                  icon={X}
+                  backgroundColor="transparent"
+                  hoverStyle={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+                />
               </Dialog.Close>
-            </XStack>
+            </StyledHeader>
 
-            <XStack backgroundColor="$blue2" padding="$2" borderRadius="$4" space="$2">
+            <StyledTabContainer>
               <Button
                 flex={1}
                 size="$3"
-                backgroundColor={activeTab === "search" ? "$blue8" : "transparent"}
-                color={activeTab === "search" ? "white" : "$blue11"}
+                backgroundColor={activeTab === "search" ? "#8B4513" : "transparent"}
+                borderColor="#8B4513"
+                borderWidth={1}
+                color={activeTab === "search" ? "white" : "#8B4513"}
                 onPress={() => setActiveTab("search")}
                 icon={Search}
+                pressStyle={{
+                  backgroundColor: activeTab === "search" ? "#6B3410" : "rgba(139, 69, 19, 0.2)",
+                }}
               >
-                <Text>Search Events</Text>
+                <Text color={activeTab === "search" ? "white" : "#8B4513"}>Search Events</Text>
               </Button>
               <Button
                 flex={1}
                 size="$3"
-                backgroundColor={activeTab === "attending" ? "$blue8" : "transparent"}
-                color={activeTab === "attending" ? "white" : "$blue11"}
+                backgroundColor={activeTab === "attending" ? "#8B4513" : "transparent"}
+                borderColor="#8B4513"
+                borderWidth={1}
+                color={activeTab === "attending" ? "white" : "#8B4513"}
                 onPress={() => setActiveTab("attending")}
                 icon={Users}
+                pressStyle={{
+                  backgroundColor: activeTab === "attending" ? "#6B3410" : "rgba(139, 69, 19, 0.2)",
+                }}
               >
-                <Text>Attending ({itemData.attendingEvents?.length ?? 0})</Text>
+                <Text color={activeTab === "attending" ? "white" : "#8B4513"}>
+                  Attending ({itemData.attendingEvents?.length ?? 0})
+                </Text>
               </Button>
-            </XStack>
+            </StyledTabContainer>
 
             {activeTab === "search" && (
               <YStack space="$4">
                 <XStack space="$2">
-                  <Input
+                  <StyledInput
                     flex={1}
                     placeholder="Search for events..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    backgroundColor="$blue2"
                   />
-                  <Button
+                  <StyledSearchButton
                     size="$3"
                     icon={Search}
                     onPress={handleSearch}
                     disabled={isLoading}
-                    backgroundColor="$blue8"
                   >
-                    <Text>Search</Text>
-                  </Button>
+                    <Text color="white">Search</Text>
+                  </StyledSearchButton>
                 </XStack>
 
                 {searchFiltersJsx}
@@ -387,7 +576,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                 <ScrollView maxHeight={400} bounces={false}>
                   <YStack space="$4" padding="$2">
                     {searchResults.map((event) => (
-                      <YStack
+                      <StyledEventCard
                         key={event.id}
                         backgroundColor="white"
                         borderRadius="$4"
@@ -432,7 +621,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                             </Text>
                           </Button>
                         </YStack>
-                      </YStack>
+                      </StyledEventCard>
                     ))}
                   </YStack>
                 </ScrollView>
@@ -443,7 +632,7 @@ const EventPlannerItem: EventPlannerItemComponent = ({
               <ScrollView maxHeight={400} bounces={false}>
                 <YStack space="$4" padding="$2">
                   {itemData.attendingEvents?.map((event) => (
-                    <YStack
+                    <StyledEventCard
                       key={event.id}
                       backgroundColor="white"
                       borderRadius="$4"
@@ -550,14 +739,30 @@ const EventPlannerItem: EventPlannerItemComponent = ({
                           </Text>
                         </Button>
                       </YStack>
-                    </YStack>
+                    </StyledEventCard>
                   ))}
                 </YStack>
               </ScrollView>
             )}
           </YStack>
-        </Dialog.Content>
+        </StyledDialogContent>
       </Dialog.Portal>
+
+      {/* Filters Dialog */}
+      <Dialog modal open={filtersDialogOpen} onOpenChange={setFiltersDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="filters-overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          {filtersDialogContent}
+        </Dialog.Portal>
+      </Dialog>
+
+      {/* Confirm Unattend Dialog */}
       <Dialog
         modal
         open={!!confirmUnattendEvent}
@@ -603,6 +808,8 @@ const EventPlannerItem: EventPlannerItemComponent = ({
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog>
+
+      {/* Attendees Dialog */}
       <Dialog
         modal
         open={!!selectedEventAttendees}
