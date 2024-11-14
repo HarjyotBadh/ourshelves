@@ -22,6 +22,7 @@ import {
   AlertDialogButtonContainer,
   AlertDialogButton,
 } from "../styles/AddUserToRoomDialogStyles";
+import { sendRoomInvite } from "../project-functions/homeFunctions";
 
 interface Room {
   id: string;
@@ -45,8 +46,6 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [roomToAdd, setRoomToAdd] = useState<Room | null>(null);
 
   useEffect(() => {
     const fetchAdminRooms = async () => {
@@ -69,33 +68,24 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
   }, [searchQuery, adminRooms]);
 
   const handleAddUserToRoom = async (room: Room) => {
-    setRoomToAdd(room);
-    setConfirmationOpen(true);
-  };
-
-  const confirmAddUserToRoom = async () => {
-    if (!roomToAdd) return;
-
     try {
-      const userRef = doc(db, "Users", userId);
-      const roomRef = doc(db, "Rooms", roomToAdd.id);
-
-      await updateDoc(userRef, {
-        rooms: arrayUnion(roomRef),
-      });
-
-      await updateDoc(roomRef, {
-        users: arrayUnion(userRef),
-      });
-
-      Alert.alert("Success", `${userName} has been added to ${roomToAdd.name}`);
-      onOpenChange(false);
+      const roomDoc = doc(db, "rooms", room.id);
+      const result = await sendRoomInvite(room.id, userId);
+      
+      if (result.alreadyInRoom) {
+        Alert.alert("Notice", `${userName} is already a member of this room`);
+        return;
+      }
+      
+      if (result.success) {
+        Alert.alert("Success", `Invitation sent to ${userName}`);
+        onOpenChange(false);
+      } else {
+        Alert.alert("Error", result.message);
+      }
     } catch (error) {
-      console.error("Error adding user to room:", error);
-      Alert.alert("Error", "Failed to add user to room. Please try again.");
-    } finally {
-      setConfirmationOpen(false);
-      setRoomToAdd(null);
+      console.error("Error sending invite:", error);
+      Alert.alert("Error", "Failed to send invitation");
     }
   };
 
@@ -172,60 +162,6 @@ const AddUserToRoomDialog: React.FC<AddUserToRoomDialogProps> = ({
           </StyledDialogContent>
         </Dialog.Portal>
       </Dialog>
-
-      <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay
-            key="overlay"
-            animation="quick"
-            opacity={0.5}
-            enterStyle={{ opacity: 0 }}
-            exitStyle={{ opacity: 0 }}
-          />
-          <StyledAlertDialogContent
-            bordered
-            elevate
-            key="content"
-            animation={[
-              "quick",
-              {
-                opacity: {
-                  overshootClamping: true,
-                },
-              },
-            ]}
-            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-          >
-            <YStack gap="$4" alignItems="center">
-              <AlertDialogIconContainer>
-                <AlertTriangle color="$orange10" size={40} />
-              </AlertDialogIconContainer>
-              <StyledAlertDialogTitle>Confirm Add User to Room</StyledAlertDialogTitle>
-              <StyledAlertDialogDescription>
-                Are you sure you want to add {userName} to {roomToAdd?.name}?
-              </StyledAlertDialogDescription>
-
-              <AlertDialogButtonContainer>
-                <AlertDialog.Cancel asChild>
-                  <AlertDialogButton theme="alt1" aria-label="Cancel">
-                    Cancel
-                  </AlertDialogButton>
-                </AlertDialog.Cancel>
-                <AlertDialog.Action asChild>
-                  <AlertDialogButton
-                    theme="active"
-                    aria-label="Add User"
-                    onPress={confirmAddUserToRoom}
-                  >
-                    Add User
-                  </AlertDialogButton>
-                </AlertDialog.Action>
-              </AlertDialogButtonContainer>
-            </YStack>
-          </StyledAlertDialogContent>
-        </AlertDialog.Portal>
-      </AlertDialog>
     </>
   );
 };
