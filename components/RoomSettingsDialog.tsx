@@ -9,6 +9,7 @@ import {
   Avatar,
   AlertDialog,
   Switch,
+  Button,
 } from "tamagui";
 import {
   Settings,
@@ -19,6 +20,7 @@ import {
   X,
   Info,
   AlertTriangle,
+  List,
 } from "@tamagui/lucide-icons";
 import {
   StyledAccordionItem,
@@ -36,6 +38,7 @@ import {
   BACKGROUND_COLOR,
   HEADER_BACKGROUND,
 } from "../styles/RoomSettingsStyles";
+import { DraggableShelfList } from "./DraggableShelfList";
 
 interface User {
   id: string;
@@ -53,6 +56,8 @@ interface RoomSettingsDialogProps {
   currentUserId: string;
   hasPersonalShelves: boolean;
   onPersonalShelvesToggle: (value: boolean) => void;
+  shelves: { id: string; name: string; position: number }[];
+  onShelvesReorder: (newOrder: { id: string; position: number }[]) => void;
 }
 
 const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
@@ -64,11 +69,14 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   currentUserId,
   hasPersonalShelves,
   onPersonalShelvesToggle,
+  shelves,
+  onShelvesReorder,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<User | null>(null);
   const [personalShelvesConfirmOpen, setPersonalShelvesConfirmOpen] = useState(false);
+  const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
 
   const filteredUsers = users.filter((user) =>
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -244,18 +252,36 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
                       <StyledAccordionContent>
                         <YStack gap="$3">
                           {isCurrentUserAdmin && (
-                            <XStack alignItems="center" justifyContent="space-between">
-                              <Text color="black" flex={1}>
-                                Personal Shelves
-                              </Text>
-                              <Switch
-                                checked={hasPersonalShelves}
-                                onCheckedChange={handlePersonalShelvesChange}
-                                backgroundColor={hasPersonalShelves ? HEADER_BACKGROUND : "$gray5"}
-                              >
-                                <Switch.Thumb animation="quick" />
-                              </Switch>
-                            </XStack>
+                            <>
+                              <XStack alignItems="center" justifyContent="space-between">
+                                <Text color="black" flex={1}>
+                                  Personal Shelves
+                                </Text>
+                                <Switch
+                                  checked={hasPersonalShelves}
+                                  onCheckedChange={handlePersonalShelvesChange}
+                                  backgroundColor={
+                                    hasPersonalShelves ? HEADER_BACKGROUND : "$gray5"
+                                  }
+                                >
+                                  <Switch.Thumb animation="quick" />
+                                </Switch>
+                              </XStack>
+
+                              <XStack alignItems="center" justifyContent="space-between">
+                                <Text color="black" flex={1}>
+                                  Reorder Shelves
+                                </Text>
+                                <Button
+                                  onPress={() => setReorderDialogOpen(true)}
+                                  backgroundColor={HEADER_BACKGROUND}
+                                  color="white"
+                                  icon={List}
+                                >
+                                  Reorder
+                                </Button>
+                              </XStack>
+                            </>
                           )}
                         </YStack>
                       </StyledAccordionContent>
@@ -371,6 +397,61 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
           </StyledAlertDialogContent>
         </AlertDialog.Portal>
       </AlertDialog>
+
+      <Dialog modal open={reorderDialogOpen} onOpenChange={setReorderDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            y={0}
+            opacity={1}
+            scale={1}
+            width="90%"
+            maxWidth={500}
+            height="80%"
+            backgroundColor={BACKGROUND_COLOR}
+          >
+            <YStack flex={1}>
+              <Header>
+                <Text fontSize={20} fontWeight="bold" flex={1} textAlign="center" color="white">
+                  Reorder Shelves
+                </Text>
+                <Dialog.Close asChild>
+                  <HeaderButton unstyled>
+                    <X color="white" size={24} />
+                  </HeaderButton>
+                </Dialog.Close>
+              </Header>
+              <YStack flex={1} padding="$4">
+                <DraggableShelfList
+                  shelves={shelves}
+                  onReorder={onShelvesReorder}
+                  onClose={() => setReorderDialogOpen(false)}
+                />
+              </YStack>
+            </YStack>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
     </>
   );
 };

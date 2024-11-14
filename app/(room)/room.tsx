@@ -135,9 +135,9 @@ const RoomScreen = () => {
     }
 
     const roomRef = doc(db, "Rooms", roomId);
-    batch.update(roomRef, { 
+    batch.update(roomRef, {
       shelfList: shelfRefs,
-      hasPersonalShelves: false
+      hasPersonalShelves: false,
     });
 
     await batch.commit();
@@ -625,15 +625,49 @@ const RoomScreen = () => {
 
   const handlePersonalShelvesToggle = async (value: boolean) => {
     if (!roomId) return;
-    
+
     try {
       const roomRef = doc(db, "Rooms", roomId);
       await updateDoc(roomRef, {
-        hasPersonalShelves: value
+        hasPersonalShelves: value,
       });
       setHasPersonalShelves(value);
     } catch (error) {
       console.error("Failed to update personal shelves setting:", error);
+    }
+  };
+
+  const handleShelvesReorder = async (newOrder: { id: string; position: number }[]) => {
+    try {
+      const batch = writeBatch(db);
+
+      // Update each shelf's position in Firestore
+      newOrder.forEach(({ id, position }) => {
+        const shelfRef = doc(db, "Shelves", id);
+        batch.update(shelfRef, {
+          position,
+          updatedAt: new Date(),
+        });
+      });
+
+      await batch.commit();
+
+      // Update local state
+      setShelves((prevShelves) => {
+        const updatedShelves = [...prevShelves];
+        newOrder.forEach(({ id, position }) => {
+          const shelfIndex = updatedShelves.findIndex((shelf) => shelf.id === id);
+          if (shelfIndex !== -1) {
+            updatedShelves[shelfIndex] = {
+              ...updatedShelves[shelfIndex],
+              position,
+            };
+          }
+        });
+        return updatedShelves.sort((a, b) => a.position - b.position);
+      });
+    } catch (error) {
+      console.error("Failed to update shelf positions:", error);
     }
   };
 
@@ -787,6 +821,8 @@ const RoomScreen = () => {
           currentUserId={auth.currentUser?.uid || ""}
           hasPersonalShelves={hasPersonalShelves}
           onPersonalShelvesToggle={handlePersonalShelvesToggle}
+          shelves={shelves.map(({ id, name, position }) => ({ id, name, position }))}
+          onShelvesReorder={handleShelvesReorder}
         />
       </Container>
     </SafeAreaWrapper>
