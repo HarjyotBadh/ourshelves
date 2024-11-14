@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { Dialog, Accordion, YStack, Text, XStack, ScrollView, Avatar, AlertDialog } from "tamagui";
+import {
+  Dialog,
+  Accordion,
+  YStack,
+  Text,
+  XStack,
+  ScrollView,
+  Avatar,
+  AlertDialog,
+  Switch,
+} from "tamagui";
 import {
   Settings,
   Users,
@@ -41,6 +51,8 @@ interface RoomSettingsDialogProps {
   roomDescription?: string;
   onRemoveUser: (userId: string) => void;
   currentUserId: string;
+  hasPersonalShelves: boolean;
+  onPersonalShelvesToggle: (value: boolean) => void;
 }
 
 const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
@@ -50,10 +62,13 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   roomDescription,
   onRemoveUser,
   currentUserId,
+  hasPersonalShelves,
+  onPersonalShelvesToggle,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<User | null>(null);
+  const [personalShelvesConfirmOpen, setPersonalShelvesConfirmOpen] = useState(false);
 
   const filteredUsers = users.filter((user) =>
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -71,6 +86,21 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
     setConfirmationOpen(false);
     setUserToRemove(null);
   };
+
+  const handlePersonalShelvesChange = (value: boolean) => {
+    if (!value) {
+      setPersonalShelvesConfirmOpen(true);
+    } else {
+      onPersonalShelvesToggle(true);
+    }
+  };
+
+  const confirmDisablePersonalShelves = () => {
+    onPersonalShelvesToggle(false);
+    setPersonalShelvesConfirmOpen(false);
+  };
+
+  const isCurrentUserAdmin = users.some((user) => user.id === currentUserId && user.isAdmin);
 
   const renderUserList = () => (
     <YStack gap="$2">
@@ -212,9 +242,22 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
                         )}
                       </StyledAccordionTrigger>
                       <StyledAccordionContent>
-                        <Text color="black">Setting 1: Value</Text>
-                        <Text color="black">Setting 2: Value</Text>
-                        <Text color="black">Setting 3: Value</Text>
+                        <YStack gap="$3">
+                          {isCurrentUserAdmin && (
+                            <XStack alignItems="center" justifyContent="space-between">
+                              <Text color="black" flex={1}>
+                                Personal Shelves
+                              </Text>
+                              <Switch
+                                checked={hasPersonalShelves}
+                                onCheckedChange={handlePersonalShelvesChange}
+                                backgroundColor={hasPersonalShelves ? HEADER_BACKGROUND : "$gray5"}
+                              >
+                                <Switch.Thumb animation="quick" />
+                              </Switch>
+                            </XStack>
+                          )}
+                        </YStack>
                       </StyledAccordionContent>
                     </StyledAccordionItem>
                   </Accordion>
@@ -269,6 +312,58 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
                     onPress={confirmRemoveUser}
                   >
                     Remove User
+                  </StyledAlertDialogButton>
+                </AlertDialog.Action>
+              </XStack>
+            </YStack>
+          </StyledAlertDialogContent>
+        </AlertDialog.Portal>
+      </AlertDialog>
+
+      <AlertDialog open={personalShelvesConfirmOpen} onOpenChange={setPersonalShelvesConfirmOpen}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <StyledAlertDialogContent
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          >
+            <YStack gap="$4" alignItems="center">
+              <AlertTriangle color={HEADER_BACKGROUND} size={40} />
+              <StyledAlertDialogTitle>Disable Personal Shelves?</StyledAlertDialogTitle>
+              <StyledAlertDialogDescription>
+                Are you sure you want to disable personal shelves? This will remove all personal
+                shelves from the room and their contents will be lost.
+              </StyledAlertDialogDescription>
+
+              <XStack gap="$3" justifyContent="center" width="100%">
+                <AlertDialog.Cancel asChild>
+                  <StyledAlertDialogButton theme="alt1" aria-label="Cancel">
+                    Cancel
+                  </StyledAlertDialogButton>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action asChild>
+                  <StyledAlertDialogButton
+                    theme="active"
+                    aria-label="Disable Personal Shelves"
+                    onPress={confirmDisablePersonalShelves}
+                  >
+                    Disable
                   </StyledAlertDialogButton>
                 </AlertDialog.Action>
               </XStack>

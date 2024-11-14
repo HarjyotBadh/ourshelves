@@ -60,6 +60,7 @@ interface RoomData extends DocumentData {
   users: DocumentReference[];
   admins: DocumentReference[];
   shelfList: DocumentReference[];
+  hasPersonalShelves: boolean;
 }
 
 const RoomScreen = () => {
@@ -94,6 +95,7 @@ const RoomScreen = () => {
     roomId: string;
   }>({ name: "", users: [], description: "", roomId: "" });
   const { stop, tracks } = useAudio();
+  const [hasPersonalShelves, setHasPersonalShelves] = useState(false);
 
   /**
    * Initializes shelves for a new room.
@@ -133,7 +135,10 @@ const RoomScreen = () => {
     }
 
     const roomRef = doc(db, "Rooms", roomId);
-    batch.update(roomRef, { shelfList: shelfRefs });
+    batch.update(roomRef, { 
+      shelfList: shelfRefs,
+      hasPersonalShelves: false
+    });
 
     await batch.commit();
     return newShelves;
@@ -195,6 +200,7 @@ const RoomScreen = () => {
 
           setRoomName(roomData.name);
           setRoomDescription(roomData.description);
+          setHasPersonalShelves(roomData.hasPersonalShelves ?? false);
 
           setLoadingProgress(20);
 
@@ -617,6 +623,20 @@ const RoomScreen = () => {
     }
   };
 
+  const handlePersonalShelvesToggle = async (value: boolean) => {
+    if (!roomId) return;
+    
+    try {
+      const roomRef = doc(db, "Rooms", roomId);
+      await updateDoc(roomRef, {
+        hasPersonalShelves: value
+      });
+      setHasPersonalShelves(value);
+    } catch (error) {
+      console.error("Failed to update personal shelves setting:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <YStack f={1} ai="center" jc="center" backgroundColor={BACKGROUND_COLOR}>
@@ -765,6 +785,8 @@ const RoomScreen = () => {
           roomDescription={roomDescription}
           onRemoveUser={handleRemoveUser}
           currentUserId={auth.currentUser?.uid || ""}
+          hasPersonalShelves={hasPersonalShelves}
+          onPersonalShelvesToggle={handlePersonalShelvesToggle}
         />
       </Container>
     </SafeAreaWrapper>
