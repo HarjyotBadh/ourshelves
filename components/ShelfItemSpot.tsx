@@ -308,22 +308,24 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
         {isLockedByAnotherUser && <LockOverlay />}
         {showPlusSigns && item && (
           <>
-            <Button
-              unstyled
-              onPress={() => setStyleSwitchOpen(true)}
-              position="absolute"
-              top={5}
-              left={5}
-              width={24}
-              height={24}
-              justifyContent="center"
-              alignItems="center"
-              backgroundColor="$blue10"
-              zIndex={20}
-              elevate
-            >
-              <ArrowUpDown color="white" size={16} />
-            </Button>
+            {availableItems.filter((style) => style.itemId === item.itemId).length > 1 && (
+              <Button
+                unstyled
+                onPress={() => setStyleSwitchOpen(true)}
+                position="absolute"
+                top={5}
+                left={5}
+                width={24}
+                height={24}
+                justifyContent="center"
+                alignItems="center"
+                backgroundColor="$blue10"
+                zIndex={20}
+                elevate
+              >
+                <ArrowUpDown color="white" size={16} />
+              </Button>
+            )}
             <Button
               unstyled
               onPress={handleRemovePress}
