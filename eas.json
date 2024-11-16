@@ -1,0 +1,45 @@
+{
+  "cli": {
+    "version": ">= 13.2.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b",
+        "resourceClass": "medium"
+      },
+      "ios": {
+        "image": "macos-sonoma-14.5-xcode-15.4",
+        "resourceClass": "medium"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b",
+        "resourceClass": "medium"
+      },
+      "ios": {
+        "image": "macos-sonoma-14.5-xcode-15.4",
+        "resourceClass": "medium"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b",
+        "resourceClass": "medium"
+      },
+      "ios": {
+        "image": "macos-sonoma-14.5-xcode-15.4",
+        "resourceClass": "medium"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

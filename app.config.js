@@ -4,6 +4,7 @@ export default {
   expo: {
     name: "OurShelves",
     slug: "OurShelves",
+    owner: "ourshelves",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -18,6 +19,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.harjyotbadh.OurShelves",
+      deploymentTarget: "16.0",
       infoPlist: {
         NSAppTransportSecurity: {
           NSAllowsArbitraryLoads: true,
