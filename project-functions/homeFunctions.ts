@@ -7,6 +7,7 @@ import {
   getDocs,
   deleteDoc,
   arrayRemove,
+  arrayUnion,
 } from "firebase/firestore";
 import { db, auth } from "firebaseConfig";
 import { ShelfData } from "../models/RoomData";
@@ -334,5 +335,60 @@ export const removeUserFromRoom = async (
   } catch (error) {
     console.error("Error removing user from room: ", error);
     return { success: false, message: "Failed to remove user from room" };
+  }
+};
+
+export const sendRoomInvite = async (
+  roomId: string,
+  userId: string
+): Promise<{ success: boolean; message: string; alreadyInRoom?: boolean }> => {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      return { success: false, message: "No user is signed in" };
+    }
+
+    const roomRef = doc(db, "Rooms", roomId);
+    const roomDoc = await getDoc(roomRef);
+
+    if (!roomDoc.exists()) {
+      return { success: false, message: "Room not found" };
+    }
+
+    const roomData = roomDoc.data();
+    const userRef = doc(db, "Users", userId);
+
+    // Check if user is already in the room
+    const isUserInRoom = roomData.users.some(
+      (user: { path: string }) => user.path === userRef.path
+    );
+
+    if (isUserInRoom) {
+      return {
+        success: false,
+        message: "User is already in this room",
+        alreadyInRoom: true,
+      };
+    }
+
+    // Add notification to user's document
+    await updateDoc(userRef, {
+      notifications: arrayUnion({
+        id: `${roomId}_${Date.now()}`,
+        type: "roomInvite",
+        title: "Room Invitation",
+        timestamp: new Date(),
+        read: false,
+        roomId: roomId,
+        roomName: roomData.name,
+        invitedBy: currentUser.displayName,
+        invitedById: currentUser.uid,
+      }),
+    });
+
+    return { success: true, message: "Invitation sent successfully" };
+  } catch (error) {
+    console.error("Error sending room invite:", error);
+    return { success: false, message: "Failed to send invitation" };
   }
 };
