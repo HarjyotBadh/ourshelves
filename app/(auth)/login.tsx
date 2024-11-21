@@ -14,7 +14,7 @@ import {
   Text,
 } from "tamagui";
 import { SafeAreaView, Platform, StatusBar } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Phone } from "@tamagui/lucide-icons";
 import validator from "validator";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
@@ -49,7 +49,6 @@ export default function LoginScreen() {
     }
 
     try {
-
       // const signInMethods = await fetchSignInMethodsForEmail(auth, email);
 
       // if (signInMethods.length === 0) {
@@ -188,7 +187,7 @@ export default function LoginScreen() {
             <Button
               width="100%"
               onPress={handlePhoneLogin}
-              icon={<Feather name="phone" size={24} color={theme.color.get()} />}
+              icon={<Phone size={24} color={theme.color.get()} />}
             >
               Continue with Phone
             </Button>

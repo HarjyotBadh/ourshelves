@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack } from "tamagui";
 import { Platform, SafeAreaView, StatusBar } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { ArrowLeft } from "@tamagui/lucide-icons";
 import { auth, db } from "firebaseConfig";
 import { signInWithCredential, PhoneAuthProvider } from "firebase/auth";
 import VerificationInput from "components/VerificationInput";
@@ -144,7 +144,7 @@ export default function PhoneLoginVerifyScreen() {
       <Stack f={1} ai="center" jc="flex-start" pt="$8">
         <XStack position="absolute" top={0} left={0} right={0} p="$4" jc="flex-start" ai="center">
           <Button
-            icon={<Feather name="arrow-left" size={24} color={theme.color.get()} />}
+            icon={<ArrowLeft size={24} color={theme.color.get()} />}
             onPress={() => router.back()}
             unstyled
           >

@@ -12,8 +12,7 @@ import {
   Card,
   H4,
 } from "tamagui";
-import { ArrowLeft, X } from "@tamagui/lucide-icons";
-import Feather from "@expo/vector-icons/Feather";
+import { ArrowLeft, X, Menu, Lock, Plus } from "@tamagui/lucide-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   addDoc,
@@ -727,7 +726,7 @@ const RoomScreen = () => {
             </Card.Header>
             <Card.Footer padded>
               <YStack gap="$4" alignItems="center">
-                <Feather name="lock" size={48} color={HEADER_BACKGROUND} />
+                <Lock size={48} color={HEADER_BACKGROUND} />
                 <Text fontSize="$4" color={HEADER_BACKGROUND} textAlign="center">
                   You have not been invited to the room:
                 </Text>
@@ -765,7 +764,7 @@ const RoomScreen = () => {
             </HeaderButton>
           ) : (
             <HeaderButton unstyled onPress={() => setIsSettingsOpen(true)}>
-              <Feather name="menu" color="white" size={24} />
+              <Menu color="white" size={24} />
             </HeaderButton>
           )}
         </Header>
