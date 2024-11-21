@@ -9,6 +9,8 @@ export interface ShelfData {
   updatedAt: Date;
   itemList: DocumentReference[];
   placedItems?: PlacedItemData[];
+  isPersonalShelf?: boolean;
+  ownerId?: string;
 }
 
 export interface PlacedItemData {

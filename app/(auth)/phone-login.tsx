@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, useTheme, Form, XStack, Text } from "tamagui";
 import { Platform, SafeAreaView, StatusBar, StyleSheet } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { ArrowLeft } from "@tamagui/lucide-icons";
 import PhoneInput from "react-native-phone-number-input";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { PhoneAuthProvider } from "firebase/auth";
@@ -76,7 +76,7 @@ export default function PhoneLoginScreen() {
           ai="center"
         >
           <Button
-            icon={<Feather name="arrow-left" size={24} color={theme.color.get()} />}
+            icon={<ArrowLeft size={24} color={theme.color.get()} />}
             onPress={() => router.back()}
             unstyled
           >

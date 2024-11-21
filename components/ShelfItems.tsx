@@ -1,7 +1,7 @@
 import React from "react";
 import { XStack } from "tamagui";
 import ShelfItemSpot from "./ShelfItemSpot";
-import { ItemData, PlacedItemData } from "../models/RoomData";
+import { ItemData, PlacedItemData, ShelfData } from "../models/RoomData";
 
 interface ShelfItemsProps {
   items: (PlacedItemData | null)[];
@@ -17,6 +17,7 @@ interface ShelfItemsProps {
     roomId: string;
   };
   availableItems: ItemData[];
+  shelf?: ShelfData;
 }
 
 const ShelfItems: React.FC<ShelfItemsProps> = ({
@@ -28,6 +29,7 @@ const ShelfItems: React.FC<ShelfItemsProps> = ({
   users,
   roomInfo,
   availableItems,
+  shelf,
 }) => {
   return (
     <XStack flex={1} justifyContent="space-between" alignItems="center">
@@ -43,6 +45,7 @@ const ShelfItems: React.FC<ShelfItemsProps> = ({
           users={users}
           roomInfo={roomInfo}
           availableItems={availableItems as ItemData[]}
+          shelf={shelf as ShelfData}
         />
       ))}
     </XStack>

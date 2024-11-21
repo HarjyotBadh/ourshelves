@@ -10,10 +10,7 @@ interface ShelfProps {
   showPlusSigns: boolean;
   onSpotPress: (position: number) => void;
   onItemRemove: (position: number) => void;
-  onItemDataUpdate: (
-    position: number,
-    newItemData: Record<string, any>
-  ) => void;
+  onItemDataUpdate: (position: number, newItemData: Record<string, any>) => void;
   onShelfNameChange: (shelfId: string, newName: string) => void;
   users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
   roomInfo: {
@@ -23,6 +20,8 @@ interface ShelfProps {
     roomId: string;
   };
   availableItems: ItemData[];
+  isPersonalShelf?: boolean;
+  ownerId?: string;
 }
 
 const Shelf: React.FC<ShelfProps> = ({
@@ -38,6 +37,8 @@ const Shelf: React.FC<ShelfProps> = ({
   users,
   roomInfo,
   availableItems,
+  isPersonalShelf,
+  ownerId,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(shelfName);
@@ -77,7 +78,19 @@ const Shelf: React.FC<ShelfProps> = ({
           onItemDataUpdate={onItemDataUpdate}
           users={users}
           roomInfo={roomInfo}
-          availableItems={availableItems as ItemData[]}
+          availableItems={availableItems}
+          shelf={{
+            id: shelfId,
+            name: shelfName,
+            isPersonalShelf,
+            ownerId,
+            roomId: roomInfo.roomId,
+            position: shelfNumber,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            itemList: [],
+            placedItems: items.filter((item): item is PlacedItemData => item !== null),
+          }}
         />
       </XStack>
       <XStack
