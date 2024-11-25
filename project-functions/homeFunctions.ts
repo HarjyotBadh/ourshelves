@@ -16,6 +16,7 @@ interface Room {
   name: string;
   isAdmin: boolean;
   tags: string[];
+  isPublic: boolean;
 }
 
 export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }> => {
@@ -30,14 +31,13 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
           const roomDoc = await getDoc(roomRef);
 
           if (roomDoc.exists()) {
-            const roomData = roomDoc.data() as { admins: { path: string }[] };
+            const roomData = roomDoc.data() as { admins: { path: string }[], isPublic: boolean, tags: any[] };
             const isAdmin = roomData.admins.some((adminRef) =>
               adminRef.path.includes(currentUserId)
             );
 
-            const tagRefs = (roomDoc.data() as { tags: any[] }).tags;
             const tags = await Promise.all(
-              tagRefs.map(async (tagRef) => {
+              roomData.tags.map(async (tagRef) => {
                 const tagDoc = await getDoc(tagRef);
                 return (tagDoc.data() as { name: string }).name;
               })
@@ -45,9 +45,10 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
 
             return {
               id: roomDoc.id,
-              name: (roomDoc.data() as Room).name,
+              name:(roomDoc.data() as Room).name,
               isAdmin: isAdmin,
               tags: tags,
+              isPublic: roomData.isPublic,
             };
           } else {
             return null;
@@ -55,12 +56,7 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
         })
       );
 
-      const rooms: Room[] = roomsData.map((room) => ({
-        id: room.id,
-        name: room.name,
-        isAdmin: room.isAdmin,
-        tags: room.tags,
-      }));
+      const rooms: Room[] = roomsData.filter((room) => room !== null);
 
       return { rooms };
     }
@@ -70,6 +66,7 @@ export const getRooms = async (currentUserId: string): Promise<{ rooms: Room[] }
 
   return { rooms: [] };
 };
+
 
 export const getTags = async (): Promise<{ tagNames: string[]; tagIds: string[] }> => {
   try {
@@ -135,6 +132,7 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean; r
           name: roomDoc.data().name,
           isAdmin: roomDoc.data().admins.includes(auth.currentUser.uid),
           tags: roomDoc.data().tags,
+          isPublic: roomDoc.data().isPublic
         },
       };
     }
@@ -142,7 +140,7 @@ export const getRoomById = async (roomId: string): Promise<{ success: boolean; r
     console.error("Error fetching room: ", error);
   }
 
-  return { success: false, room: { id: "", name: "", isAdmin: false, tags: [] } };
+  return { success: false, room: { id: "", name: "", isAdmin: false, tags: [], isPublic: false } };
 };
 
 export const leaveRoom = async (roomId: string): Promise<{ success: boolean; message: string }> => {
@@ -191,18 +189,23 @@ export const leaveRoom = async (roomId: string): Promise<{ success: boolean; mes
 
 export const createRoom = async (
   roomName: string,
-  roomDescription: string
+  roomDescription: string,
+  isPublic: boolean
 ): Promise<{ success: boolean; message: string }> => {
   const userId = auth.currentUser.uid;
 
   try {
     const userDoc = await getDoc(doc(db, "Users", userId));
 
+    console.log("here!")
     if (userDoc.exists()) {
+
       const userRef = doc(db, "Users", userId);
+
       const roomRef = await addDoc(collection(db, "Rooms"), {
         name: roomName,
         description: roomDescription,
+        isPublic: isPublic,
         users: [userRef],
         admins: [userRef],
         tags: [],
@@ -224,6 +227,7 @@ export const createRoom = async (
   return { success: false, message: "nothing happened!" };
 };
 
+
 export const deleteRoom = async (
   roomId: string
 ): Promise<{ success: boolean; message: string }> => {
@@ -243,7 +247,7 @@ export const deleteRoom = async (
     const roomData = roomDoc.data();
 
     // Delete all shelves and their items if they exist
-    if (roomData.shelfList && Array.isArray(roomData.shelfList)) {
+    if (roomData?.shelfList && Array.isArray(roomData.shelfList)) {
       for (const shelfRef of roomData.shelfList) {
         try {
           const shelfDoc = await getDoc(shelfRef);
@@ -271,13 +275,16 @@ export const deleteRoom = async (
     }
 
     // Remove room reference from all users who have this room
-    if (roomData.users && Array.isArray(roomData.users)) {
+    if (roomData?.users && Array.isArray(roomData.users)) {
       for (const userRef of roomData.users) {
         try {
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const updatedRooms = (userData.rooms || []).filter((room: any) => room.id !== roomId);
+            const userData = userDoc.data() as { rooms: any[] }; // Explicitly type userData
+            const updatedRooms = (userData.rooms || []).filter(
+              (room: any) => room.id !== roomId
+            );
+
             await updateDoc(userRef, { rooms: updatedRooms });
           }
         } catch (error) {
@@ -298,6 +305,7 @@ export const deleteRoom = async (
     };
   }
 };
+
 
 /**
  * Removes a user from a specified room.

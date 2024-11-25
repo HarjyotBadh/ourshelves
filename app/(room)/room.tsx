@@ -60,6 +60,7 @@ interface RoomData extends DocumentData {
   users: DocumentReference[];
   admins: DocumentReference[];
   shelfList: DocumentReference[];
+  isPublic: boolean;
 }
 
 const RoomScreen = () => {
@@ -92,7 +93,8 @@ const RoomScreen = () => {
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
     roomId: string;
-  }>({ name: "", users: [], description: "", roomId: "" });
+    isPublic: boolean;
+  }>({ name: "", users: [], description: "", roomId: "", isPublic: false });
   const { stop, tracks } = useAudio();
 
   /**
@@ -407,6 +409,7 @@ const RoomScreen = () => {
             description: roomData.description || "",
             users: combinedUsers,
             roomId: roomId,
+            isPublic: roomData.isPublic || false
           });
         } else {
           console.error("Room not found");
