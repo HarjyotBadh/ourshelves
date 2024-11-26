@@ -186,6 +186,7 @@ const HomeScreen = () => {
             name={room.name}
             isAdmin={room.isAdmin}
             tags={room.tags}
+            isPublic={room.isPublic}
             tagsList={tagsList}
             tagIdsList={tagIdsList}
             enterRoom={enterRoom}

@@ -119,6 +119,25 @@ export const addTag = async (
   return { success: false, message: "" };
 };
 
+// Function to set the room to public
+export const setRoomPublic = async (
+  roomId: string,
+  isPublic: boolean
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const roomRef = doc(db, "Rooms", roomId);
+    const roomDoc = await getDoc(roomRef);
+    if (roomDoc.exists()) {
+      await updateDoc(roomRef, { isPublic });
+      return { success: true, message: "Room publicity set to: " + isPublic};
+    }
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+
+  return { success: false, message: "" };
+};
+
 export const getRoomById = async (roomId: string): Promise<{ success: boolean; room: Room }> => {
   try {
     const roomDoc = await getDoc(doc(db, "Rooms", roomId));

@@ -1,16 +1,18 @@
 import { X, Check, ChevronDown, ChevronUp } from '@tamagui/lucide-icons';
+import { setRoomPublic } from 'project-functions/homeFunctions';
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
-import { Adapt, Button, Dialog, Label, Select, Sheet, Unspaced, XStack, YStack } from 'tamagui';
+import { Adapt, Button, Dialog, Label, Select, Sheet, Switch, Unspaced, XStack, YStack } from 'tamagui';
 
 
-const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag, homeDeleteRoom }) => {
+const HomeTile = ({ id, name, isAdmin, tags, tagsList, isPublic, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag, homeDeleteRoom }) => {
     const [isOptionsDialogOpen, setOptionsDialogOpen] = useState(false);
     const [isTagsDialogOpen, setTagsDialogOpen] = useState(false);
     const [items, setItems] = useState(tagsList);
     const [selectedTag, setSelectedTag] = useState('');
     const [bgColor, setBgColor] = useState('');
+    const [roomIsPublic, setIsPublic] = useState(isPublic);
 
     const colors = [
         '#ffbfd6',
@@ -21,6 +23,7 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
         '#ffddbd',
         '#f0c2ff',
     ];
+
     useEffect(() => {
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         setBgColor(randomColor);
@@ -29,7 +32,13 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
     }, [tagsList]);
 
     const openOptionsDialog = () => setOptionsDialogOpen(true);
-    const closeOptionsDialog = () => setOptionsDialogOpen(false);
+    
+    // Close the options dialog and save "isPublic" option
+    const closeOptionsDialog = (roomId) => {
+        setRoomPublic(roomId, roomIsPublic);
+        setOptionsDialogOpen(false);
+    }
+
     const openTagsDialog = () => setTagsDialogOpen(true);
     const closeTagsDialog = () => setTagsDialogOpen(false);
 
@@ -51,7 +60,7 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
     };
 
     const roomOptions = (option, roomName, roomId) => {
-        closeOptionsDialog();
+        closeOptionsDialog(roomId);
 
         if (option === 'addtags') {
             openTagsDialog();
@@ -152,13 +161,30 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
                                 Delete Room
                             </Button>
                         )}
+                        {isAdmin && (
+                            <XStack alignItems="center" gap="$5" marginTop="$4">
+                                <Label size="$5">Room is Public:</Label>
+                                <Switch
+                                    size="$4"
+                                    checked={roomIsPublic}
+                                    onCheckedChange={(checked) => setIsPublic(checked)}
+                                >
+                                    <Switch.Thumb animation="quicker" />
+                                </Switch>
+                            </XStack>
+                            
+                        )}
 
                         <XStack alignSelf="flex-end" gap="$4">
-                            <Dialog.Close displayWhenAdapted asChild>
-                                <Button theme="active" aria-label="Close" onPress={closeOptionsDialog}>
-                                    Cancel
-                                </Button>
-                            </Dialog.Close>
+                        <Dialog.Close displayWhenAdapted asChild>
+                            <Button
+                                theme="active"
+                                aria-label="Close"
+                                onPress={() => closeOptionsDialog(id)} // Pass the correct `id`
+                            >
+                                Cancel
+                            </Button>
+                        </Dialog.Close>
                         </XStack>
 
                         <Unspaced>
