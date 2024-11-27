@@ -3,7 +3,7 @@ import { View, Stack, Text, XStack, YStack, Avatar, Circle } from "tamagui";
 import { Pressable } from "react-native";
 import { ref as dbRef, onValue, remove, runTransaction, onDisconnect } from "firebase/database";
 import { auth, rtdb } from "firebaseConfig";
-import { PlacedItemData } from "../models/RoomData";
+import { PlacedItemData, ShelfData } from "../models/RoomData";
 import { Plus, X, Lock, ArrowUpDown } from "@tamagui/lucide-icons";
 import { Button } from "tamagui";
 import items from "./items";
@@ -26,6 +26,7 @@ interface ShelfItemSpotProps {
     roomId: string;
   };
   availableItems: ItemData[];
+  shelf?: ShelfData;
 }
 
 const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
@@ -38,6 +39,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   users,
   roomInfo,
   availableItems,
+  shelf,
 }) => {
   const [lockStatus, setLockStatus] = useState<{
     lockedBy: string | null;
@@ -280,16 +282,24 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
 
   if (!item) {
     if (showPlusSigns) {
+      // Check if this is someone else's personal shelf
+      const isOtherPersonalShelf = shelf?.isPersonalShelf && shelf.ownerId !== auth.currentUser?.uid;
+      
       return (
         <Button
           unstyled
-          onPress={() => onSpotPress(position)}
+          onPress={() => !isOtherPersonalShelf && onSpotPress(position)}
           width="30%"
           height="100%"
           justifyContent="center"
           alignItems="center"
+          opacity={isOtherPersonalShelf ? 0.5 : 1}
         >
-          <Plus color="black" size={24} />
+          {isOtherPersonalShelf ? (
+            <Lock color="gray" size={24} />
+          ) : (
+            <Plus color="black" size={24} />
+          )}
         </Button>
       );
     } else {
