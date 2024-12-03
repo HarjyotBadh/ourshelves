@@ -6,6 +6,7 @@ import { Audio } from "expo-av";
 import { Timestamp } from "firebase/firestore";
 import { AnimatePresence } from "tamagui";
 import { Svg, Circle } from "react-native-svg";
+import { useAudio } from "components/AudioContext";
 
 const soundEffectUrl =
   "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/sound-effects%2Fbell-ring.wav?alt=media&token=81ceadc0-0102-4a80-9a1b-28d77051ec06";
@@ -25,7 +26,12 @@ interface BellItemProps {
   onClose: () => void;
   roomInfo: {
     name: string;
-    users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
+    users: {
+      id: string;
+      displayName: string;
+      profilePicture?: string;
+      isAdmin: boolean;
+    }[];
     description: string;
     roomId: string;
   };
@@ -120,12 +126,21 @@ const CooldownIndicator = ({ lastRung }: { lastRung: Timestamp }) => {
   );
 };
 
-const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
+const BellItem: BellItemComponent = ({
+  itemData,
+  onDataUpdate,
+  isActive,
+  onClose,
+  roomInfo,
+}) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [soundEffect, setSoundEffect] = useState<Audio.Sound | null>(null);
   const [canRing, setCanRing] = useState(false);
-  const [lastRung, setLastRung] = useState(itemData.lastRung || Timestamp.now());
+  const [lastRung, setLastRung] = useState(
+    itemData.lastRung || Timestamp.now()
+  );
   const toast = useToastController();
+  const { play } = useAudio();
 
   useEffect(() => {
     if (!itemData.lastRung) {
@@ -183,9 +198,10 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
     }
 
     try {
-      if (soundEffect) {
-        await soundEffect.replayAsync();
-      }
+      //if (soundEffect) {
+      // await soundEffect.replayAsync();
+      await play(soundEffectUrl, "bell-sfx", "bell-" + itemData.id, true);
+      //}
 
       await notifyRoomUsers(roomInfo.roomId);
 
@@ -229,7 +245,12 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
           }}
         >
           <YStack position="relative" width={100} height={100}>
-            <Image source={{ uri: itemData.imageUri }} width={100} height={100} borderRadius={50} />
+            <Image
+              source={{ uri: itemData.imageUri }}
+              width={100}
+              height={100}
+              borderRadius={50}
+            />
             <CooldownIndicator lastRung={lastRung} />
           </YStack>
         </Button>
@@ -240,7 +261,10 @@ const BellItem: BellItemComponent = ({ itemData, onDataUpdate, isActive, onClose
 
 BellItem.getInitialData = () => {
   const now = Timestamp.now();
-  const threeHoursAgo = new Timestamp(now.seconds - 3 * 60 * 60, now.nanoseconds);
+  const threeHoursAgo = new Timestamp(
+    now.seconds - 3 * 60 * 60,
+    now.nanoseconds
+  );
   return {
     lastRung: threeHoursAgo,
   };
