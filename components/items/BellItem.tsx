@@ -134,7 +134,6 @@ const BellItem: BellItemComponent = ({
   roomInfo,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [soundEffect, setSoundEffect] = useState<Audio.Sound | null>(null);
   const [canRing, setCanRing] = useState(false);
   const [lastRung, setLastRung] = useState(
     itemData.lastRung || Timestamp.now()
@@ -151,30 +150,6 @@ const BellItem: BellItemComponent = ({
       });
       setLastRung(initialData.lastRung);
     }
-  }, []);
-
-  useEffect(() => {
-    const loadSoundEffect = async () => {
-      if (soundEffectUrl) {
-        try {
-          const { sound } = await Audio.Sound.createAsync(
-            { uri: soundEffectUrl },
-            { shouldPlay: false }
-          );
-          setSoundEffect(sound);
-        } catch (error) {
-          console.error("Error loading sound effect:", error);
-        }
-      }
-    };
-
-    loadSoundEffect();
-
-    return () => {
-      if (soundEffect) {
-        soundEffect.unloadAsync();
-      }
-    };
   }, []);
 
   useEffect(() => {
