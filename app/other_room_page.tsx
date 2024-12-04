@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "firebaseConfig";
+import { UserData } from "../../models/UserData";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import {
   Avatar,
@@ -16,7 +17,7 @@ import {
   ScrollView,
 } from "tamagui";
 import { getTags, getTagById, getUserById } from "project-functions/homeFunctions";
-import { doc, DocumentReference, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, DocumentReference, DocumentData, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DoorOpen, Tag } from "@tamagui/lucide-icons";
@@ -26,7 +27,7 @@ import { auth } from "firebaseConfig"; // Ensure this is correctly configured in
 import TagsModal from './TagsModal'; // Import the TagsModal
 
 // Data for profile page to be queried from db
-interface RoomPage {
+interface RoomPage extends DocumentData {
     roomName: string;
     description: string;
     tags: DocumentReference[];
@@ -46,7 +47,12 @@ export default function RoomPage() {
   const [roomPage, setRoomPage] = useState<RoomPage | null>(null);
   const [description, setDescription] = useState("");
   const [tagsList, setTagsList] = useState<string[]>([]);
-  const [userList, setUserList] = useState<string[]>([]);
+  const [userList, setUserList] = useState<
+    {
+      id: string;
+      displayName: string;
+    }[]
+  >([]);
   const [profileIcon, setIcon] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
@@ -55,6 +61,13 @@ export default function RoomPage() {
   const [showTagsModal, setShowTagsModal] = useState(false); // State for showing tags modal
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string | null } | null>(null);
 
+  const userMap = new Map<
+  string,
+  {
+    id: string;
+    displayName: string;
+  }
+>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,8 +91,24 @@ export default function RoomPage() {
             
 
             // TODO, somehow get the users and tags from the list of ids
+            console.log(roomPageData?.users)
+            for (const ref of roomPageData?.users) {
+                const userDoc = await getDoc(ref);
+                if (userDoc.exists()) {
+                  const userData = userDoc.data() as UserData;
+                  userMap.set(userDoc.id, {
+                    id: userDoc.id,
+                    displayName: userData.displayName || "Unknown User",
+                  });
+                }
+            }
+
             
-            
+            console.log(userMap)
+
+            const userNames = Array.from(userMap.values());
+            setUserList(userNames)
+    
             setDescription(roomPageData?.description || "N/A");
           } else {
             throw new Error("Room not found");
@@ -138,9 +167,9 @@ export default function RoomPage() {
     } 
   };
 
-  const handleUserClick = (user: string) => {
+  const handleUserClick = (userId: string) => {
     // Define the action when a user is clicked. For example:
-    //router.push(`/user/${user}`);
+    router.push(`/other_user_page?profileId=${userId}`);
   };
 
   return (
@@ -170,10 +199,10 @@ export default function RoomPage() {
           <ScrollView style={{ maxHeight: 200, width: "100%" }}>
             {userList.map((user) => (
               <TouchableOpacity
-                onPress={() => handleUserClick(user)}
+                onPress={() => handleUserClick(user.id)}
               >
-                <Text fontSize="$10" color="$color" marginBottom="$2">
-                    {user}
+                <Text fontSize="$9" color="$color" marginBottom="$2">
+                    {user.displayName}
                 </Text>
               </TouchableOpacity>
             ))}
