@@ -88,31 +88,31 @@ const SunflowerPlant = ({ growth = 0, isWithered = false }) => {
     <View width={100} height={100}>
       <Svg width="100%" height="100%" viewBox="0 0 100 100">
         <Defs>
-          {/* Stem Gradient */}
+          {/* Stem Gradient - Natural green colors */}
           <LinearGradient id="stemGradient" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor="#6B8E23" />
             <Stop offset="100%" stopColor="#556B2F" />
           </LinearGradient>
 
-          {/* Leaf Gradient */}
+          {/* Leaf Gradient - Natural green colors */}
           <LinearGradient id="leafGradient" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0%" stopColor="#228B22" />
             <Stop offset="100%" stopColor="#006400" />
           </LinearGradient>
 
-          {/* Petal Gradient */}
+          {/* Petal Gradient - Natural sunflower colors */}
           <LinearGradient id="petalGradient" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor="#FFD700" />
             <Stop offset="100%" stopColor="#FFA500" />
           </LinearGradient>
 
-          {/* Seed Gradient */}
+          {/* Seed Gradient - Natural brown colors */}
           <LinearGradient id="seedGradient" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor="#8B4513" />
             <Stop offset="100%" stopColor="#A0522D" />
           </LinearGradient>
 
-          {/* Pot Gradient */}
+          {/* Pot Gradient - Clay pot colors */}
           <LinearGradient id="potGradient" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor="#D2691E" />
             <Stop offset="100%" stopColor="#8B4513" />

@@ -22,6 +22,7 @@ interface RoomData {
   name: string;
   admins: { path: string }[];
   tags?: string[];
+  isPublic: boolean;
   color: string;
 }
 
@@ -30,6 +31,7 @@ interface Room {
   name: string;
   isAdmin: boolean;
   tags: string[];
+  isPublic: boolean;
   color: string;
 }
 
@@ -67,6 +69,7 @@ const HomeScreen = () => {
                 name: roomData.name,
                 isAdmin: isAdmin,
                 tags: roomData.tags || [],
+                isPublic: roomData.isPublic
                 color: roomData.color,
               };
             }
@@ -104,13 +107,13 @@ const HomeScreen = () => {
     }
   };
 
-  const homeCreateRoom = async (roomName: string, roomDescription: string) => {
+  const homeCreateRoom = async (roomName: string, roomDescription: string, isPublic: boolean) => {
     if (roomName === "") {
       Alert.alert("Error", "Room name cannot be empty.");
       return;
     }
 
-    const result = await createRoom(roomName, roomDescription);
+    const result = await createRoom(roomName, roomDescription, isPublic);
 
     if (result.success) {
       Alert.alert("Room Created", `Room "${roomName}" created.`);
@@ -188,6 +191,7 @@ const HomeScreen = () => {
             name={room.name}
             isAdmin={room.isAdmin}
             tags={room.tags}
+            isPublic={room.isPublic}
             tagsList={tagsList}
             tagIdsList={tagIdsList}
             color={room.color}

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { useRouter } from "expo-router";
+import { Href, useRouter } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, XStack, Input, Text, useTheme } from "tamagui";
 import { Platform, SafeAreaView, StatusBar } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { ArrowLeft } from "@tamagui/lucide-icons";
 import { auth, db } from "firebaseConfig";
 import { updateProfile } from "firebase/auth";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
@@ -68,7 +68,9 @@ export default function DisplayNameInputScreen() {
             photoURL: defaultProfilePicture,
           });
 
-          router.replace("/(tabs)");
+          //router.replace("/(tabs)");
+          // Redirect to tutorial instead of tabs
+          router.replace("/(tutorial)/home" as Href);
         } else {
           setError("No user is signed in.");
         }
@@ -90,7 +92,7 @@ export default function DisplayNameInputScreen() {
       <Stack f={1} ai="center" jc="center">
         <XStack position="absolute" top={0} left={0} right={0} p="$4" jc="flex-start" ai="center">
           <Button
-            icon={<Feather name="arrow-left" size={24} color={theme.color.get()} />}
+            icon={<ArrowLeft size={24} color={theme.color.get()} />}
             onPress={handleSignOut}
             unstyled
           >

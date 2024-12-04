@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, Text, Dialog, Button } from "tamagui";
-import { RefreshCw } from "@tamagui/lucide-icons";
+import { Modal, View } from "react-native";
+import { YStack, Button, Text } from "tamagui";
+import { RefreshCw, Quote } from "@tamagui/lucide-icons";
+import { ToastViewport, useToastController } from "@tamagui/toast";
+import { auth } from "firebaseConfig";
+import {
+  QuoteView,
+  ContentContainer,
+  BottomBar,
+  QuoteContainer,
+  dailyQuoteStyles as styles
+} from "styles/DailyQuoteStyles";
 
 interface DailyQuoteItemProps {
   itemData: {
@@ -9,13 +19,10 @@ interface DailyQuoteItemProps {
     name: string;
     imageUri: string;
     placedUserId: string;
-    [key: string]: any;
-
-    // Custom properties
     currentQuote?: {
       quote: string;
       author: string;
-      lastRefreshed?: number; // Unix timestamp in milliseconds
+      lastRefreshed?: number;
     };
   };
   onDataUpdate: (newItemData: Record<string, any>) => void;
@@ -29,58 +36,6 @@ interface DailyQuoteItemProps {
   };
 }
 
-const QuoteContainer = styled(View, {
-  padding: "$2",
-  backgroundColor: "$blue2",
-  borderRadius: "$2",
-  borderWidth: 1,
-  borderColor: "$blue6",
-  width: "100%",
-  height: "100%",
-  justifyContent: "center",
-  alignItems: "center",
-});
-
-const QuoteText = styled(Text, {
-  fontSize: "$2",
-  color: "$blue11",
-  textAlign: "center",
-  fontStyle: "italic",
-  lineHeight: "$1",
-});
-
-const AuthorText = styled(Text, {
-  fontSize: "$1",
-  color: "$blue9",
-  textAlign: "center",
-  marginTop: "$1",
-});
-
-const StyledDialog = styled(Dialog.Content, {
-  backgroundColor: "$blue2",
-  borderRadius: "$6",
-  paddingVertical: "$3",
-  paddingHorizontal: "$3",
-  shadowColor: "$shadowColor",
-  shadowRadius: 26,
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.2,
-  width: "90%",
-  maxWidth: 420,
-  minWidth: 380,
-  borderWidth: 2,
-  borderColor: "$blue6",
-});
-
-const StyledButton = styled(Button, {
-  backgroundColor: "$blue9",
-  borderRadius: "$4",
-  paddingHorizontal: "$4",
-  borderWidth: 2,
-  borderColor: "$blue10",
-  marginBottom: "$4",
-});
-
 interface DailyQuoteItemComponent extends React.FC<DailyQuoteItemProps> {
   getInitialData: () => {
     currentQuote: {
@@ -91,7 +46,7 @@ interface DailyQuoteItemComponent extends React.FC<DailyQuoteItemProps> {
   };
 }
 
-const REFRESH_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const REFRESH_INTERVAL = 24 * 60 * 60 * 1000;
 
 const useCountdown = (targetTime?: number) => {
   const [timeLeft, setTimeLeft] = useState("");
@@ -109,7 +64,7 @@ const useCountdown = (targetTime?: number) => {
     };
 
     setTimeLeft(calculateTimeLeft());
-    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000); // Update every minute
+    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000);
 
     return () => clearInterval(timer);
   }, [targetTime]);
@@ -117,15 +72,17 @@ const useCountdown = (targetTime?: number) => {
   return timeLeft;
 };
 
-const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isActive, onClose }) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const isOwner = itemData.placedUserId === auth.currentUser?.uid;
+  const toast = useToastController();
+  
   const timeLeft = useCountdown(itemData.currentQuote?.lastRefreshed);
 
   useEffect(() => {
-    if (isActive && !dialogOpen) {
-      setDialogOpen(true);
+    if (isActive && !isModalVisible) {
+      setIsModalVisible(true);
     }
   }, [isActive]);
 
@@ -135,13 +92,22 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
     }
   }, []);
 
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    onClose();
+  };
+
+  const shouldRefreshQuote = (lastRefreshed?: number) => {
+    if (!lastRefreshed) return true;
+    return Date.now() - lastRefreshed >= REFRESH_INTERVAL;
+  };
+
   const fetchNewQuote = async () => {
     setIsLoading(true);
     try {
       const response = await fetch("https://zenquotes.io/api/random");
       const quoteData = await response.json();
 
-      // Check if the response has the expected structure
       if (Array.isArray(quoteData) && quoteData[0] && quoteData[0].q && quoteData[0].a) {
         onDataUpdate({
           ...itemData,
@@ -151,20 +117,15 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
             lastRefreshed: Date.now(),
           },
         });
-      } else {
-        // Use fallback if API response is not in expected format
-        onDataUpdate({
-          ...itemData,
-          currentQuote: {
-            quote: "The only way to do great work is to love what you do.",
-            author: "Steve Jobs",
-            lastRefreshed: Date.now(),
-          },
+        toast.show("New quote fetched!", {
+          message: "Your daily inspiration has been updated.",
+          duration: 3000,
         });
+      } else {
+        throw new Error("Invalid quote format");
       }
     } catch (error) {
       console.error("Error fetching quote:", error);
-      // Only update with fallback if there's no existing quote
       if (!itemData.currentQuote?.quote) {
         onDataUpdate({
           ...itemData,
@@ -175,6 +136,10 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
           },
         });
       }
+      toast.show("Failed to fetch new quote", {
+        message: "Using backup quote instead.",
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -184,82 +149,65 @@ const DailyQuoteItem: DailyQuoteItemComponent = ({ itemData, onDataUpdate, isAct
     return quote.length > maxLength ? `${quote.substring(0, maxLength)}...` : quote;
   };
 
-  const shouldRefreshQuote = (lastRefreshed?: number) => {
-    if (!lastRefreshed) return true;
-    const timeSinceLastRefresh = Date.now() - lastRefreshed;
-    return timeSinceLastRefresh >= REFRESH_INTERVAL;
-  };
-
   if (!isActive) {
     return (
-      <YStack flex={1}>
-        <QuoteContainer>
-          <QuoteText>
-            "{truncateQuote(itemData.currentQuote?.quote || "Loading daily quote...", 50)}"
-          </QuoteText>
-          {itemData.currentQuote?.author && (
-            <AuthorText>- {itemData.currentQuote.author}</AuthorText>
-          )}
-        </QuoteContainer>
-      </YStack>
+      <View style={styles.inactiveContainer}>
+        <Text style={styles.inactiveQuoteText}>
+          "{truncateQuote(itemData.currentQuote?.quote || "Loading quote...", 40)}"
+        </Text>
+        <Text style={styles.inactiveAuthorText}>
+          - {itemData.currentQuote?.author || ""}
+        </Text>
+      </View>
     );
   }
 
   return (
-    <YStack flex={1}>
-      <Dialog
-        modal
-        open={dialogOpen}
-        onOpenChange={(isOpen) => {
-          setDialogOpen(isOpen);
-          if (!isOpen) {
-            onClose();
-          }
-        }}
-      >
-        <Dialog.Portal>
-          <Dialog.Overlay
-            key="overlay"
-            animation="quick"
-            opacity={0.5}
-            enterStyle={{ opacity: 0 }}
-            exitStyle={{ opacity: 0 }}
-          />
-          <StyledDialog>
-            <YStack gap="$4" padding="$4">
-              <Dialog.Title>
-                <Text fontSize="$6" fontWeight="bold" color="$blue11" textAlign="center">
-                  Daily Quote
-                </Text>
-              </Dialog.Title>
+    <Modal
+      visible={isModalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={handleModalClose}
+    >
+      <View style={styles.modalContainer}>
+        <QuoteView>
+          <ContentContainer>
+            <Text style={styles.headerText}>Daily Quote</Text>
 
-              <YStack gap="$2" backgroundColor="$blue3" padding="$4" borderRadius="$4">
-                <Text fontSize="$4" color="$blue11" fontStyle="italic" textAlign="center">
-                  "{itemData.currentQuote?.quote}"
-                </Text>
-                <Text fontSize="$3" color="$blue9" textAlign="right">
-                  - {itemData.currentQuote?.author}
-                </Text>
-              </YStack>
-
-              <Text fontSize="$2" color="$blue8" textAlign="center">
-                {timeLeft}
+            <View style={styles.previewContainer}>
+              <Text style={styles.quoteText}>
+                "{itemData.currentQuote?.quote}"
               </Text>
+              <Text style={styles.authorText}>
+                - {itemData.currentQuote?.author}
+              </Text>
+            </View>
 
-              <StyledButton onPress={fetchNewQuote} disabled={isLoading} icon={RefreshCw}>
-                <Text color="white">{isLoading ? "Generating..." : "Generate New Quote"}</Text>
-              </StyledButton>
-
-              <Dialog.Close asChild>
-                <Button backgroundColor="$red9" borderColor="$red10">
-                  <Text color="white">Close</Text>
+            {isOwner && (
+              <>
+                <Text style={styles.timerText}>{timeLeft}</Text>
+                <Button
+                  onPress={fetchNewQuote}
+                  disabled={isLoading}
+                  icon={RefreshCw}
+                  backgroundColor="$blue10"
+                  color="white"
+                  marginBottom="$4"
+                >
+                  {isLoading ? "Fetching..." : "Get New Quote"}
                 </Button>
-              </Dialog.Close>
-            </YStack>
-          </StyledDialog>
-        </Dialog.Portal>
-      </Dialog>
-    </YStack>
+              </>
+            )}
+
+            <Button onPress={handleModalClose} theme="red">
+              Close
+            </Button>
+          </ContentContainer>
+          <BottomBar />
+        </QuoteView>
+        <ToastViewport name="quote" />
+      </View>
+    </Modal>
   );
 };
 

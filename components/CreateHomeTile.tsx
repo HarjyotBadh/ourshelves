@@ -1,6 +1,7 @@
 import { PlusCircle, X } from "@tamagui/lucide-icons";
 import React, { useCallback } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
+import type { SizeTokens} from 'tamagui';
 import {
   Adapt,
   Button,
@@ -9,6 +10,8 @@ import {
   Input,
   Label,
   Sheet,
+  Separator,
+  Switch, 
   TextArea,
   Unspaced,
   View,
@@ -19,10 +22,11 @@ import ColorPicker from "./ColorPicker";
 const CreateHomeTile = ({ handleCreateRoom }) => {
   const [roomName, setRoomName] = React.useState("");
   const [roomDescription, setRoomDescription] = React.useState("");
+  const [isPublic, setIsPublic] = React.useState(false)
   const [roomColor, setRoomColor] = React.useState("#ffffff");
 
   const createRoom = () => {
-    handleCreateRoom(roomName, roomDescription);
+    handleCreateRoom(roomName, roomDescription, isPublic);
   };
 
   const handleDescriptionChange = useCallback((text) => {
@@ -94,6 +98,13 @@ const CreateHomeTile = ({ handleCreateRoom }) => {
               onChangeText={handleDescriptionChange}
             />
           </Fieldset>
+          <Fieldset gap="$5" horizontal>
+            <Label width={160} justifyContent="flex-end" htmlFor="description">
+              Room Privacy
+            </Label>
+            <SwitchWithLabel size="$4" onToggle={(checked) => setIsPublic(checked)} />
+          </Fieldset>
+
 
           <XStack alignSelf="flex-end" gap="$4">
             <Dialog.Close displayWhenAdapted asChild>
@@ -139,3 +150,36 @@ const styles = StyleSheet.create({
 });
 
 export default CreateHomeTile;
+
+export function SwitchWithLabel(props: { 
+  size: SizeTokens; 
+  defaultChecked?: boolean; 
+  onToggle: (checked: boolean) => void; 
+}) {
+const id = `switch-${props.size.toString().slice(1)}-${props.defaultChecked ?? ''}}`;
+
+return (
+  <XStack width={200} alignItems="center" gap="$2">
+    <Label
+      paddingRight="$0"
+      minWidth={90}
+      justifyContent="flex-end"
+      size={props.size}
+      htmlFor={id}
+    >
+      Room is Public
+    </Label>
+    <Separator minHeight={20} vertical />
+    <Switch 
+      id={id} 
+      size={props.size} 
+      defaultChecked={props.defaultChecked} 
+      onCheckedChange={props.onToggle}
+    >
+      <Switch.Thumb animation="quicker" />
+    </Switch>
+  </XStack>
+);
+}
+
+

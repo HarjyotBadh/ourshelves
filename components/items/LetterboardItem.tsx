@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Dialog, YStack, XStack, Input, Button } from "tamagui";
+import { Modal, View, Dimensions } from "react-native";
+import { YStack, XStack, Input, Button, Text } from "tamagui";
 import { earnCoins } from "project-functions/shopFunctions";
 import { auth } from "firebaseConfig";
-import { Dimensions } from "react-native";
 import { useToastController } from "@tamagui/toast";
+
+const NUM_ROWS = 4;
+const NUM_COLS = 4;
 
 interface LetterBoardProps {
   itemData: {
@@ -12,7 +15,6 @@ interface LetterBoardProps {
     name: string;
     imageUri: string;
     placedUserId: string;
-    [key: string]: any;
     gridData: string[];
     numColumns: number;
   };
@@ -28,8 +30,87 @@ interface LetterBoardProps {
 }
 
 interface LetterBoardComponent extends React.FC<LetterBoardProps> {
-  getInitialData: () => { gridData: string[] };
+  getInitialData: () => { gridData: string[]; numColumns: number };
 }
+
+const PreviewCell = ({ value }: { value: string }) => (
+  <View style={{
+    width: 20,
+    height: 20,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#8B4513',
+    borderRadius: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }}>
+    <Text 
+      fontSize={10}
+      fontWeight="bold"
+      color="#8B4513"
+    >
+      {value}
+    </Text>
+  </View>
+);
+
+const PreviewGrid = ({ gridValues }: { gridValues: string[][] }) => (
+  <YStack 
+    padding={2}
+    backgroundColor="#DEB887" 
+    borderRadius={4}
+    gap={2}
+  >
+    {gridValues.map((row, rowIndex) => (
+      <XStack key={rowIndex} gap={2}>
+        {row.map((value, colIndex) => (
+          <PreviewCell 
+            key={`${rowIndex}-${colIndex}`}
+            value={value}
+          />
+        ))}
+      </XStack>
+    ))}
+  </YStack>
+);
+
+const ActiveGrid = ({ 
+  gridValues,
+  onInputChange,
+}: { 
+  gridValues: string[][],
+  onInputChange: (text: string, rowIndex: number, colIndex: number) => void,
+}) => (
+  <YStack 
+    padding="$4"
+    backgroundColor="#DEB887" 
+    borderRadius={8}
+    gap="$2"
+  >
+    {gridValues.map((row, rowIndex) => (
+      <XStack key={rowIndex} gap="$2">
+        {row.map((value, colIndex) => (
+          <Input
+            key={`${rowIndex}-${colIndex}`}
+            value={value}
+            onChangeText={(text) => onInputChange(text, rowIndex, colIndex)}
+            width={45}
+            height={45}
+            textAlign="center"
+            fontSize={20}
+            fontWeight="bold"
+            backgroundColor="white"
+            color="#8B4513"
+            borderWidth={1}
+            borderColor="#8B4513"
+            borderRadius={4}
+            padding={0}
+          />
+        ))}
+      </XStack>
+    ))}
+  </YStack>
+);
 
 const LetterBoard: LetterBoardComponent = ({
   itemData,
@@ -38,216 +119,130 @@ const LetterBoard: LetterBoardComponent = ({
   onClose,
   roomInfo,
 }) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  // Grid of letters to be used for letterboard
-  const [gridValues, setGridValues] = useState(
-    Array(8)
-      .fill("")
-      .map(() => Array(3).fill(""))
+  const [gridValues, setGridValues] = useState<string[][]>(
+    Array(NUM_ROWS).fill("").map(() => Array(NUM_COLS).fill(""))
   );
-  const [storedGridVals, setStoredGrid] = useState<string[]>([]);
   const [boardChanged, setBoardChanged] = useState(false);
-  const [boardInit, setBoardinit] = useState(true); // TODO this might need to be changed to make it truly asynchronous
   const toast = useToastController();
-  const { width, height } = Dimensions.get("window");
+  const { width: screenWidth } = Dimensions.get("window");
 
-  // Opens dialog when item is active/clicked
-  useEffect(() => {
-    if (isActive && !dialogOpen) {
-      setDialogOpen(true);
-    }
-
-    // TODO
-    if (itemData.gridData !== undefined /*&& boardInit*/) {
-      convertTo2DArray(itemData.gridData, itemData.numColumns);
-      //setBoardinit(false);
-    }
-  }, [isActive]);
-
-  // Updating data in realtime
   useEffect(() => {
     if (itemData.gridData && Array.isArray(itemData.gridData)) {
-      convertTo2DArray(itemData.gridData, itemData.numColumns);
+      const array2D: string[][] = []; 
+      for (let i = 0; i < NUM_ROWS; i++) {
+        array2D.push(itemData.gridData.slice(i * NUM_COLS, (i + 1) * NUM_COLS));
+      }
+      setGridValues(array2D);
     }
-  }, [itemData]);
+  }, [itemData.gridData]);
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    onDataUpdate({ ...itemData, gridData: storedGridVals, numColumns: gridValues[0].length });
-    if (boardChanged) {
-      earnCoins(auth.currentUser.uid, 10);
-      toast.show("You earned 10 coins for interacting with the letterboard!", {
-        duration: 1000,
+  const handleModalClose = async () => {
+    try {
+      if (boardChanged) {
+        await earnCoins(auth.currentUser?.uid, 10);
+        toast.show("You earned 10 coins for your letterboard message!", {
+          duration: 3000,
+        });
+        setBoardChanged(false);
+      }
+      
+      const flatArray = gridValues.flat();
+      onDataUpdate({
+        ...itemData,
+        gridData: flatArray,
+        numColumns: NUM_COLS
       });
-      setBoardChanged(false);
+      onClose();
+    } catch (error) {
+      console.error("Error closing letterboard:", error);
     }
-    onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
   };
 
-  // Convert 2D array to 1D array
-  const convertTo1DArray = () => {
-    const flatArray = gridValues.flat(); // Flatten the 2D array
-    setStoredGrid(flatArray);
-  };
-
-  // Convert 1D array back to 2D array (with given number of columns)
-  const convertTo2DArray = (array1D: string[], numColumns: number) => {
-    if (!array1D || !Array.isArray(array1D)) return;
-
-    const array2D: string[][] = [];
-    for (let i = 0; i < array1D.length; i += numColumns) {
-      array2D.push(array1D.slice(i, i + numColumns));
-    }
-    setGridValues(array2D);
-  };
-
-  // Handler for input changes
-  const handleInputChange = (text, rowIndex, colIndex) => {
+  const handleInputChange = (text: string, rowIndex: number, colIndex: number) => {
     if (text.length > 1) return;
-    const newGridValues = [...gridValues];
-    newGridValues[rowIndex][colIndex] = text;
+    
+    const newGridValues = gridValues.map((row, i) =>
+      row.map((cell, j) => (i === rowIndex && j === colIndex ? text.toUpperCase() : cell))
+    );
+    
     setGridValues(newGridValues);
-    convertTo1DArray();
-    renderLetterBoardPreview();
-    setBoardChanged(true); // Checking for board interaction so we could reward coins
+    setBoardChanged(true);
   };
 
-  // What the letterboard looks like when sitting on the shelf
-  const renderLetterBoardPreview = () => (
-    <YStack flex={1} alignItems="center" justifyContent="center" padding={5} backgroundColor="#ddd">
-      {/* Transparent overlay */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "transparent",
-        }}
-        pointerEvents="box-none"
-      />
-
-      <YStack
-        position="absolute"
-        backgroundColor="black"
-        height={height * 0.12}
-        width={width * 0.307}
-        borderRadius="$1"
-        alignItems="center"
-        justifyContent="center"
-      />
-
-      <YStack padding={3} gap="$0.5">
-        {gridValues.map((row, rowIndex) => (
-          <XStack key={rowIndex} space="$0.5">
-            {row.map((value, colIndex) => (
-              <Input
-                key={`${rowIndex}-${colIndex}`}
-                editable={false}
-                value={value}
-                onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
-                maxLength={1}
-                width={width * 0.095}
-                height={height * 0.013}
-                textAlign="center"
-                fontSize={8}
-                fontWeight="bold"
-                backgroundColor="#000"
-                color="#fff"
-                borderWidth={0.25}
-                borderRadius="$1"
-              />
-            ))}
-          </XStack>
-        ))}
-      </YStack>
-    </YStack>
-  );
-
-  // Renders item when not active/clicked
   if (!isActive) {
-    return <YStack flex={1}>{renderLetterBoardPreview()}</YStack>;
+    return (
+      <View 
+        style={{ 
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <PreviewGrid gridValues={gridValues} />
+      </View>
+    );
   }
 
-  // Renders item when active/clicked
   return (
-    <Dialog modal open={isActive} onOpenChange={onClose}>
-      <Dialog.Portal>
-        <Dialog.Overlay key="overlay" />
-        <Dialog.Content
-          bordered
-          elevate
-          key="content"
-          animation={[
-            "quick",
-            {
-              opacity: {
-                overshootClamping: true,
-              },
-            },
-          ]}
-          width={300}
-          height={650}
-        >
-          <Dialog.Title>Letterboard</Dialog.Title>
-          <Dialog.Description>Edit what letters you want displayed:</Dialog.Description>
-
-          {/* Grid of text inputs */}
-          <YStack
-            flex={1}
-            alignItems="center"
-            justifyContent="center"
-            padding={2}
-            backgroundColor="#ddd"
+    <Modal visible={isActive} transparent animationType="fade" onRequestClose={handleModalClose}>
+      <View style={{ 
+        flex: 1, 
+        justifyContent: "center", 
+        alignItems: "center", 
+        backgroundColor: "rgba(0,0,0,0.5)" 
+      }}>
+        <View style={{
+          width: Math.min(screenWidth * 0.9, 400),
+          backgroundColor: "#DEB887",
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+          overflow: "hidden",
+          padding: 20,
+        }}>
+          <Text 
+            fontSize={24}
+            fontWeight="bold"
+            textAlign="center"
+            marginBottom="$4"
+            color="#8B4513"
           >
-            <YStack
-              position="absolute"
-              backgroundColor="black"
-              height={460}
-              width={200}
-              borderRadius="$4"
-              alignItems="center"
-              justifyContent="center"
+            Letterboard
+          </Text>
+
+          <YStack alignItems="center" justifyContent="center">
+            <ActiveGrid 
+              gridValues={gridValues}
+              onInputChange={handleInputChange}
             />
-            <YStack padding={2} gap="$2">
-              {gridValues.map((row, rowIndex) => (
-                <XStack key={rowIndex} gap="$2">
-                  {row.map((value, colIndex) => (
-                    <Input
-                      key={`${rowIndex}-${colIndex}`}
-                      value={value}
-                      onChangeText={(text) => handleInputChange(text, rowIndex, colIndex)}
-                      maxLength={1}
-                      width={50}
-                      height={50}
-                      textAlign="center"
-                      fontSize={25}
-                      fontWeight="bold"
-                      backgroundColor="#000"
-                      color="#fff"
-                      borderWidth={1}
-                      borderRadius="$2"
-                    />
-                  ))}
-                </XStack>
-              ))}
-            </YStack>
           </YStack>
 
-          <Dialog.Close displayWhenAdapted asChild>
-            <Button onPress={handleDialogClose} theme="alt1" aria-label="Close">
-              Exit
-            </Button>
-          </Dialog.Close>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog>
+          <Button
+            onPress={handleModalClose}
+            backgroundColor="$red10"
+            color="white"
+            marginTop="$4"
+            marginBottom="$4"
+          >
+            Close
+          </Button>
+
+          <View style={{
+            position: "absolute",
+            bottom: 0,
+            left: -20,
+            right: -20,
+            height: 20,
+            backgroundColor: "#8B4513"
+          }} />
+        </View>
+      </View>
+    </Modal>
   );
 };
 
-// Initializes item data (default values)
-LetterBoard.getInitialData = () => ({ gridData: [] });
+LetterBoard.getInitialData = () => ({ 
+  gridData: Array(NUM_ROWS * NUM_COLS).fill(""), 
+  numColumns: NUM_COLS 
+});
 
 export default LetterBoard;

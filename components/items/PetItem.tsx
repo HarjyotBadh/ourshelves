@@ -47,14 +47,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     zIndex: 10,
   },
-  feedingMessage: {
-    position: "absolute",
-    top: "50%",
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    color: "$green9",
-    zIndex: 15,
+  bottomBar: {
+    height: 20,
+    backgroundColor: "#8B4513",
+    marginTop: "auto",
   },
 });
 
@@ -113,12 +109,12 @@ interface PetItemComponent extends React.FC<PetItemProps> {
 
 const StyledProgressBar = styled(Progress, {
   height: 20,
-  backgroundColor: "$gray3",
+  backgroundColor: "#F5DEB3",
   overflow: "hidden",
   flex: 1,
   borderRadius: "$4",
   borderWidth: 2,
-  borderColor: "$gray4",
+  borderColor: "#8B4513",
 });
 
 const calculateDecayedLevels = (
@@ -148,20 +144,26 @@ const calculateDecayedLevels = (
   return { newHunger, newHappiness };
 };
 
-const StyledDialog = styled(Dialog.Content, {
-  backgroundColor: "$blue2",
-  borderRadius: "$6",
-  paddingVertical: "$3",
-  paddingHorizontal: "$3",
-  shadowColor: "$shadowColor",
-  shadowRadius: 26,
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.2,
+const PetDialogContent = styled(Dialog.Content, {
+  backgroundColor: "#DEB887",
   width: "90%",
-  maxWidth: 420,
-  minWidth: 380,
-  borderWidth: 2,
-  borderColor: "$blue6",
+  maxWidth: 800,
+  padding: 0,
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
+  overflow: "hidden",
+});
+
+const InfoText = styled(Text, {
+  fontSize: "$2",
+  color: "#8B4513",
+  textAlign: "center",
+  backgroundColor: "#F5DEB3",
+  paddingVertical: "$1",
+  paddingHorizontal: "$2",
+  borderRadius: "$2",
+  borderWidth: 1,
+  borderColor: "#8B4513",
 });
 
 const StyledTitle = styled(Text, {
@@ -172,19 +174,28 @@ const StyledTitle = styled(Text, {
   marginBottom: "$2",
 });
 
+const StyledIconContainer = styled(XStack, {
+  backgroundColor: "$blue4",
+  padding: "$2",
+  borderRadius: "$3",
+  borderWidth: 1,
+  borderColor: "$blue6",
+});
+
 const StyledButton = styled(Button, {
-  backgroundColor: "$green9",
+  backgroundColor: "#8B4513",
+  color: "white",
   borderRadius: "$4",
-  paddingHorizontal: "$4",
   borderWidth: 2,
-  borderColor: "$green10",
-  marginBottom: "$4",
+  borderColor: "#654321",
+  paddingVertical: "$2",
+  paddingHorizontal: "$3",
 
   variants: {
     disabled: {
       true: {
-        backgroundColor: "$gray6",
-        borderColor: "$gray7",
+        backgroundColor: "#D2B48C",
+        borderColor: "#8B4513",
         opacity: 0.6,
       },
     },
@@ -202,34 +213,6 @@ const StyledButtonText = styled(Text, {
   fontSize: "$4",
   fontWeight: "600",
   textAlign: "center",
-
-  variants: {
-    close: {
-      true: {
-        color: "white",
-      },
-    },
-  },
-});
-
-const InfoText = styled(Text, {
-  fontSize: "$2",
-  color: "$blue11",
-  textAlign: "center",
-  backgroundColor: "$blue4",
-  paddingVertical: "$1",
-  paddingHorizontal: "$2",
-  borderRadius: "$2",
-  borderWidth: 1,
-  borderColor: "$blue6",
-});
-
-const StyledIconContainer = styled(XStack, {
-  backgroundColor: "$blue4",
-  padding: "$2",
-  borderRadius: "$3",
-  borderWidth: 1,
-  borderColor: "$blue6",
 });
 
 const EditableName = styled(XStack, {
@@ -239,11 +222,13 @@ const EditableName = styled(XStack, {
   cursor: "pointer",
   padding: "$1",
   borderRadius: "$4",
-
+  backgroundColor: "#F5DEB3",
+  borderWidth: 1,
+  borderColor: "#8B4513",
   variants: {
     editing: {
       true: {
-        backgroundColor: "$blue4",
+        backgroundColor: "#F5DEB3",
       },
     },
   },
@@ -253,7 +238,7 @@ const NameInput = styled(Input, {
   textAlign: "center",
   fontSize: "$6",
   fontWeight: "bold",
-  color: "$blue11",
+  color: "#8B4513",
   backgroundColor: "transparent",
   borderWidth: 0,
   minWidth: 120,
@@ -578,7 +563,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
             enterStyle={{ opacity: 0 }}
             exitStyle={{ opacity: 0 }}
           />
-          <StyledDialog
+          <PetDialogContent
             bordered
             elevate
             key="content"
@@ -725,7 +710,7 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                 <StyledButtonText>Close</StyledButtonText>
               </StyledButton>
             </Dialog.Close>
-          </StyledDialog>
+          </PetDialogContent>
         </Dialog.Portal>
       </Dialog>
     </YStack>

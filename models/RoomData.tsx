@@ -9,6 +9,8 @@ export interface ShelfData {
   updatedAt: Date;
   itemList: DocumentReference[];
   placedItems?: PlacedItemData[];
+  isPersonalShelf?: boolean;
+  ownerId?: string;
 }
 
 export interface PlacedItemData {
@@ -30,6 +32,8 @@ export interface ItemData {
   imageUri: string;
   cost: number;
   shouldLock: boolean;
+  styleId: string | null;
+  styleName: string | null;
   [key: string]: any;
 }
 

@@ -1,174 +1,145 @@
-import { Timestamp } from 'firebase/firestore';
 import React from 'react';
-import { Dialog, Button, XStack, YStack, Label, Switch, Select, Separator, Text, Adapt, Sheet, Input, Anchor } from 'tamagui';
-import { Trash, CirclePlus, CircleMinus } from "@tamagui/lucide-icons";
-import { Alert } from 'react-native';
+import { View } from 'react-native';
+import { Dialog, Button, XStack, YStack, Label, Separator, Input, Text } from 'tamagui';
+import { CirclePlus, CircleMinus } from "@tamagui/lucide-icons";
+import {
+  DialogContent,
+  DialogTitle,
+  InputGroup,
+  votingStyles,
+} from 'styles/VotingBoxStyles';
 
 interface VotingBoxOptionsDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    setOptions: (topic: string, numOptions: number, options: string[]) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  setOptions: (topic: string, numOptions: number, options: string[]) => void;
 }
 
 export const VotingBoxOptionsDialog: React.FC<VotingBoxOptionsDialogProps> = ({
-    open,
-    onOpenChange,
-    setOptions
+  open,
+  onOpenChange,
+  setOptions
 }) => {
+  const [topic, setTopic] = React.useState('');
+  const [numOptions, setNumOptions] = React.useState(2);
+  const [option1, setOption1] = React.useState('');
+  const [option2, setOption2] = React.useState('');
+  const [option3, setOption3] = React.useState('');
+  const [option4, setOption4] = React.useState('');
 
-    const [topic, setTopic] = React.useState('');
-    const [numOptions, setNumOptions] = React.useState(2);
-    const [option1, setOption1] = React.useState('');
-    const [option2, setOption2] = React.useState('');
-    const [option3, setOption3] = React.useState('');
-    const [option4, setOption4] = React.useState('');
+  return (
+    <Dialog modal open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+        <DialogContent
+          elevation={10}
+          key="content"
+          animation={[
+            'quick',
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+        >
+          <DialogTitle>Create Poll</DialogTitle>
 
-    return (
-        <Dialog modal open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Overlay key="overlay" />
-                <Dialog.Content
-                    bordered
-                    elevate
-                    width={380}
-                    key="content"
-                    animation={[
-                        'quick',
-                        {
-                            opacity: {
-                                overshootClamping: true,
-                            },
-                        },
-                    ]}
-                >
-                    <Dialog.Title>Select Voting Options</Dialog.Title>
+          <YStack padding="$4" gap="$2">
+            <InputGroup>
+              <Label width={80} color="black">Topic</Label>
+              <Separator minHeight={20} vertical />
+              <Input
+                flex={1}
+                placeholder="Enter a Topic"
+                value={topic}
+                onChangeText={setTopic}
+                backgroundColor="white"
+                color="black"
+                height="$5"
+                fontSize="$5"
+                borderWidth={1}
+                borderColor="$gray8"
+              />
+            </InputGroup>
 
-                    <YStack marginTop="$3" marginBottom="$3" gap="$2">
-                        <XStack width="100%" alignItems="center" gap="$4">
-                            <Label
-                                paddingRight="$0"
-                                minWidth={40}
-                                justifyContent="flex-end"
-                            >
-                                Topic
-                            </Label>
-                            <Separator minHeight={20} vertical />
-                            <Input
-                                flex={1}
-                                minWidth={190}
-                                placeholder='What is your favorite color?'
-                                value={topic}
-                                onChangeText={setTopic}
-                            />
-                        </XStack>
+            {[
+              { value: option1, setValue: setOption1, num: 1 },
+              { value: option2, setValue: setOption2, num: 2 },
+              { value: option3, setValue: setOption3, num: 3 },
+              { value: option4, setValue: setOption4, num: 4 },
+            ].map((option, index) => (
+              index < numOptions && (
+                <InputGroup key={index}>
+                  <Label width={80} color="black">Option {option.num}</Label>
+                  <Separator minHeight={20} vertical />
+                  <Input
+                    flex={1}
+                    placeholder={`Option ${option.num}`}
+                    value={option.value}
+                    onChangeText={option.setValue}
+                    backgroundColor="white"
+                    color="black"
+                    height="$5"
+                    fontSize="$5"
+                    borderWidth={1}
+                    borderColor="$gray8"
+                  />
+                </InputGroup>
+              )
+            ))}
 
-                        <XStack width="100%" alignItems="center" gap="$4">
-                            <Label
-                                paddingRight="$0"
-                                minWidth={40}
-                                justifyContent="flex-end"
-                            >
-                                Option 1
-                            </Label>
-                            <Separator minHeight={20} vertical />
-                            <Input
-                                flex={1}
-                                minWidth={190}
-                                placeholder='Option 1'
-                                value={option1}
-                                onChangeText={setOption1}
-                            />
-                        </XStack>
+            <XStack justifyContent="center" gap="$4">
+              {numOptions > 2 && (
+                <Button
+                  icon={CircleMinus}
+                  size="$4"
+                  theme="red"
+                  onPress={() => setNumOptions(numOptions - 1)}
+                />
+              )}
+              {numOptions < 4 && (
+                <Button
+                  icon={CirclePlus}
+                  size="$4"
+                  theme="blue"
+                  onPress={() => setNumOptions(numOptions + 1)}
+                />
+              )}
+            </XStack>
 
-                        <XStack width="100%" alignItems="center" gap="$4">
-                            <Label
-                                paddingRight="$0"
-                                minWidth={40}
-                                justifyContent="flex-end"
-                            >
-                                Option 2
-                            </Label>
-                            <Separator minHeight={20} vertical />
-                            <Input
-                                flex={1}
-                                minWidth={190}
-                                placeholder='Option 2'
-                                value={option2}
-                                onChangeText={setOption2}
-                            />
-                        </XStack>
+            <XStack justifyContent="center" gap="$4">
+              <Button
+                theme="red"
+                width={120}
+                onPress={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                theme="green"
+                width={120}
+                onPress={() => {
+                  setOptions(topic, numOptions, [option1, option2, option3, option4]);
+                  onOpenChange(false);
+                }}
+              >
+                Create
+              </Button>
+            </XStack>
+          </YStack>
 
-                        {(numOptions >= 3) && (
-                            <XStack width="100%" alignItems="center" gap="$4">
-                                <Label
-                                    paddingRight="$0"
-                                    minWidth={40}
-                                    justifyContent="flex-end"
-                                >
-                                    Option 3
-                                </Label>
-                                <Separator minHeight={20} vertical />
-                                <Input
-                                    flex={1}
-                                    minWidth={190}
-                                    placeholder='Option 3'
-                                    value={option3}
-                                    onChangeText={setOption3}
-                                />
-                            </XStack>
-                        )}
-
-                        {(numOptions >= 4) && (
-                            <XStack width="100%" alignItems="center" gap="$4">
-                                <Label
-                                    paddingRight="$0"
-                                    minWidth={40}
-                                    justifyContent="flex-end"
-                                >
-                                    Option 4
-                                </Label>
-                                <Separator minHeight={20} vertical />
-                                <Input
-                                    flex={1}
-                                    minWidth={190}
-                                    placeholder='Option 4'
-                                    value={option4}
-                                    onChangeText={setOption4}
-                                />
-                            </XStack>
-                        )}
-
-                        <XStack width="100%" justifyContent="center" alignItems="center" gap="$4">
-                            {(numOptions >= 3) && (
-                                <Button
-                                    icon={CircleMinus}
-                                    size="$4"
-                                    onPress={() => { setNumOptions(numOptions - 1); }}
-                                />
-                            )}
-                            {(numOptions <= 3) && (
-                                <Button
-                                    icon={CirclePlus}
-                                    size="$4"
-                                    onPress={() => { setNumOptions(numOptions + 1); }}
-                                />
-                            )}
-                        </XStack>
-                    </YStack>
-
-                    <Dialog.Close displayWhenAdapted asChild>
-                        <Button
-                            onPress={() => {
-                                setOptions(topic, numOptions, [option1, option2, option3, option4]);
-                                onOpenChange(false);
-                            }}
-                            theme="alt1"
-                            aria-label="Save">
-                            Save
-                        </Button>
-                    </Dialog.Close>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog>
-    );
+          <View style={votingStyles.bottomBar} />
+        </DialogContent>
+      </Dialog.Portal>
+    </Dialog>
+  );
 };
