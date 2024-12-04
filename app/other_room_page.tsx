@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "firebaseConfig";
-import { UserData } from "../../models/UserData";
+import { UserData } from "../models/UserData";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import {
   Avatar,
