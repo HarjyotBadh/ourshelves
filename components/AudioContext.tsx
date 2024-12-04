@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
+import { auth, db } from 'firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AudioTrack {
   sound: Audio.Sound;
@@ -10,7 +12,7 @@ interface AudioTrack {
 
 interface AudioContextType {
   tracks: { [key: string]: AudioTrack };
-  play: (trackUrl: string, trackId: string, itemId: string) => Promise<void>;
+  play: (trackUrl: string, trackId: string, itemId: string, isSfx?: boolean) => Promise<void>;
   stop: (itemId: string) => Promise<void>;
   isPlaying: (itemId: string) => boolean;
 }
@@ -19,8 +21,27 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tracks, setTracks] = useState<{ [key: string]: AudioTrack }>({});
+  const [userPreferences, setUserPreferences] = useState({
+    muteSfx: false,
+    muteMusic: false
+  });
 
   useEffect(() => {
+    const fetchUserPreferences = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "Users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserPreferences({
+            muteSfx: data.muteSfx || false,
+            muteMusic: data.muteMusic || false
+          });
+        }
+      }
+    };
+
+    fetchUserPreferences();
     return () => {
       Object.values(tracks).forEach(track => {
         if (track.sound) {
@@ -30,7 +51,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  const play = async (trackUrl: string, trackId: string, itemId: string) => {
+  const play = async (trackUrl: string, trackId: string, itemId: string, isSfx = false) => {
+    // Check if should be muted based on preferences
+    if ((isSfx && userPreferences.muteSfx) || (!isSfx && userPreferences.muteMusic)) {
+      return;
+    }
+
     try {
       let track = tracks[itemId];
       
@@ -44,7 +70,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: trackUrl },
-        { shouldPlay: true, isLooping: true }
+        { shouldPlay: true, isLooping: !isSfx }
       );
 
       setTracks(prev => ({
