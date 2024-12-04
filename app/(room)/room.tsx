@@ -61,6 +61,7 @@ interface RoomData extends DocumentData {
   admins: DocumentReference[];
   shelfList: DocumentReference[];
   hasPersonalShelves: boolean;
+  isPublic: boolean;
 }
 
 const RoomScreen = () => {
@@ -93,7 +94,8 @@ const RoomScreen = () => {
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
     roomId: string;
-  }>({ name: "", users: [], description: "", roomId: "" });
+    isPublic: boolean;
+  }>({ name: "", users: [], description: "", roomId: "", isPublic: false });
   const { stop, tracks } = useAudio();
   const [hasPersonalShelves, setHasPersonalShelves] = useState(false);
   const [hasPersonalShelf, setHasPersonalShelf] = useState(false);
@@ -429,6 +431,7 @@ const RoomScreen = () => {
             description: roomData.description || "",
             users: combinedUsers,
             roomId: roomId,
+            isPublic: roomData.isPublic || false
           });
         } else {
           console.error("Room not found");
