@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Pressable, TouchableWithoutFeedback, Keyboard } from "react-native";
-import { Text, YStack, Input, ScrollView, Switch, XStack, SizableText } from "tamagui";
+import { Pressable, TouchableWithoutFeedback, Keyboard, Alert } from "react-native";
+import { Text, YStack, Input, Button, ScrollView, Switch, XStack, SizableText } from "tamagui";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "firebaseConfig";
 import { useRouter, Stack } from "expo-router";
+import { WandSparkles } from "@tamagui/lucide-icons";
+
 
 interface User {
   id: string;
@@ -14,6 +16,7 @@ interface Room {
   id: string;
   roomName: string;
   isPublic: boolean;
+  // TODO, add tags here and grab current user tags
 }
 
 export default function SearchList() {
@@ -21,6 +24,7 @@ export default function SearchList() {
   const [roomNames, setRoomNames] = useState<Room[]>([]);
   const [isUsersMode, setIsUsersMode] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isButtonPressed, setIsButtonPressed] = useState(false)
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -92,6 +96,15 @@ export default function SearchList() {
     router.push(`/other_room_page?roomId=${id}`);
   };
 
+  const recommendedRooms = () => {
+    setIsButtonPressed((prev) => !prev)
+    if (!isButtonPressed) {
+      Alert.alert("Recommended Rooms Displayed")
+    }
+
+    // Add tags stuff here
+  }
+
   return (
     <>
       <Stack.Screen
@@ -117,6 +130,23 @@ export default function SearchList() {
             <SizableText size="$6" color={!isUsersMode ? "$color" : "$gray8"}>
               Rooms
             </SizableText>
+
+            {/* Conditionally render the button when isUsersMode is false */}
+          {!isUsersMode && (
+            <Button
+            size="$4"
+            circular
+            color="$white"
+            justifyContent="center"
+            alignItems="center"
+            display="flex"
+            backgroundColor={isButtonPressed ? "$blue10" : "$gray8"} // Dynamic background color
+            onPress={() => recommendedRooms()} // Toggle the button state
+            icon={<WandSparkles size="$2" />}
+          />
+          )}
+
+            
           </XStack>
           <Input
             size="$6"
