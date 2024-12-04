@@ -96,13 +96,32 @@ export default function SearchList() {
     router.push(`/other_room_page?roomId=${id}`);
   };
 
+  // For generating the recommended rooms
   const recommendedRooms = () => {
     setIsButtonPressed((prev) => !prev)
     if (!isButtonPressed) {
       Alert.alert("Recommended Rooms Displayed")
     }
 
-    // Add tags stuff here
+    // // Helper function to calculate the intersection of two sets of tags
+    // function getTagMatchCount(roomTags, userTags) {
+    //   return roomTags.filter(tag => userTags.includes(tag)).length;
+    // }
+
+    // // Filter rooms that have at least one tag in common with the user
+    // const filteredRooms = rooms.filter(room => 
+    //   room.tags.some(tag => userTags.includes(tag))
+    // );
+
+    // // Sort the rooms based on how many tags they share with the user
+    // filteredRooms.sort((roomA, roomB) => {
+    //   const matchCountA = getTagMatchCount(roomA.tags, userTags);
+    //   const matchCountB = getTagMatchCount(roomB.tags, userTags);
+
+    //   return matchCountB - matchCountA; // Sort descending by match count
+    // });
+
+    // setRoomNames(filteredRooms);
   }
 
   return (
