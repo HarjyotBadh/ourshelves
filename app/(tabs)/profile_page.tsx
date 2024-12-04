@@ -109,7 +109,6 @@ export function CheckboxWithLabel({
   );
 }
 
-const NAME_REGEX = /^[a-zA-Z0-9_]+$/; // Define the regex for valid usernames
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -126,8 +125,6 @@ export default function ProfilePage() {
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [showAddTagsDialog, setShowAddTagsDialog] = useState(false);
   const router = useRouter();
-  const [newUsername, setNewUsername] = useState(""); // State for new username
-  const [showChangeUsernameDialog, setShowChangeUsernameDialog] = useState(false); // State for dialog visibility
 
   const [checkedTags, setCheckedTags] = useState({
     closeCommunity: false,
@@ -213,33 +210,7 @@ export default function ProfilePage() {
       );
     }
   };
-  const handleChangeUsername = async () => {
-    if (newUsername.trim() === "") {
-      alert("Username cannot be empty.");
-      return;
-    } else if (!NAME_REGEX.test(newUsername)) {
-      alert("Username can only contain letters, numbers, and underscores.");
-      return;
-    }
-
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userRef = doc(db, "Users", user.uid);
-        await setDoc(userRef, { displayName: newUsername }, { merge: true }); // Update username in Firestore
-        setProfilePage((prev) => prev ? { ...prev, displayName: newUsername } : null); // Update local state
-        alert("Username updated successfully!");
-      } else {
-        alert("No user is signed in.");
-      }
-    } catch (error) {
-      console.error("Error updating username:", error);
-      alert("Failed to update username. Please try again.");
-    } finally {
-      setShowChangeUsernameDialog(false); // Close dialog
-      setNewUsername(""); // Clear input
-    }
-  };
+  
   const handleDeleteAccount = async () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -350,24 +321,23 @@ export default function ProfilePage() {
         }}
       />
       <ProfileMenu
-      open={isMenuOpen}
-      onOpenChange={handleMenuChange}
-      onAddTags={() => {
-        setShowAddTagsDialog(true);
-        setIsMenuOpen(false);
-      }}
-      muteSfx={profilePage?.muteSfx ?? false}
-      muteMusic={profilePage?.muteMusic ?? false}
-    />
+        open={isMenuOpen}
+        onOpenChange={handleMenuChange}
+        onAddTags={() => {
+          setShowAddTagsDialog(true);
+          setIsMenuOpen(false);
+        }}
+        muteSfx={profilePage?.muteSfx ?? false}
+        muteMusic={profilePage?.muteMusic ?? false}
+        onChangeUsername={() => {
+          // Handle username change
+        }}
+      />
 
       <Dialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
         <Dialog.Portal>
           <Dialog.Overlay
             key="overlay"
-            animation="quick"
-            opacity={0.5}
-            enterStyle={{ opacity: 0 }}
-            exitStyle={{ opacity: 0 }}
           />
           <Dialog.Content
             bordered
@@ -407,10 +377,6 @@ export default function ProfilePage() {
         <Dialog.Portal>
           <Dialog.Overlay
             key="overlay"
-            animation="quick"
-            opacity={0.5}
-            enterStyle={{ opacity: 0 }}
-            exitStyle={{ opacity: 0 }}
           />
           <Dialog.Content
             bordered
@@ -492,51 +458,6 @@ export default function ProfilePage() {
         </Dialog.Portal>
       </Dialog>
 
-      {/* Change Username Dialog */}
-      <Dialog open={showChangeUsernameDialog} onOpenChange={setShowChangeUsernameDialog}>
-        <Dialog.Portal>
-          <Dialog.Overlay
-            key="overlay"
-            animation="quick"
-            opacity={0.5}
-            enterStyle={{ opacity: 0 }}
-            exitStyle={{ opacity: 0 }}
-          />
-          <Dialog.Content
-            bordered
-            elevate
-            key="content"
-            animation={[
-              "quick",
-              {
-                opacity: {
-                  overshootClamping: true,
-                },
-              },
-            ]}
-            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-            gap="$4"
-          >
-            <Dialog.Title>Change Username</Dialog.Title>
-            <Dialog.Description>Enter your new username:</Dialog.Description>
-            <Input
-              value={newUsername}
-              onChangeText={setNewUsername}
-              placeholder="New Username"
-            />
-            <XStack gap="$3" justifyContent="flex-end">
-              <Dialog.Close asChild>
-                <Button theme="alt1">Cancel</Button>
-              </Dialog.Close>
-              <Button theme="blue" onPress={handleChangeUsername}>
-                Change Username
-              </Button>
-            </XStack>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog>
-
       <SafeAreaView
         style={{
           flex: 1,
@@ -601,15 +522,6 @@ export default function ProfilePage() {
                   Select Picture Icon
                 </Button>
               </Link>
-
-              <Button
-                mr="$2" // Add margin to the right for spacing
-                bg="$yellow8"
-                color="$yellow12"
-                onPress={() => setShowChangeUsernameDialog(true)} // Open Change Username dialog
-              >
-                Change Username
-              </Button>
 
               <TextArea
                 height={170}
