@@ -1,12 +1,15 @@
 import { styled, Button, View } from "tamagui";
 import { StyleSheet } from "react-native";
 
+export const FRAME_HEIGHT = 100;
+
 export const PictureFrameView = styled(View, {
   borderRadius: "$2",
   backgroundColor: "#DEB887",
   alignItems: "center",
   justifyContent: "center",
   padding: 10,
+  height: FRAME_HEIGHT,
 });
 
 export const ImageContainer = styled(View, {
@@ -40,5 +43,22 @@ export const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     padding: 10,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginVertical: 5,
+    width: "90%",
+  },
+  invalidInput: {
+    borderColor: "red",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: -5,
+    marginBottom: 10,
   },
 });
