@@ -20,7 +20,7 @@ import { getTags, getTagById, getUserById } from "project-functions/homeFunction
 import { doc, DocumentReference, DocumentData, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DoorOpen, Tag } from "@tamagui/lucide-icons";
+import { ArrowLeftToLine, DoorOpen, Tag } from "@tamagui/lucide-icons";
 import AddUserToRoomDialog from "../components/AddUserToRoomDialog";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "firebaseConfig"; // Ensure this is correctly configured in your project
@@ -46,7 +46,7 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(true);
   const [roomPage, setRoomPage] = useState<RoomPage | null>(null);
   const [description, setDescription] = useState("");
-  const [tagsList, setTagsList] = useState<string[]>([]);
+  const [tagsList, setTagsList] = useState<string[]>([])
   const [userList, setUserList] = useState<
     {
       id: string;
@@ -69,6 +69,19 @@ export default function RoomPage() {
   }
 >();
 
+const showAlert = (messages) => {
+  // Convert the array of strings into a single string separated by commas, newlines, or any other separator
+  const messageString = messages.join('\n'); // Joining with newlines for better readability
+
+  Alert.alert(
+    'Alert Title', // Title of the alert
+    messageString, // The stringified message
+    [
+      { text: 'OK', onPress: () => console.log('OK Pressed') }
+    ]
+  );
+};
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -88,10 +101,21 @@ export default function RoomPage() {
                 roomName: roomPageData?.name || "unknown room",
                 tags: roomPageData?.tags || [],
             });
-            
 
-            // TODO, somehow get the users and tags from the list of ids
-            console.log(roomPageData?.users)
+            let tag: string[] = [];
+
+            // Grabbing the users of the room
+            for (const ref of roomPageData?.tags) {
+              const tagDoc = await getDoc(ref);
+              if (tagDoc.exists()) {
+                tag.push(tagDoc.data() as string);
+              }
+            }
+
+          
+            setTagsList(tag);
+
+            // Grabbing the users of the room
             for (const ref of roomPageData?.users) {
                 const userDoc = await getDoc(ref);
                 if (userDoc.exists()) {
@@ -102,10 +126,6 @@ export default function RoomPage() {
                   });
                 }
             }
-
-            
-            console.log(userMap)
-
             const userNames = Array.from(userMap.values());
             setUserList(userNames)
     
@@ -141,9 +161,10 @@ export default function RoomPage() {
 
   // Function to handle viewing tags
   const viewTags = () => {
-    if (roomPage) {
-      setShowTagsModal(true); // Show the modal
-    }
+    showAlert(tagsList)
+    // if (roomPage) {
+    //   setShowTagsModal(true); // Show the modal
+    // }
   };
 
   const confirmAddUserToRoom = async () => {
