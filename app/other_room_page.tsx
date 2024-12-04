@@ -13,19 +13,24 @@ import {
   XStack,
   YStack,
   SizableText,
+  ScrollView,
 } from "tamagui";
-import { doc, getDoc } from "firebase/firestore";
+import { getTags, getTagById, getUserById } from "project-functions/homeFunctions";
+import { doc, DocumentReference, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Plus, Tag } from "@tamagui/lucide-icons";
+import { DoorOpen, Tag } from "@tamagui/lucide-icons";
 import AddUserToRoomDialog from "../components/AddUserToRoomDialog";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "firebaseConfig"; // Ensure this is correctly configured in your project
 import TagsModal from './TagsModal'; // Import the TagsModal
 
 // Data for profile page to be queried from db
 interface RoomPage {
     roomName: string;
     description: string;
-    tags: string[];
-    users: string[];
+    tags: DocumentReference[];
+    users: DocumentReference[];
 }
 
 const LoadingContainer = styled(YStack, {
@@ -36,16 +41,20 @@ const LoadingContainer = styled(YStack, {
   padding: 20,
 });
 
-export default function ProfilePage() {
+export default function RoomPage() {
   const [loading, setLoading] = useState(true);
   const [roomPage, setRoomPage] = useState<RoomPage | null>(null);
   const [description, setDescription] = useState("");
+  const [tagsList, setTagsList] = useState<string[]>([]);
+  const [userList, setUserList] = useState<string[]>([]);
   const [profileIcon, setIcon] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const router = useRouter();
   const [isAddToRoomDialogOpen, setIsAddToRoomDialogOpen] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false); // State for showing tags modal
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string | null } | null>(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,8 +73,13 @@ export default function ProfilePage() {
                 users: roomPageData?.users || [],
                 description: roomPageData?.description || [],
                 roomName: roomPageData?.name || "unknown room",
-                tags: roomPageData.tags || [],
+                tags: roomPageData?.tags || [],
             });
+            
+
+            // TODO, somehow get the users and tags from the list of ids
+            
+            
             setDescription(roomPageData?.description || "N/A");
           } else {
             throw new Error("Room not found");
@@ -82,6 +96,7 @@ export default function ProfilePage() {
 
     fetchData();
   }, [roomId]);
+
 
   // The Loading Page
   if (loading) {
@@ -102,6 +117,32 @@ export default function ProfilePage() {
     }
   };
 
+  const confirmAddUserToRoom = async () => {
+
+    try {
+      const userRef = doc(db, "Users", auth.currentUser?.uid);
+      const roomRef = doc(db, "Rooms", roomId);
+
+      await updateDoc(userRef, {
+        rooms: arrayUnion(roomRef),
+      });
+
+      await updateDoc(roomRef, {
+        users: arrayUnion(userRef),
+      });
+
+      Alert.alert("Success", `You joined ${roomPage?.roomName}`);
+    } catch (error) {
+      console.error("Error adding user to room:", error);
+      Alert.alert("Error", "Failed to add user to room. Please try again.");
+    } 
+  };
+
+  const handleUserClick = (user: string) => {
+    // Define the action when a user is clicked. For example:
+    //router.push(`/user/${user}`);
+  };
+
   return (
     <>
       <Stack.Screen
@@ -116,25 +157,44 @@ export default function ProfilePage() {
           <H2>{roomPage?.roomName}</H2>
 
           <H4>Room Description:</H4>
-          <TextArea height={170} width={300} value={description} editable={false} borderWidth={2} />
+          <TextArea
+            height={50}
+            width={300}
+            textAlign="center"
+            value={description}
+            editable={false}
+            borderWidth={2}
+          />
 
+          <H4>Users:</H4>
+          <ScrollView style={{ maxHeight: 200, width: "100%" }}>
+            {userList.map((user) => (
+              <TouchableOpacity
+                onPress={() => handleUserClick(user)}
+              >
+                <Text fontSize="$10" color="$color" marginBottom="$2">
+                    {user}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
           <XStack gap={10}>
             <Button
               size="$7"
               circular
-              onPress={() => setIsAddToRoomDialogOpen(true)}
+              onPress={() => confirmAddUserToRoom()}
               color="$white"
               justifyContent="center"
               alignItems="center"
               display="flex"
-              icon={<Plus size="$4" />}
+              icon={<DoorOpen size="$4" />}
             />
 
             <Button
               size="$7"
               circular
-              onPress={viewTags} // Show tags modal
+              onPress={viewTags}
               color="$white"
               justifyContent="center"
               alignItems="center"
@@ -142,15 +202,13 @@ export default function ProfilePage() {
               icon={<Tag size="$4" />}
             />
           </XStack>
-
         </YStack>
       </SafeAreaView>
 
-      {/* Tags Modal */}
       <TagsModal
         visible={showTagsModal}
         onClose={() => setShowTagsModal(false)}
-        tags={roomPage?.tags || []}
+        tags={tagsList || []}
       />
     </>
   );

@@ -96,6 +96,20 @@ export const getTagById = async (tagId: string): Promise<{ success: boolean; tag
   return { success: false, tag: "" };
 };
 
+export const getUserById = async (userId: string): Promise<{ success: boolean; user: string }> => {
+  try {
+    const userDoc = await getDoc(doc(db, "Users", userId));
+
+    if (userDoc.exists()) {
+      return { success: true, user: userDoc.data().displayName };
+    }
+  } catch (error) {
+    console.error("Error fetching tag: ", error);
+  }
+
+  return { success: false, user: "" };
+};
+
 export const addTag = async (
   roomId: string,
   tagId: string
