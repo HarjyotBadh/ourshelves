@@ -58,6 +58,8 @@ const ClockDigital: React.FC<ClockDigitalProps> = ({
                     fontWeight: 'bold',
                     backgroundColor: 'rgba(139, 69, 19, 1)',
                     padding: 9,
+                    width: "100%",
+                    height: "70%",
                 }}
             >
                 {hour?.toString().padStart(2, '0')}:

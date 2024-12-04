@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, styled, YStack } from "tamagui";
-import ClockGraphic from "components/ClockGraphic";
-import { ClockDialog } from "components/ClockDialog";
+import ClockGraphic from "components/ClockItem/ClockGraphic";
+import { ClockDialog } from "components/ClockItem/ClockDialog";
 import { auth } from "../../firebaseConfig";
 
 interface ClockItemProps {

@@ -1,52 +1,42 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, Anchor } from "tamagui";
+import { View, Text } from "react-native";
+import { YStack, Anchor } from "tamagui";
 import { auth } from "../../firebaseConfig";
 import LinkGraphic from "components/LinkItem/LinkGraphic";
 import { LinkDialog } from "components/LinkItem/LinkDialog";
+import { LinkContainer, linkStyles } from "styles/LinkStyles";
 
 interface LinkItemProps {
   itemData: {
-    id: string; // unique id of the placed item (do not change)
-    itemId: string; // id of the item (do not change)
-    name: string; // name of the item (do not change)
-    imageUri: string; // picture uri of the item (do change)
-    placedUserId: string; // user who placed the item (do not change)
-    [key: string]: any; // any other properties (do not change)
-
-    // add custom properties below ------
+    id: string;
+    itemId: string;
+    name: string;
+    imageUri: string;
+    placedUserId: string;
     linkName: string;
     link: string;
-
-    // ---------------------------------
+    [key: string]: any;
   };
-  onDataUpdate: (newItemData: Record<string, any>) => void; // updates item data when called (do not change)
-  isActive: boolean; // whether item is active/clicked (do not change)
-  onClose: () => void; // called when dialog is closed (important, as it will unlock the item) (do not change)
+  onDataUpdate: (newItemData: Record<string, any>) => void;
+  isActive: boolean;
+  onClose: () => void;
   roomInfo: {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
-  }; // various room info (do not change)
+  };
 }
 
 interface LinkItemComponent extends React.FC<LinkItemProps> {
   getInitialData: () => { linkName: string; link: string };
 }
 
-const LinkItemContainer = styled(View, {
-  width: "100%",
-  height: "100%",
-  justifyContent: "center",
-  alignItems: "center",
-});
-
 const LinkItem: LinkItemComponent = ({ itemData, onDataUpdate, isActive, onClose, roomInfo }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-
   const [linkName, setLinkName] = useState(itemData.linkName || "");
   const [link, setLink] = useState(itemData.link || "");
+  const isOwner = itemData.placedUserId === auth.currentUser?.uid;
 
-  // Opens dialog when item is active/clicked
   useEffect(() => {
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
@@ -68,7 +58,7 @@ const LinkItem: LinkItemComponent = ({ itemData, onDataUpdate, isActive, onClose
     ) {
       setLinkName(linkNameOption);
       setLink(linkOption);
-      onDataUpdate({ ...itemData, linkName: linkNameOption, link: linkOption }); // updates item data when called
+      onDataUpdate({ ...itemData, linkName: linkNameOption, link: linkOption });
     } else {
       alert(
         "Invalid URL. Please enter a valid URL starting with 'http' and ending with a valid top-level domain."
@@ -78,59 +68,55 @@ const LinkItem: LinkItemComponent = ({ itemData, onDataUpdate, isActive, onClose
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
+    onClose();
   };
 
-  // Renders item when not active/clicked
-  // (default state of item on shelf)
-  if (!isActive) {
-    return (
-      <YStack flex={1}>
-        <LinkItemContainer>
-          {itemData.placedUserId !== auth.currentUser.uid && (
-            <Anchor href={link} height={100}>
-              <LinkGraphic linkName={linkName} />
-            </Anchor>
-          )}
-
-          {itemData.placedUserId === auth.currentUser.uid && <LinkGraphic linkName={linkName} />}
-        </LinkItemContainer>
-      </YStack>
-    );
-  }
-
-  // Renders item when active/clicked
-  // (item is clicked and dialog is open, feel free to change this return)
-  return (
-    <YStack flex={1}>
-      <LinkItemContainer>
-        {itemData.placedUserId !== auth.currentUser.uid && (
-          <Anchor href={link} height={100}>
+  const renderLinkContent = () => (
+    <LinkContainer>
+      <View style={linkStyles.iconContainer}>
+        {!isOwner ? (
+          <Anchor href={link} height={70}>
             <LinkGraphic linkName={linkName} />
           </Anchor>
+        ) : (
+          <LinkGraphic linkName={linkName} />
         )}
+      </View>
+      <View style={linkStyles.ownerNameContainer}>
+        {!isOwner && (
+          <Text style={linkStyles.linkSubtext}>
+            {"Click to visit link"}
+          </Text>
+        )}
+      </View>
+    </LinkContainer>
+  );
 
-        {itemData.placedUserId === auth.currentUser.uid && <LinkGraphic linkName={linkName} />}
-        {itemData.placedUserId === auth.currentUser.uid && (
-          <LinkDialog
-            open={dialogOpen}
-            onOpenChange={(isOpen) => {
-              setDialogOpen(isOpen);
-              if (!isOpen) {
-                handleDialogClose();
-              }
-            }}
-            onLinkSelect={handleLinkSelect}
-            defaultLinkName={linkName}
-            defaultLink={link}
-          />
-        )}
-      </LinkItemContainer>
+  if (!isActive) {
+    return <YStack flex={1}>{renderLinkContent()}</YStack>;
+  }
+
+  return (
+    <YStack flex={1}>
+      {renderLinkContent()}
+      {isOwner && (
+        <LinkDialog
+          open={dialogOpen}
+          onOpenChange={(isOpen) => {
+            setDialogOpen(isOpen);
+            if (!isOpen) {
+              handleDialogClose();
+            }
+          }}
+          onLinkSelect={handleLinkSelect}
+          defaultLinkName={linkName}
+          defaultLink={link}
+        />
+      )}
     </YStack>
   );
 };
 
-// Initializes item data (default values)
 LinkItem.getInitialData = () => ({ linkName: "Google", link: "https://www.google.com/" });
 
-export default LinkItem; // do not remove the export (but change the name of the Item to match the name of the file)
+export default LinkItem;

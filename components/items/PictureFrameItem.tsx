@@ -1,38 +1,24 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Modal, StyleSheet, Dimensions, Alert, TextInput } from "react-native";
-import { View, YStack, Button, Image, Text } from "tamagui";
+import { Modal, View, Alert, TextInput } from "react-native";
+import { YStack, Button, Image, Text } from "tamagui";
 import * as ImagePicker from "expo-image-picker";
 import { ToastViewport, useToastController } from "@tamagui/toast";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "firebaseConfig";
+import { Image as ImageIcon, Trash } from "@tamagui/lucide-icons";
+import { earnCoins } from "project-functions/shopFunctions";
 
 import {
   PictureFrameView,
   ButtonContainer,
   ImageContainer,
-  BOTTOM_BAR_HEIGHT,
   BottomBar,
   styles,
 } from "styles/PictureFrameStyles";
-import { earnCoins } from "project-functions/shopFunctions";
 
-const { width: screenWidth } = Dimensions.get("window");
-const FRAME_WIDTH = screenWidth * 1;
-const FRAME_HEIGHT = FRAME_WIDTH * 1;
-
-const PREVIEW_WIDTH = 100;
-const PREVIEW_HEIGHT = PREVIEW_WIDTH * (FRAME_HEIGHT / FRAME_WIDTH);
-const PREVIEW_PADDING = 5;
-
-interface DefaultItemData {
-  imageUri: string;
-}
-interface RoomInfo {
-  roomId: string;
-}
-const defaultItemData: DefaultItemData = {
-  imageUri: "",
-};
+const PREVIEW_WIDTH = 110;
+const PREVIEW_HEIGHT = 100;
+const PREVIEW_PADDING = 20;
 
 interface PictureFrameItemProps {
   itemData: {
@@ -54,6 +40,8 @@ interface PictureFrameItemProps {
   };
 }
 
+const DEFAULT_IMAGE_URI = "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/items%2Fpicture_frame.png?alt=media&token=16688f79-a4ba-41d2-a345-8e018a3ad7a1";
+
 interface PictureFrameItemComponent extends React.FC<PictureFrameItemProps> {
   getInitialData: () => { imageUri: string };
 }
@@ -72,26 +60,17 @@ const PictureFrameItem: PictureFrameItemComponent = ({
   const toast = useToastController();
   const [location, setLocation] = useState<string>(itemData.location || "");
   const [isLocationValid, setIsLocationValid] = useState<boolean>(true);
-
-  useEffect(() => {
-    setImageUri(itemData.imageUri || "");
-  }, [itemData]);
+  const isOwner = itemData.placedUserId === auth.currentUser?.uid;
 
   useEffect(() => {
     if (isActive && !dialogOpen) {
       setDialogOpen(true);
     }
-  }, [isActive, dialogOpen]);
+  }, [isActive]);
 
   useEffect(() => {
-    if (hasChanges) {
-      onDataUpdate({
-        ...itemData,
-        imageUri,
-      });
-      setHasChanges(false);
-    }
-  }, [hasChanges, imageUri, itemData, onDataUpdate]);
+    setImageUri(itemData.imageUri || "");
+  }, [itemData]);
 
   const uploadImage = async (uri: string) => {
     if (!roomInfo.roomId) {
@@ -103,19 +82,14 @@ const PictureFrameItem: PictureFrameItemComponent = ({
 
     setIsUploading(true);
     try {
-      // Convert URI to blob
       const response = await fetch(uri);
       const blob = await response.blob();
-
-      // Create unique filename
       const filename = `pictures/${roomInfo.roomId}/${Date.now()}.jpg`;
       const storageRef = ref(storage, filename);
 
-      // Upload to Firebase Storage
       await uploadBytes(storageRef, blob);
       const downloadUrl = await getDownloadURL(storageRef);
 
-      // Update state and parent component with the storage URL
       setImageUri(downloadUrl);
       setHasChanges(true);
       onDataUpdate({ ...itemData, imageUri: downloadUrl });
@@ -141,9 +115,7 @@ const PictureFrameItem: PictureFrameItemComponent = ({
     
   const pickImage = async () => {
     try {
-      // First, request permissions
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
       if (!permissionResult.granted) {
         toast.show("Permission to access gallery was denied", {
           duration: 3000,
@@ -164,7 +136,7 @@ const PictureFrameItem: PictureFrameItemComponent = ({
       }
     } catch (error) {
       console.error("Error picking image:", error);
-      toast.show("Failed to pick image: " + (error.message || "Unknown error"), {
+      toast.show("Failed to pick image", {
         duration: 3000,
       });
     }
@@ -204,14 +176,13 @@ const PictureFrameItem: PictureFrameItemComponent = ({
 
   const handleClose = useCallback(async () => {
     try {
-      // if (hasChanges) {
-      console.log("Earned 10 coins for updating the picture!");
-      await earnCoins(auth.currentUser.uid, 10);
-      toast.show("You earned 10 coins for updating the picture!", {
-        duration: 3000,
-      });
-      setHasChanges(false);
-      // }
+      if (hasChanges) {
+        await earnCoins(auth.currentUser.uid, 10);
+        toast.show("You earned 10 coins for updating the picture!", {
+          duration: 3000,
+        });
+        setHasChanges(false);
+      }
       onClose();
     } catch (error) {
       console.error("Error closing picture frame:", error);
@@ -219,21 +190,7 @@ const PictureFrameItem: PictureFrameItemComponent = ({
         duration: 3000,
       });
     }
-  }, [itemData, imageUri, onDataUpdate, onClose, hasChanges]);
-
-  const renderPictureFramePreview = () => (
-    <View style={{ padding: PREVIEW_PADDING }}>
-      <Image
-        source={{ uri: imageUri }}
-        style={{
-          width: PREVIEW_WIDTH,
-          height: PREVIEW_HEIGHT,
-          borderRadius: 4,
-        }}
-        resizeMode="cover"
-      />
-    </View>
-  );
+  }, [hasChanges, onClose]);
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -243,7 +200,31 @@ const PictureFrameItem: PictureFrameItemComponent = ({
   if (!isActive) {
     return (
       <YStack flex={1} justifyContent="center" alignItems="center">
-        {imageUri ? renderPictureFramePreview() : <Text style={styles.noImageText}>No image</Text>}
+        <View style={styles.iconContainer}>
+          {imageUri ? (
+            <Image
+              source={{ uri: imageUri }}
+              style={{
+                width: PREVIEW_WIDTH,
+                height: PREVIEW_HEIGHT,
+                borderRadius: 8,
+                marginTop: PREVIEW_PADDING,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Image
+              source={{ uri: DEFAULT_IMAGE_URI }}
+              style={{
+                width: PREVIEW_WIDTH,
+                height: PREVIEW_HEIGHT,
+                borderRadius: 8,
+                marginTop: PREVIEW_PADDING,
+              }}
+              resizeMode="cover"
+            />
+          )}
+        </View>
       </YStack>
     );
   }
@@ -255,26 +236,20 @@ const PictureFrameItem: PictureFrameItemComponent = ({
       animationType="fade"
       onRequestClose={handleDialogClose}
     >
-      <YStack
-        flex={1}
-        backgroundColor="rgba(0,0,0,0.5)"
-        justifyContent="center"
-        alignItems="center"
-      >
-        <PictureFrameView
-          padding="$2"
-          width={FRAME_WIDTH}
-          height={FRAME_HEIGHT + 120}
-          position="relative"
-        >
-          <ImageContainer width={FRAME_WIDTH - 20} height={FRAME_HEIGHT - 20}>
+      <View style={styles.modalContainer}>
+        <PictureFrameView>
+          <Text style={styles.headerText}>
+            {isOwner ? "Your Picture Frame" : "View Picture"}
+          </Text>
+          
+          <ImageContainer>
             {imageUri ? (
               <Image
                 source={{ uri: imageUri }}
                 style={{
                   width: "100%",
                   height: "100%",
-                  borderRadius: 4,
+                  borderRadius: 8,
                 }}
                 resizeMode="cover"
               />
@@ -291,20 +266,50 @@ const PictureFrameItem: PictureFrameItemComponent = ({
       {!isLocationValid && (
         <Text style={styles.errorText}>Please enter a valid location.</Text>
       )}
-          <ButtonContainer marginTop="$2">
-            <Button
-              onPress={pickImage}
-              backgroundColor="$blue10"
-              color="white"
-              size="$3"
-              marginRight="$2"
-              disabled={isUploading}
-            >
-              {isUploading ? "Uploading..." : "Pick an image"}
-            </Button>
+
+          <ButtonContainer>
+            {isOwner && (
+              <>
+                <Button
+                  onPress={pickImage}
+                  backgroundColor="$blue10"
+                  color="white"
+                  size="$3"
+                  marginRight="$2"
+                  disabled={isUploading}
+                >
+                  {isUploading ? "Uploading..." : "Pick an image"}
+                </Button>
+                {imageUri && (
+                  <Button
+                    onPress={async () => {
+                      try {
+                        // Update state and parent component
+                        setImageUri("");
+                        onDataUpdate({ ...itemData, imageUri: "" });
+                        setHasChanges(true);
+                        toast.show("Image removed successfully!", {
+                          duration: 3000,
+                        });
+                      } catch (error) {
+                        console.error("Error removing image:", error);
+                        toast.show("Failed to remove image", {
+                          duration: 3000,
+                        });
+                      }
+                    }}
+                    backgroundColor="$red10"
+                    color="white"
+                    size="$3"
+                    marginRight="$2"
+                    icon={Trash}
+                  />
+                )}
+              </>
+            )}
             <Button
               onPress={handleClose}
-              backgroundColor="$blue10"
+              backgroundColor={isOwner ? "$gray10" : "$red10"}
               color="white"
               size="$3"
               disabled={isUploading}
@@ -315,11 +320,11 @@ const PictureFrameItem: PictureFrameItemComponent = ({
           <BottomBar />
         </PictureFrameView>
         <ToastViewport name="pictureframe" />
-      </YStack>
+      </View>
     </Modal>
   );
 };
 
-PictureFrameItem.getInitialData = () => defaultItemData;
+PictureFrameItem.getInitialData = () => ({ imageUri: "" });
 
 export default PictureFrameItem;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useRouter } from "expo-router";
+import { Href, useRouter } from "expo-router";
 import { Button, H1, Paragraph, Stack, YStack, XStack, Input, Text, useTheme } from "tamagui";
 import { Platform, SafeAreaView, StatusBar } from "react-native";
 import { ArrowLeft } from "@tamagui/lucide-icons";
@@ -68,7 +68,9 @@ export default function DisplayNameInputScreen() {
             photoURL: defaultProfilePicture,
           });
 
-          router.replace("/(tabs)");
+          //router.replace("/(tabs)");
+          // Redirect to tutorial instead of tabs
+          router.replace("/(tutorial)/home" as Href);
         } else {
           setError("No user is signed in.");
         }

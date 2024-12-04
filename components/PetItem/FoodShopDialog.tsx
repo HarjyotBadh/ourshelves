@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, Button, Text, YStack, XStack, ScrollView, styled } from "tamagui";
+import { Dialog, Button, Text, YStack, XStack, ScrollView, styled, View } from "tamagui";
 import { useToastController } from "@tamagui/toast";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "firebaseConfig";
@@ -7,24 +7,86 @@ import { loseCoins } from "project-functions/shopFunctions";
 import { FoodItem, FOOD_ITEMS } from "models/FoodItem";
 
 const StyledDialog = styled(Dialog.Content, {
-  backgroundColor: "$blue2",
-  borderRadius: "$6",
-  paddingVertical: "$3",
-  paddingHorizontal: "$3",
+  backgroundColor: "#DEB887",
   width: "90%",
-  maxWidth: 420,
-  borderWidth: 2,
-  borderColor: "$blue6",
+  maxWidth: 800,
+  padding: 0,
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
+  overflow: "hidden",
+});
+
+const DialogTitle = styled(Text, {
+  color: "white",
+  backgroundColor: "#8B4513",
+  padding: "$4",
+  fontSize: 24,
+  textAlign: "center",
+  fontWeight: "bold",
+});
+
+const ContentContainer = styled(YStack, {
+  padding: "$4",
+});
+
+const CoinsDisplay = styled(XStack, {
+  backgroundColor: "#F5DEB3",
+  paddingHorizontal: "$3",
+  paddingVertical: "$2",
+  borderRadius: "$4",
+  borderWidth: 1,
+  borderColor: "#8B4513",
+  alignSelf: "center",
+  alignItems: "center",
+  marginBottom: "$4",
 });
 
 const FoodCard = styled(XStack, {
-  backgroundColor: "$blue4",
+  backgroundColor: "#F5DEB3",
   padding: "$3",
   borderRadius: "$4",
   borderWidth: 1,
-  borderColor: "$blue6",
+  borderColor: "#8B4513",
   alignItems: "center",
   gap: "$3",
+  marginBottom: "$2",
+});
+
+const IconContainer = styled(YStack, {
+  backgroundColor: "#DEB887",
+  padding: "$2",
+  borderRadius: "$3",
+  borderWidth: 1,
+  borderColor: "#8B4513",
+});
+
+const StyledButton = styled(Button, {
+  backgroundColor: "#8B4513",
+  color: "white",
+  borderRadius: "$4",
+  borderWidth: 2,
+  borderColor: "#654321",
+  
+  variants: {
+    selected: {
+      true: {
+        backgroundColor: "#654321",
+      },
+    },
+    disabled: {
+      true: {
+        backgroundColor: "#D2B48C",
+        borderColor: "#8B4513",
+        opacity: 0.6,
+      },
+    },
+  },
+});
+
+const BottomBar = styled(View, {
+  height: 20,
+  backgroundColor: "#8B4513",
+  marginTop: "auto",
 });
 
 interface FoodShopDialogProps {
@@ -111,81 +173,57 @@ export const FoodShopDialog: React.FC<FoodShopDialogProps> = ({
           exitStyle={{ opacity: 0 }}
         />
         <StyledDialog>
-          <YStack space="$4">
-            <YStack space="$2">
-              <Text fontSize="$6" fontWeight="bold" textAlign="center">
-                Pet Food Shop
+          <DialogTitle>Pet Food Shop</DialogTitle>
+          <ContentContainer>
+            <CoinsDisplay>
+              <Text fontSize="$5" fontWeight="bold" color="#8B4513">
+                {coins}
               </Text>
-              <XStack 
-                backgroundColor="$blue4" 
-                paddingHorizontal="$3" 
-                paddingVertical="$2" 
-                borderRadius="$4"
-                borderWidth={1}
-                borderColor="$blue6"
-                alignSelf="center"
-                alignItems="center"
-                space="$2"
-              >
-                <Text fontSize="$5" fontWeight="bold" color="$blue11">
-                  {coins}
-                </Text>
-                <Text fontSize="$5" color="$blue11">
-                  🪙
-                </Text>
-              </XStack>
-            </YStack>
-            
+              <Text fontSize="$5" color="#8B4513"> 🪙</Text>
+            </CoinsDisplay>
+
             <ScrollView maxHeight={400}>
-              <YStack space="$2">
+              <YStack>
                 {FOOD_ITEMS.map((food) => (
                   <FoodCard key={food.id}>
-                    <YStack
-                      backgroundColor="$blue3"
-                      padding="$2"
-                      borderRadius="$3"
-                      borderWidth={1}
-                      borderColor="$blue6"
-                    >
-                      <food.icon size={32} color="$blue10" />
-                    </YStack>
+                    <IconContainer>
+                      <food.icon size={32} color="#8B4513" />
+                    </IconContainer>
                     <YStack flex={1}>
-                      <Text fontWeight="bold">{food.name}</Text>
-                      <Text fontSize="$2">{food.description}</Text>
-                      <Text color="$blue11">Feeding value: {food.feedValue}%</Text>
+                      <Text fontWeight="bold" color="#8B4513">{food.name}</Text>
+                      <Text fontSize="$2" color="#8B4513">{food.description}</Text>
+                      <Text color="#8B4513">Feeding value: {food.feedValue}%</Text>
                     </YStack>
-                    <Button
-                      // Only disable if we don't own it AND don't have enough coins
+                    <StyledButton
                       disabled={!ownedFood.includes(food.id) && coins < food.cost}
-                      onPress={() => ownedFood.includes(food.id) 
-                        ? onSelectFood(food.id)
-                        : handlePurchase(food)
-                      }
-                      backgroundColor={
-                        selectedFoodId === food.id 
-                          ? "$blue9" 
-                          : ownedFood.includes(food.id) 
-                            ? "$green9" 
-                            : coins < food.cost
-                              ? "$red9"
-                              : "$gray8"
+                      selected={selectedFoodId === food.id}
+                      onPress={() => 
+                        ownedFood.includes(food.id) 
+                          ? onSelectFood(food.id)
+                          : handlePurchase(food)
                       }
                     >
-                      {selectedFoodId === food.id 
-                        ? "Selected" 
-                        : ownedFood.includes(food.id) 
-                          ? "Select" 
-                          : coins < food.cost
-                            ? "Not enough coins"
-                            : `${food.cost} 🪙`
-                      }
-                    </Button>
+                      <Text color="white">
+                        {selectedFoodId === food.id 
+                          ? "Selected" 
+                          : ownedFood.includes(food.id) 
+                            ? "Select" 
+                            : coins < food.cost
+                              ? "Not enough coins"
+                              : `${food.cost} 🪙`
+                        }
+                      </Text>
+                    </StyledButton>
                   </FoodCard>
                 ))}
               </YStack>
             </ScrollView>
-            <Button onPress={() => onOpenChange(false)}>Close</Button>
-          </YStack>
+
+            <StyledButton onPress={() => onOpenChange(false)} marginTop="$4">
+              <Text color="white">Close</Text>
+            </StyledButton>
+          </ContentContainer>
+          <BottomBar />
         </StyledDialog>
       </Dialog.Portal>
     </Dialog>

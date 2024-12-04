@@ -1,163 +1,198 @@
 import React, { useState, useEffect } from "react";
-import { View, styled, YStack, Anchor } from "tamagui";
+import { Modal, ScrollView, View } from "react-native";
+import { YStack, Button, TextArea, Text } from "tamagui";
 import { auth } from "../../firebaseConfig";
 import { Timestamp } from "@firebase/firestore";
-import { NoteBoxOwnerDialog } from "components/NoteBoxItem/NoteBoxOwnerDialog"; // Adjust the import path as necessary
 import { Alert } from "react-native";
-import { NoteBoxNonOwnerDialog } from "components/NoteBoxItem/NoteBoxNonOwnerDialog";
 import { NotepadText } from "@tamagui/lucide-icons";
+import {
+  noteboxStyles,
+  NoteBoxView,
+  ContentContainer,
+  BottomBar,
+} from "styles/NoteBoxStyles";
 
 interface NoteBoxItemProps {
-    itemData: {
-        id: string; // unique id of the placed item (do not change)
-        itemId: string; // id of the item (do not change)
-        name: string; // name of the item (do not change)
-        imageUri: string; // picture uri of the item (do change)
-        placedUserId: string; // user who placed the item (do not change)
-        [key: string]: any; // any other properties (do not change)
-
-        // add custom properties below ------
-        notes: { sender: string; body: string; timestamp: Timestamp }[];
-
-        // ---------------------------------
-    };
-    onDataUpdate: (newItemData: Record<string, any>) => void; // updates item data when called (do not change)
-    isActive: boolean; // whether item is active/clicked (do not change)
-    onClose: () => void; // called when dialog is closed (important, as it will unlock the item) (do not change)
-    roomInfo: {
-        name: string;
-        users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
-        description: string;
-    }; // various room info (do not change)
+  itemData: {
+    id: string;
+    itemId: string;
+    name: string;
+    imageUri: string;
+    placedUserId: string;
+    notes: { sender: string; body: string; timestamp: Timestamp }[];
+  };
+  onDataUpdate: (newItemData: Record<string, any>) => void;
+  isActive: boolean;
+  onClose: () => void;
+  roomInfo: {
+    name: string;
+    users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
+    description: string;
+  };
 }
 
 interface NoteBoxItemComponent extends React.FC<NoteBoxItemProps> {
-    getInitialData: () => { notes: { sender: string; body: string; timestamp: Timestamp }[] };
+  getInitialData: () => { notes: { sender: string; body: string; timestamp: Timestamp }[] };
 }
 
-const NoteBoxItemContainer = styled(View, {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-});
-
 const NoteBoxItem: NoteBoxItemComponent = ({
-    itemData,
-    onDataUpdate,
-    isActive,
-    onClose,
-    roomInfo,
+  itemData,
+  onDataUpdate,
+  isActive,
+  onClose,
+  roomInfo,
 }) => {
-    const [dialogOpen, setDialogOpen] = useState(false);
+  const [notes, setNotes] = useState(itemData.notes || []);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const isOwner = itemData.placedUserId === auth.currentUser?.uid;
 
-    const [notes, setNotes] = useState(itemData.notes || []);
+  useEffect(() => {
+    if (isActive && !isModalVisible) {
+      setIsModalVisible(true);
+    }
+  }, [isActive]);
 
-    // Opens dialog when item is active/clicked
-    useEffect(() => {
-        if (isActive && !dialogOpen) {
-            setDialogOpen(true);
-        }
-    }, [isActive]);
-
-    useEffect(() => {
-        setNotes(itemData.notes || []);
-    }, [itemData]);
-
-    const handleAddNote = (body: string) => {
-        const sender = auth.currentUser.displayName;
-
-        if (body.length === 0 || body.length > 1000) {
-            Alert.alert("Error", "Note must be between 1 and 1000 characters.");
-            return;
-        }
-
-        const newNote = { sender: sender, body: body, timestamp: Timestamp.now() };
-        const updatedNotes = [...notes, newNote];
-
-        setNotes(updatedNotes);
-        onDataUpdate({ ...itemData, notes: updatedNotes });
-
-        Alert.alert("Success", `Note added from ${sender}.`);
+  const handleAddNote = () => {
+    if (newNoteText.length === 0 || newNoteText.length > 1000) {
+      Alert.alert("Error", "Note must be between 1 and 1000 characters.");
+      return;
     }
 
-    const handleDeleteNote = (sender: string, timestamp: Timestamp) => {
-        const updatedNotes = notes.filter(note => !(note.sender === sender && note.timestamp.isEqual(timestamp)));
-
-        setNotes(updatedNotes);
-        onDataUpdate({ ...itemData, notes: updatedNotes });
-
-        Alert.alert("Success", `Note from ${sender} deleted.`);
+    const sender = auth.currentUser?.displayName || "Unknown User";
+    const newNote = {
+      sender,
+      body: newNoteText,
+      timestamp: Timestamp.now(),
     };
 
-    const handleDialogClose = () => {
-        setDialogOpen(false);
-        onClose(); // ensure you call onClose when dialog is closed (important, as it will unlock the item)
-    };
+    const updatedNotes = [...notes, newNote];
+    setNotes(updatedNotes);
+    onDataUpdate({ ...itemData, notes: updatedNotes });
+    setNewNoteText("");
+    Alert.alert("Success", `Note added from ${sender}.`);
+  };
 
-
-
-
-
-
-    // Renders item when not active/clicked
-    // (default state of item on shelf)
-    if (!isActive) {
-        return (
-            <YStack flex={1}>
-                <NoteBoxItemContainer>
-                    {itemData.placedUserId !== auth.currentUser.uid ? (
-                        <NotepadText color="black" size={80} />
-                    ) : (
-                        <NotepadText color="white" size={80} />
-                    )}
-                </NoteBoxItemContainer>
-            </YStack>
-        );
-    }
-
-    const thingy = false;
-
-    // Renders item when active/clicked
-    // (item is clicked and dialog is open, feel free to change this return)
-    return (
-        <YStack flex={1}>
-            <NoteBoxItemContainer>
-                {itemData.placedUserId !== auth.currentUser.uid ? (
-                    <>
-                        <NotepadText color="black" size={80} />
-                        <NoteBoxNonOwnerDialog
-                            open={dialogOpen}
-                            onOpenChange={(isOpen) => {
-                                setDialogOpen(isOpen);
-                                if (!isOpen) {
-                                    handleDialogClose();
-                                }
-                            }}
-                            addNote={handleAddNote} />
-                    </>
-                ) : (
-                    <>
-                        <NotepadText color="white" size={80} />
-                        <NoteBoxOwnerDialog
-                            open={dialogOpen}
-                            onOpenChange={(isOpen) => {
-                                setDialogOpen(isOpen);
-                                if (!isOpen) {
-                                    handleDialogClose();
-                                }
-                            }}
-                            deleteNote={handleDeleteNote}
-                            notes={notes}
-                        />
-                    </>
-                )}
-            </NoteBoxItemContainer>
-        </YStack>
+  const handleDeleteNote = (sender: string, timestamp: Timestamp) => {
+    const updatedNotes = notes.filter(
+      (note) => !(note.sender === sender && note.timestamp.isEqual(timestamp))
     );
+    setNotes(updatedNotes);
+    onDataUpdate({ ...itemData, notes: updatedNotes });
+    Alert.alert("Success", `Note from ${sender} deleted.`);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    onClose();
+  };
+
+  const formatTimestamp = (timestamp: Timestamp) => {
+    return timestamp.toDate().toLocaleString();
+  };
+
+  if (!isActive) {
+    return (
+      <View style={noteboxStyles.inactiveContainer}>
+        <View style={noteboxStyles.iconContainer}>
+          <NotepadText 
+            color={isOwner ? "#FFD700" : "#64b5f6"} 
+            size={70} 
+          />
+        </View>
+        {isOwner && notes.length > 0 && (
+          <View style={noteboxStyles.noteCountContainer}>
+            <Text style={noteboxStyles.noteCountText}>
+              {notes.length}
+            </Text>
+          </View>
+        )}
+        <View style={noteboxStyles.ownerNameContainer}>
+          <Text style={noteboxStyles.ownerNameText}>
+            {isOwner ? "My Notebox" : `${roomInfo.users.find(user => user.id === itemData.placedUserId)?.displayName || 'Unknown'}'s Notebox`}
+          </Text>
+          {!isOwner && (
+            <Text style={noteboxStyles.noteboxSubtext}>
+              Tap to leave a note
+            </Text>
+          )}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <Modal
+      visible={isModalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={handleModalClose}
+    >
+      <View style={noteboxStyles.modalContainer}>
+        <NoteBoxView>
+          <ContentContainer>
+            <Text style={noteboxStyles.headerText}>
+              {isOwner ? "Your Notes" : "Add a Note"}
+            </Text>
+
+            <YStack flex={1} mb="$4">
+              {isOwner ? (
+                <View style={noteboxStyles.scrollViewContainer}>
+                  <ScrollView style={noteboxStyles.noteList}>
+                    {notes.map((note, index) => (
+                      <View key={index} style={noteboxStyles.noteItem}>
+                        <Text style={noteboxStyles.noteSender}>{note.sender}</Text>
+                        <Text style={noteboxStyles.noteBody}>{note.body}</Text>
+                        <Text style={noteboxStyles.noteTimestamp}>
+                          {formatTimestamp(note.timestamp)}
+                        </Text>
+                        <Button
+                          onPress={() => handleDeleteNote(note.sender, note.timestamp)}
+                          theme="red"
+                          marginTop="$2"
+                        >
+                          Delete Note
+                        </Button>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : (
+                <>
+                  <TextArea
+                    value={newNoteText}
+                    onChangeText={setNewNoteText}
+                    placeholder="Write your note here..."
+                    numberOfLines={4}
+                    style={noteboxStyles.noteInput}
+                    color="black"
+                    placeholderTextColor="#666"
+                  />
+                  <View style={noteboxStyles.buttonContainer}>
+                    <Button
+                      theme="blue"
+                      onPress={handleAddNote}
+                      disabled={!newNoteText.trim()}
+                      flex={1}
+                    >
+                      Add Note
+                    </Button>
+                  </View>
+                </>
+              )}
+            </YStack>
+
+            <Button onPress={handleModalClose} theme="red" mb="$4">
+              Close
+            </Button>
+          </ContentContainer>
+          <BottomBar />
+        </NoteBoxView>
+      </View>
+    </Modal>
+  );
 };
 
-// Initializes item data (default values)
 NoteBoxItem.getInitialData = () => ({ notes: [] });
 
-export default NoteBoxItem; // do not remove the export (but change the name of the Item to match the name of the file)
+export default NoteBoxItem;

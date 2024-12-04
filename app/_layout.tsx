@@ -205,6 +205,12 @@ function RootLayoutNav() {
                       headerShown: false,
                     }}
                   />
+                  <Stack.Screen
+                    name="(tutorial)"
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
                 </Stack>
               </ThemeProvider>
             </Provider>

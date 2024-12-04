@@ -1,5 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Keyboard, Platform, StatusBar, TouchableWithoutFeedback, Alert } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Keyboard,
+  Platform,
+  StatusBar,
+  TouchableWithoutFeedback,
+  Alert,
+} from "react-native";
 import { db } from "firebaseConfig";
 import { useRouter, Link, useLocalSearchParams, Stack } from "expo-router";
 import {
@@ -15,12 +21,34 @@ import {
   YStack,
   SizableText, 
   Dialog,
+  Sheet,
+  Label,
+  Switch,
+  Checkbox,
   Input,
 } from "tamagui";
-import { doc, getDoc, deleteDoc, setDoc } from "firebase/firestore";
+import type { CheckboxProps } from "tamagui";
+import {
+  doc,
+  getDoc,
+  deleteDoc, setDoc,
+  updateDoc,
+  onSnapshot,
+} from "firebase/firestore";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { updateProfileAbtMe, updateProfileTags } from "project-functions/profileFunctions";
-import { Wrench, LogOut, AlignJustify } from "@tamagui/lucide-icons";
+import {
+  updateProfileAbtMe,
+  updateProfileTags,
+} from "project-functions/profileFunctions";
+import {
+  Menu,
+  LogOut,
+  Tags,
+  Volume2,
+  Music,
+  Check as CheckIcon,
+  Wrench,
+} from "@tamagui/lucide-icons";
 import { auth } from "firebaseConfig";
 import {
   deleteUser,
@@ -28,18 +56,16 @@ import {
   EmailAuthProvider,
   signOut,
 } from "firebase/auth";
+import { ProfileMenu } from "components/ProfileMenu";
 
-import { Check as CheckIcon } from "@tamagui/lucide-icons";
-import type { CheckboxProps } from "tamagui";
-import { Checkbox, Label } from "tamagui";
-
-// Data for profile page to be queried from db
 interface ProfilePage {
   aboutMe: string;
   profilePicture: string;
   rooms: string;
   displayName: string;
   tags: string[];
+  muteSfx?: boolean;
+  muteMusic?: boolean;
 }
 
 const LoadingContainer = styled(YStack, {
@@ -50,6 +76,39 @@ const LoadingContainer = styled(YStack, {
   padding: 20,
 });
 
+export function CheckboxWithLabel({
+  size,
+  label = "Accept terms and conditions",
+  checked,
+  onChange,
+  ...checkboxProps
+}: CheckboxProps & {
+  label?: string;
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
+}) {
+  const id = `checkbox-${(size || "").toString().slice(1)}`;
+  return (
+    <XStack width={300} alignItems="center" gap="$4">
+      <Checkbox
+        id={id}
+        size={size}
+        checked={checked}
+        onCheckedChange={onChange}
+        {...checkboxProps}
+      >
+        <Checkbox.Indicator>
+          <CheckIcon />
+        </Checkbox.Indicator>
+      </Checkbox>
+
+      <Label size={size} htmlFor={id}>
+        {label}
+      </Label>
+    </XStack>
+  );
+}
+
 const NAME_REGEX = /^[a-zA-Z0-9_]+$/; // Define the regex for valid usernames
 
 export default function ProfilePage() {
@@ -58,10 +117,14 @@ export default function ProfilePage() {
   const [aboutMeText, setAboutMe] = useState("");
   const [profileIcon, setIcon] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false); // Use state for edit mode
-  const profileId = auth.currentUser?.uid; // Placeholder ProfilePage doc id
-  const { iconId } = useLocalSearchParams(); // Getting Local Query Data
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [muteSfx, setMuteSfx] = useState(false);
+  const [muteMusic, setMuteMusic] = useState(false);
+  const profileId = auth.currentUser?.uid;
+  const { iconId } = useLocalSearchParams();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [showAddTagsDialog, setShowAddTagsDialog] = useState(false);
   const router = useRouter();
   const [newUsername, setNewUsername] = useState(""); // State for new username
   const [showChangeUsernameDialog, setShowChangeUsernameDialog] = useState(false); // State for dialog visibility
@@ -71,8 +134,8 @@ export default function ProfilePage() {
     zanyShenanigans: false,
     familyFriendly: false,
   });
-
-  const [showAddTagsDialog, setShowAddTagsDialog] = useState(false);
+  const [localMuteSfx, setLocalMuteSfx] = useState(false);
+  const [localMuteMusic, setLocalMuteMusic] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,32 +144,40 @@ export default function ProfilePage() {
         setError(null);
         if (profileId) {
           const profilePageDocRef = doc(db, "Users", profileId);
-          const profilePageDoc = await getDoc(profilePageDocRef);
-          if (profilePageDoc.exists()) {
-            const profilePageData = profilePageDoc.data();
-            const aboutMe = profilePageData.aboutMe || "N/A";
-            setProfilePage({
-              aboutMe: aboutMe,
-              profilePicture: profilePageData.profilePicture,
-              rooms: profilePageData.rooms,
-              displayName: profilePageData.displayName,
-              tags: profilePageData.tags,
-            });
-
-            setIcon(profilePageData.profilePicture);
-            setAboutMe(aboutMe);
-
-            // Grabbing tag information
-            setCheckedTags({
-              closeCommunity: profilePageData.tags.includes("closeCommunity"),
-              zanyShenanigans: profilePageData.tags.includes("zanyShenanigans"),
-              familyFriendly: profilePageData.tags.includes("familyFriendly"),
-            });
-          } else {
-            throw new Error("User not found");
-          }
-        } else {
-          throw new Error("User not authenticated");
+          const unsubscribe = onSnapshot(profilePageDocRef, (doc) => {
+            if (doc.exists()) {
+              const profilePageData = doc.data();
+              const aboutMe = profilePageData.aboutMe || "N/A";
+              const tags = profilePageData.tags || [];
+  
+              setProfilePage((prev) => ({
+                ...prev,
+                aboutMe: aboutMe,
+                profilePicture: profilePageData.profilePicture,
+                rooms: profilePageData.rooms,
+                displayName: profilePageData.displayName,
+                tags: tags,
+                muteSfx: profilePageData.muteSfx ?? false,
+                muteMusic: profilePageData.muteMusic ?? false,
+              }));
+  
+              if (!isMenuOpen) {
+                setLocalMuteSfx(profilePageData.muteSfx ?? false);
+                setLocalMuteMusic(profilePageData.muteMusic ?? false);
+              }
+  
+              setIcon(profilePageData.profilePicture);
+              setAboutMe(aboutMe);
+  
+              setCheckedTags({
+                closeCommunity: tags.includes("closeCommunity"),
+                zanyShenanigans: tags.includes("zanyShenanigans"),
+                familyFriendly: tags.includes("familyFriendly"),
+              });
+            }
+          });
+  
+          return () => unsubscribe();
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred");
@@ -117,26 +188,12 @@ export default function ProfilePage() {
     fetchData();
   }, [iconId, profileId]);
 
-  // The Loading Page
-  if (loading) {
-    return (
-      <LoadingContainer>
-        <Spinner size="large" color="$blue10" />
-        <Text fontSize={18} color="$blue10" marginTop={20} marginBottom={10}>
-          Profile is loading...
-        </Text>
-      </LoadingContainer>
-    );
-  }
 
-  // Updating the User's About Me Section
   const aboutMeUpdate = async () => {
-    // Ensuring the About Me section has a limit and there's no newline characters
     if (aboutMeText.length < 100 && !/\n/.test(aboutMeText)) {
       var result;
       var savedString;
 
-      // Ensuring the about me text isn't empty
       if (aboutMeText.length == 0 || aboutMeText == "") {
         result = await updateProfileAbtMe("N/A");
         savedString = "N/A";
@@ -151,7 +208,9 @@ export default function ProfilePage() {
         setAboutMe(savedString);
       }
     } else {
-      alert("ERROR - Update cannot exceeded 100 characters or contain a newline");
+      alert(
+        "ERROR - Update cannot exceeded 100 characters or contain a newline"
+      );
     }
   };
   const handleChangeUsername = async () => {
@@ -200,19 +259,29 @@ export default function ProfilePage() {
               Alert.alert("Error", "Password is required");
               return;
             }
-            const credential = EmailAuthProvider.credential(user.email, password);
+            const credential = EmailAuthProvider.credential(
+              user.email,
+              password
+            );
             try {
               await reauthenticateWithCredential(user, credential);
               await deleteDoc(doc(db, "Users", user.uid));
               await deleteUser(user);
-              Alert.alert("Account Deleted", "Your account has been successfully deleted.", [
-                {
-                  text: "OK",
-                  onPress: () => router.push("/(auth)/login"),
-                },
-              ]);
+              Alert.alert(
+                "Account Deleted",
+                "Your account has been successfully deleted.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => router.push("/(auth)/login"),
+                  },
+                ]
+              );
             } catch (error) {
-              Alert.alert("Error", `Failed to delete account: ${error.message}`);
+              Alert.alert(
+                "Error",
+                `Failed to delete account: ${error.message}`
+              );
             }
           },
         },
@@ -229,14 +298,14 @@ export default function ProfilePage() {
     }
   };
 
-  const addTags = async () => {
-    setShowAddTagsDialog(true); // Open Add Tags popup
+  const handleMenuChange = (open: boolean) => {
+    setIsMenuOpen(open);
   };
 
   const HeaderRight = () => (
     <Button
       size="$4"
-      icon={<LogOut size={18} />}
+      icon={LogOut}
       onPress={() => setShowSignOutDialog(true)}
       theme="red"
       marginRight={10}
@@ -250,16 +319,26 @@ export default function ProfilePage() {
   const HeaderLeft = () => (
     <Button
       size="$4"
-      icon={<AlignJustify size="4" />}
-      onPress={() => addTags()}
+      icon={<Menu size={28} />} // Increased size from default
+      onPress={() => setIsMenuOpen(true)}
       marginRight={10}
       animation="bouncy"
-      backgroundColor="transparent" // Make background transparent
-      borderWidth={0} // Ensure no border
-      borderColor="transparent" // Ensure no border color shows
-      pressStyle={{ scale: 0.9, backgroundColor: "transparent" }} // Transparent when pressed
+      backgroundColor="transparent"
+      borderWidth={0}
+      pressStyle={{ scale: 0.9, backgroundColor: "transparent" }}
     />
   );
+
+  if (loading) {
+    return (
+      <LoadingContainer>
+        <Spinner size="large" color="$blue10" />
+        <Text fontSize={18} color="$blue10" marginTop={20} marginBottom={10}>
+          Profile is loading...
+        </Text>
+      </LoadingContainer>
+    );
+  }
 
   return (
     <>
@@ -270,6 +349,16 @@ export default function ProfilePage() {
           title: "Profile",
         }}
       />
+      <ProfileMenu
+      open={isMenuOpen}
+      onOpenChange={handleMenuChange}
+      onAddTags={() => {
+        setShowAddTagsDialog(true);
+        setIsMenuOpen(false);
+      }}
+      muteSfx={profilePage?.muteSfx ?? false}
+      muteMusic={profilePage?.muteMusic ?? false}
+    />
 
       <Dialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
         <Dialog.Portal>
@@ -297,7 +386,9 @@ export default function ProfilePage() {
             gap="$4"
           >
             <Dialog.Title>Confirm Sign Out</Dialog.Title>
-            <Dialog.Description>Are you sure you want to sign out?</Dialog.Description>
+            <Dialog.Description>
+              Are you sure you want to sign out?
+            </Dialog.Description>
             <XStack gap="$3" justifyContent="flex-end">
               <Dialog.Close asChild>
                 <Button theme="alt1">Cancel</Button>
@@ -312,7 +403,6 @@ export default function ProfilePage() {
         </Dialog.Portal>
       </Dialog>
 
-      {/* Add Tags Dialog */}
       <Dialog open={showAddTagsDialog} onOpenChange={setShowAddTagsDialog}>
         <Dialog.Portal>
           <Dialog.Overlay
@@ -339,7 +429,9 @@ export default function ProfilePage() {
             gap="$4"
           >
             <Dialog.Title>Add Tags</Dialog.Title>
-            <Dialog.Description>Enter the tags you want to add to your profile.</Dialog.Description>
+            <Dialog.Description>
+              Enter the tags you want to add to your profile.
+            </Dialog.Description>
             <YStack width={300} alignItems="center" gap="$1">
               <CheckboxWithLabel
                 id="closeCommunity"
@@ -347,7 +439,10 @@ export default function ProfilePage() {
                 label="Close Community"
                 checked={checkedTags.closeCommunity}
                 onChange={(checked) =>
-                  setCheckedTags((prev) => ({ ...prev, closeCommunity: checked }))
+                  setCheckedTags((prev) => ({
+                    ...prev,
+                    closeCommunity: checked,
+                  }))
                 }
               />
               <CheckboxWithLabel
@@ -356,7 +451,10 @@ export default function ProfilePage() {
                 label="Zany Shenanigans"
                 checked={checkedTags.zanyShenanigans}
                 onChange={(checked) =>
-                  setCheckedTags((prev) => ({ ...prev, zanyShenanigans: checked }))
+                  setCheckedTags((prev) => ({
+                    ...prev,
+                    zanyShenanigans: checked,
+                  }))
                 }
               />
               <CheckboxWithLabel
@@ -365,7 +463,10 @@ export default function ProfilePage() {
                 label="Family Friendly"
                 checked={checkedTags.familyFriendly}
                 onChange={(checked) =>
-                  setCheckedTags((prev) => ({ ...prev, familyFriendly: checked }))
+                  setCheckedTags((prev) => ({
+                    ...prev,
+                    familyFriendly: checked,
+                  }))
                 }
               />
             </YStack>
@@ -379,12 +480,9 @@ export default function ProfilePage() {
                 onPress={() => {
                   const selectedTags = Object.entries(checkedTags)
                     .filter(([, isChecked]) => isChecked)
-                    .map(([tag]) => tag); // Extracting the tag names
-
-                  // Here you can use `selectedTags` array as needed
-                  console.log("Selected Tags:", selectedTags); // Replace with your logic to use these tags
+                    .map(([tag]) => tag);
                   updateProfileTags(selectedTags);
-                  setShowAddTagsDialog(false); // Close the dialog after adding tags
+                  setShowAddTagsDialog(false);
                 }}
               >
                 Update Tags
@@ -440,14 +538,20 @@ export default function ProfilePage() {
       </Dialog>
 
       <SafeAreaView
-        style={{ flex: 1, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}
+        style={{
+          flex: 1,
+          paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+        }}
       >
         {!isEditMode ? (
           <YStack ai="center" gap="$4" px="$10" pt="$1">
             <H2>{profilePage?.displayName}</H2>
 
             <Avatar circular size="$12">
-              <Avatar.Image accessibilityLabel="profilePicture" src={profileIcon} />
+              <Avatar.Image
+                accessibilityLabel="profilePicture"
+                src={profileIcon}
+              />
               <Avatar.Fallback backgroundColor="$blue10" />
             </Avatar>
 
@@ -468,7 +572,7 @@ export default function ProfilePage() {
             </XStack>
 
             <Button
-              size="$7" // Adjust size as needed
+              size="$7"
               circular
               onPress={() => {
                 setIsEditMode(true);
@@ -485,7 +589,10 @@ export default function ProfilePage() {
             <YStack ai="center" gap="$4" px="$10" pt="$1">
               <H2>{profilePage?.displayName}</H2>
               <Avatar circular size="$12">
-                <Avatar.Image accessibilityLabel="profilePicture2" src={profileIcon} />
+                <Avatar.Image
+                  accessibilityLabel="profilePicture2"
+                  src={profileIcon}
+                />
                 <Avatar.Fallback backgroundColor="$blue10" />
               </Avatar>
 
@@ -511,10 +618,20 @@ export default function ProfilePage() {
                 onChangeText={setAboutMe}
                 borderWidth={2}
               />
-              <Button mr="$2" bg="$yellow8" color="$yellow12" onPress={aboutMeUpdate}>
+              <Button
+                mr="$2"
+                bg="$yellow8"
+                color="$yellow12"
+                onPress={aboutMeUpdate}
+              >
                 Update About Me
               </Button>
-              <Button onPress={handleDeleteAccount} bg="$yellow8" color="$yellow12" mr="$2">
+              <Button
+                onPress={handleDeleteAccount}
+                bg="$yellow8"
+                color="$yellow12"
+                mr="$2"
+              >
                 Delete Account
               </Button>
               <Button
@@ -535,28 +652,5 @@ export default function ProfilePage() {
         )}
       </SafeAreaView>
     </>
-  );
-}
-
-export function CheckboxWithLabel({
-  size,
-  label = "Accept terms and conditions",
-  checked,
-  onChange,
-  ...checkboxProps
-}: CheckboxProps & { label?: string; checked?: boolean; onChange?: (checked: boolean) => void }) {
-  const id = `checkbox-${(size || "").toString().slice(1)}`;
-  return (
-    <XStack width={300} alignItems="center" gap="$4">
-      <Checkbox id={id} size={size} checked={checked} onCheckedChange={onChange} {...checkboxProps}>
-        <Checkbox.Indicator>
-          <CheckIcon />
-        </Checkbox.Indicator>
-      </Checkbox>
-
-      <Label size={size} htmlFor={id}>
-        {label}
-      </Label>
-    </XStack>
   );
 }
