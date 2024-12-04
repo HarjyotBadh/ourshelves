@@ -55,6 +55,7 @@ const NoteBoxItem: NoteBoxItemComponent = ({
 
     // Opens dialog when item is active/clicked
     useEffect(() => {
+        console.log(auth.currentUser.uid);
         if (isActive && !dialogOpen) {
             setDialogOpen(true);
         }

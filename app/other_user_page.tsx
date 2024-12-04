@@ -19,6 +19,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus, Tag } from "@tamagui/lucide-icons";
 import AddUserToRoomDialog from "../components/AddUserToRoomDialog";
 import TagsModal from './TagsModal'; // Import the TagsModal
+import { Alert } from "react-native";
+import { blockUser, unblockUser, getBlockedUsers } from "project-functions/blockFunctions";
 
 // Data for profile page to be queried from db
 interface ProfilePage {
@@ -47,6 +49,20 @@ export default function ProfilePage() {
   const router = useRouter();
   const [isAddToRoomDialogOpen, setIsAddToRoomDialogOpen] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false); // State for showing tags modal
+  const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchBlockedUsers = async () => {
+      try {
+        const users = await getBlockedUsers();
+        setBlockedUsers(users);
+      } catch (error) {
+        console.error("Error fetching blocked users:", error);
+      }
+    };
+
+    fetchBlockedUsers();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,6 +121,58 @@ export default function ProfilePage() {
     }
   };
 
+  const handleBlockUser = () => {
+    Alert.alert(
+      'Block User',
+      `Are you sure you want to block ${profilePage?.displayName}?`,
+      [
+        {
+          text: 'No',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            const result = await blockUser(profileId);
+
+            if (result.success) {
+              Alert.alert("User blocked");
+            } else {
+              Alert.alert(`Error blocking user ${profilePage?.displayName}}`);
+            }
+
+          }
+        }
+      ]
+    );
+  }
+
+  const handleUnblockUser = () => {
+    Alert.alert(
+      'Unblock User',
+      `Are you sure you want to unblock ${profilePage?.displayName}?`,
+      [
+        {
+          text: 'No',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            const result = await unblockUser(profileId);
+
+            if (result.success) {
+              Alert.alert("User unblocked");
+            } else {
+              Alert.alert(`Error unblocking user ${profilePage?.displayName}}`);
+            }
+
+          }
+        }
+      ]
+    );
+  }
+
   return (
     <>
       <Stack.Screen
@@ -134,16 +202,18 @@ export default function ProfilePage() {
           </XStack>
 
           <XStack gap={10}>
-            <Button
-              size="$7"
-              circular
-              onPress={() => setIsAddToRoomDialogOpen(true)}
-              color="$white"
-              justifyContent="center"
-              alignItems="center"
-              display="flex"
-              icon={<Plus size="$4" />}
-            />
+            {blockedUsers.includes(profileId) ? null : (
+              <Button
+                size="$7"
+                circular
+                onPress={() => setIsAddToRoomDialogOpen(true)}
+                color="$white"
+                justifyContent="center"
+                alignItems="center"
+                display="flex"
+                icon={<Plus size="$4" />}
+              />
+            )}
 
             <Button
               size="$7"
@@ -163,6 +233,16 @@ export default function ProfilePage() {
             userId={profileId}
             userName={profilePage?.displayName || ""}
           />
+
+          {blockedUsers.includes(profileId) ? (
+            <Button onPress={handleUnblockUser}>
+              <Text>Unblock User</Text>
+            </Button>
+          ) : (
+            <Button onPress={handleBlockUser}>
+              <Text>Block User</Text>
+            </Button>
+          )}
         </YStack>
       </SafeAreaView>
 

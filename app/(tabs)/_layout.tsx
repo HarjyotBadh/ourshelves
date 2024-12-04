@@ -50,7 +50,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="shop"
         options={{
-          title: 'Shop',
+          title: 'Shooop',
           tabBarIcon: ({ color }) => <ShoppingBag color={color} />,
         }}
       />

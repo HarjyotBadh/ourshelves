@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, Accordion, YStack, Text, XStack, ScrollView, Avatar, AlertDialog } from "tamagui";
+import { Button, Dialog, Accordion, YStack, Text, XStack, ScrollView, Avatar, AlertDialog } from "tamagui";
 import {
   Settings,
   Users,
@@ -26,6 +26,7 @@ import {
   BACKGROUND_COLOR,
   HEADER_BACKGROUND,
 } from "../styles/RoomSettingsStyles";
+import ColorPickerModal from "./ColorPickerModal";
 
 interface User {
   id: string;
@@ -40,6 +41,8 @@ interface RoomSettingsDialogProps {
   users: User[];
   roomDescription?: string;
   onRemoveUser: (userId: string) => void;
+  color: string;
+  onColorChange: (color: string) => void;
   currentUserId: string;
 }
 
@@ -49,11 +52,14 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   users,
   roomDescription,
   onRemoveUser,
+  color,
+  onColorChange,
   currentUserId,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<User | null>(null);
+  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
 
   const filteredUsers = users.filter((user) =>
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -212,9 +218,17 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
                         )}
                       </StyledAccordionTrigger>
                       <StyledAccordionContent>
-                        <Text color="black">Setting 1: Value</Text>
-                        <Text color="black">Setting 2: Value</Text>
-                        <Text color="black">Setting 3: Value</Text>
+                        <XStack margin="$2" gap="$4" justifyContent="center" alignItems="center">
+                          <ColorPickerModal
+                            isVisible={isColorPickerVisible}
+                            onClose={() => setIsColorPickerVisible(false)}
+                            onColorSelected={onColorChange}
+                            initialColor={color}
+                          />
+                        </XStack>
+                        <Button onPress={() => setIsColorPickerVisible(true)}>
+                          <Text>Set Room Color</Text>
+                        </Button>
                       </StyledAccordionContent>
                     </StyledAccordionItem>
                   </Accordion>

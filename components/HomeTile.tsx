@@ -5,7 +5,7 @@ import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Adapt, Button, Dialog, Label, Select, Sheet, Unspaced, XStack, YStack } from 'tamagui';
 
 
-const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, homeLeaveRoom, homeAddTag, homeDeleteRoom }) => {
+const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, color, enterRoom, homeLeaveRoom, homeAddTag, homeDeleteRoom }) => {
     const [isOptionsDialogOpen, setOptionsDialogOpen] = useState(false);
     const [isTagsDialogOpen, setTagsDialogOpen] = useState(false);
     const [items, setItems] = useState(tagsList);
@@ -93,7 +93,7 @@ const HomeTile = ({ id, name, isAdmin, tags, tagsList, tagIdsList, enterRoom, ho
     return (
         <View style={styles.container}>
             <Pressable onPress={() => enterRoom(id)} onLongPress={openOptionsDialog} style={styles.pressable}>
-                <View style={[styles.pressableSquare, { backgroundColor: bgColor }]} />
+                <View style={[styles.pressableSquare, { backgroundColor: color }]} />
                 <Text style={styles.pressableText}>{name}</Text>
             </Pressable>
 

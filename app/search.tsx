@@ -4,6 +4,7 @@ import { Text, YStack, Input, ScrollView } from "tamagui";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "firebaseConfig";
 import { useRouter, Stack } from "expo-router";
+import { getBlockedUsers } from "project-functions/blockFunctions";
 
 interface User {
   id: string;
@@ -15,6 +16,20 @@ export default function NameList() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchBlockedUsers = async () => {
+      try {
+        const users = await getBlockedUsers();
+        setBlockedUsers(users);
+      } catch (error) {
+        console.error("Error fetching blocked users:", error);
+      }
+    };
+
+    fetchBlockedUsers();
+  }, []);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -48,6 +63,16 @@ export default function NameList() {
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const blockedResults = filteredNames.filter(user =>
+    blockedUsers.includes(user.id)
+  );
+
+  const normalResults = filteredNames.filter(user =>
+    !blockedUsers.includes(user.id)
+  );
+
+
+
   const selectUser = async (userId: string) => {
     router.push(`/other_user_page?profileId=${userId}`);
   };
@@ -80,13 +105,29 @@ export default function NameList() {
                 Loading...
               </Text>
             ) : filteredNames.length > 0 ? (
-              filteredNames.map((user) => (
-                <Pressable key={user.id} onPress={() => selectUser(user.id)}>
-                  <Text fontSize="$10" color="$color" marginBottom="$2">
-                    {user.displayName}
-                  </Text>
-                </Pressable>
-              ))
+              <>
+                <Text fontSize="$6" color="$gray10">
+                  Results
+                </Text>
+                {normalResults.map((user) => (
+                  <Pressable key={user.id} onPress={() => selectUser(user.id)}>
+                    <Text fontSize="$9" color="$color" marginBottom="$2">
+                      {user.displayName}
+                    </Text>
+                  </Pressable>
+                ))}
+
+                <Text fontSize="$6" color="$gray10" marginTop="$4">
+                  Blocked Users
+                </Text>
+                {blockedResults.map((user) => (
+                  <Pressable key={user.id} onPress={() => selectUser(user.id)}>
+                    <Text fontSize="$9" color="$color" marginBottom="$2">
+                      {user.displayName}
+                    </Text>
+                  </Pressable>
+                ))}
+              </>
             ) : (
               <Text fontSize="$8" color="$color">
                 -- No Results --

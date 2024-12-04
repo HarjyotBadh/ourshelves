@@ -14,10 +14,12 @@ import {
   View,
   XStack,
 } from "tamagui";
+import ColorPicker from "./ColorPicker";
 
 const CreateHomeTile = ({ handleCreateRoom }) => {
   const [roomName, setRoomName] = React.useState("");
   const [roomDescription, setRoomDescription] = React.useState("");
+  const [roomColor, setRoomColor] = React.useState("#ffffff");
 
   const createRoom = () => {
     handleCreateRoom(roomName, roomDescription);

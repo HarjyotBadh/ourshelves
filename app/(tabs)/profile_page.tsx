@@ -191,6 +191,8 @@ export default function ProfilePage() {
 
   const handleSignOut = async () => {
     try {
+      console.log("try sign out");
+      console.log(auth);
       await signOut(auth);
     } catch (error) {
       console.error("Error signing out:", error);
