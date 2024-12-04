@@ -89,7 +89,7 @@ export default function SearchList() {
   };
 
   const selectRoom = (id: string) => {
-    //router.push(`/room_page?roomId=${id}`);
+    router.push(`/other_room_page?roomId=${id}`);
   };
 
   return (
