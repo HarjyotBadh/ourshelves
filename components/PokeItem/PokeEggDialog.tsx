@@ -15,22 +15,75 @@ import { PokemonClient, EvolutionClient } from "pokenode-ts";
 const pokeAPI = new PokemonClient();
 const evolutionAPI = new EvolutionClient();
 
+const DialogContainer = styled(Dialog.Content, {
+  backgroundColor: "#DEB887",
+  width: "90%",
+  maxWidth: 800,
+  padding: 0,
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
+  overflow: "hidden",
+});
+
+const DialogTitle = styled(Text, {
+  fontSize: 28,
+  fontWeight: "bold",
+  color: "#8B4513",
+  textAlign: "center",
+  marginBottom: "$4",
+});
+
+const ContentContainer = styled(YStack, {
+  padding: "$4",
+  backgroundColor: "#F5DEB3",
+});
+
+const ProgressContainer = styled(XStack, {
+  gap: "$2",
+  justifyContent: "center",
+  marginBottom: "$4",
+});
+
 const ProgressIndicator = styled(View, {
   width: 24,
   height: 24,
   borderRadius: 12,
   borderWidth: 2,
-  borderColor: "#FFDE00",
+  borderColor: "#8B4513",
+  backgroundColor: "transparent",
   variants: {
     filled: {
       true: {
-        backgroundColor: "#FFDE00",
-      },
-      false: {
-        backgroundColor: "transparent",
+        backgroundColor: "#8B4513",
       },
     },
   },
+});
+
+const InteractionButton = styled(Button, {
+  backgroundColor: "#8B4513",
+  color: "#F5DEB3",
+  borderRadius: "$4",
+  marginTop: "$4",
+  variants: {
+    disabled: {
+      true: {
+        backgroundColor: "#D2B48C",
+        opacity: 0.6,
+      },
+    },
+  },
+});
+
+const StyledText = styled(Text, {
+  color: "#8B4513",
+  textAlign: "center",
+});
+
+const BottomBar = styled(View, {
+  height: 20,
+  backgroundColor: "#8B4513",
+  marginTop: "auto",
 });
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
@@ -209,125 +262,72 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
   };
 
   return (
-    <Dialog.Content
-      bordered
-      elevate
-      key="content"
-      animation={[
-        "quick",
-        {
-          opacity: {
-            overshootClamping: true,
-          },
-        },
-      ]}
-      enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-      exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-      x={0}
-      scale={1}
-      opacity={1}
-      y={0}
-    >
-      <LinearGradient
-        colors={["#4F94CD", "#87CEFA"]}
-        start={[0, 0]}
-        end={[1, 1]}
-        borderRadius={10}
-        padding={20}
-      >
-        <YStack gap="$4" maxWidth={500} alignItems="center">
-          <Dialog.Title>
-            <Text
-              fontSize={28}
-              fontWeight="bold"
-              color="#FFDE00"
-              style={{
-                textShadowColor: "#3B4CCA",
-                textShadowOffset: { width: 1, height: 1 },
-                textShadowRadius: 2,
-              }}
-            >
-              Mysterious Egg
-            </Text>
-          </Dialog.Title>
-          <XStack gap="$2" justifyContent="center">
-            {[...Array(7)].map((_, index) => (
-              <ProgressIndicator
-                key={index}
-                filled={index < itemData.interactionCount}
-                animation="quick"
-                enterStyle={{ opacity: 0, scale: 0.8 }}
-                exitStyle={{ opacity: 0, scale: 0.8 }}
-                pressStyle={{ scale: 0.9 }}
-                hoverStyle={{ scale: 1.1 }}
-                focusStyle={{ scale: 1.1 }}
-              />
-            ))}
-          </XStack>
-          <Paragraph textAlign="center" color="#FFFFFF" fontSize={20} fontWeight="bold">
-            Day {itemData.interactionCount + 1} of 7
-          </Paragraph>
+    <DialogContainer>
+      <ContentContainer>
+        <DialogTitle>Mysterious Egg</DialogTitle>
+        <ProgressContainer>
+          {[...Array(7)].map((_, index) => (
+            <ProgressIndicator
+              key={index}
+              filled={index < itemData.interactionCount}
+              animation="quick"
+              enterStyle={{ opacity: 0, scale: 0.8 }}
+              exitStyle={{ opacity: 0, scale: 0.8 }}
+              pressStyle={{ scale: 0.9 }}
+              hoverStyle={{ scale: 1.1 }}
+              focusStyle={{ scale: 1.1 }}
+            />
+          ))}
+        </ProgressContainer>
+
+        <StyledText fontSize={20} fontWeight="bold">
+          Day {itemData.interactionCount + 1} of 7
+        </StyledText>
+
+        <YStack alignItems="center" padding="$4">
           <AnimatedImage
             source={{ uri: itemData.imageUri }}
             style={[{ width: 220, height: 220 }, animatedStyle]}
             objectFit="contain"
           />
-          <Button
-            onPress={handleInteraction}
-            disabled={!isInteractionAvailable()}
-            backgroundColor={isInteractionAvailable() ? "#FFDE00" : "#A9A9A9"}
-            color={isInteractionAvailable() ? "#3B4CCA" : "#FFFFFF"}
-            borderRadius="$4"
-            fontSize={20}
-            fontWeight="bold"
-            paddingHorizontal="$5"
-            hoverStyle={isInteractionAvailable() ? { backgroundColor: "#FFE769" } : {}}
-            pressStyle={isInteractionAvailable() ? { scale: 0.95 } : {}}
-          >
-            <YStack alignItems="center">
-              <Text
-                color={isInteractionAvailable() ? "#3B4CCA" : "#FFFFFF"}
-                fontSize={20}
-                fontWeight="bold"
-              >
-                Take care of the egg
-              </Text>
-              <Text color={isInteractionAvailable() ? "#3B4CCA" : "#FFFFFF"} fontSize={14}>
-                {isInteractionAvailable() ? "Ready!" : getTimeUntilNextInteraction()}
-              </Text>
-            </YStack>
-          </Button>
-          <Button
-            onPress={handleQuickHatch}
-            backgroundColor="#FF6B6B"
-            color="#FFFFFF"
-            borderRadius="$4"
-            fontSize={16}
-            fontWeight="bold"
-            paddingHorizontal="$3"
-            marginTop="$2"
-          >
-            Quick Hatch (Test)
-          </Button>
-          <Dialog.Close asChild>
-            <Button
-              onPress={onClose}
-              backgroundColor="#FF0000"
-              color="#FFFFFF"
-              borderRadius="$4"
-              fontSize={18}
-              fontWeight="bold"
-              paddingVertical="$2"
-              paddingHorizontal="$4"
-              hoverStyle={{ backgroundColor: "#FF3333" }}
-              pressStyle={{ scale: 0.95 }}
-            >
-              Close
-            </Button>
-          </Dialog.Close>
         </YStack>
-      </LinearGradient>
-    </Dialog.Content>
+
+        <InteractionButton
+          onPress={handleInteraction}
+          disabled={!isInteractionAvailable()}
+        >
+          <YStack alignItems="center">
+            <Text color="white" fontSize={20} fontWeight="bold">
+              Take care of the egg
+            </Text>
+            <Text color="white" fontSize={14}>
+              {isInteractionAvailable() ? "Ready!" : getTimeUntilNextInteraction()}
+            </Text>
+          </YStack>
+        </InteractionButton>
+
+        <Button
+          onPress={handleQuickHatch}
+          backgroundColor="#D2691E"
+          color="white"
+          marginTop="$4"
+        >
+          Quick Hatch (Test)
+        </Button>
+
+        <Dialog.Close asChild>
+          <Button
+            onPress={onClose}
+            backgroundColor="#CD853F"
+            color="white"
+            marginTop="$4"
+          >
+            Close
+          </Button>
+        </Dialog.Close>
+      </ContentContainer>
+      <BottomBar />
+    </DialogContainer>
   );
 };
 

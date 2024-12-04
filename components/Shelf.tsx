@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { XStack, YStack, Text, Input } from "tamagui";
 import ShelfItems from "./ShelfItems";
-import { PlacedItemData } from "../models/RoomData";
-
+import { PlacedItemData, ItemData } from "../models/RoomData";
 interface ShelfProps {
   shelfId: string;
   shelfNumber: number;
@@ -11,18 +10,18 @@ interface ShelfProps {
   showPlusSigns: boolean;
   onSpotPress: (position: number) => void;
   onItemRemove: (position: number) => void;
-  onItemDataUpdate: (
-    position: number,
-    newItemData: Record<string, any>
-  ) => void;
+  onItemDataUpdate: (position: number, newItemData: Record<string, any>) => void;
   onShelfNameChange: (shelfId: string, newName: string) => void;
-  users: Record<string, any>;
+  users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
   roomInfo: {
     name: string;
     users: { id: string; displayName: string; profilePicture?: string; isAdmin: boolean }[];
     description: string;
     roomId: string;
   };
+  availableItems: ItemData[];
+  isPersonalShelf?: boolean;
+  ownerId?: string;
 }
 
 const Shelf: React.FC<ShelfProps> = ({
@@ -37,6 +36,9 @@ const Shelf: React.FC<ShelfProps> = ({
   onShelfNameChange,
   users,
   roomInfo,
+  availableItems,
+  isPersonalShelf,
+  ownerId,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(shelfName);
@@ -76,6 +78,19 @@ const Shelf: React.FC<ShelfProps> = ({
           onItemDataUpdate={onItemDataUpdate}
           users={users}
           roomInfo={roomInfo}
+          availableItems={availableItems}
+          shelf={{
+            id: shelfId,
+            name: shelfName,
+            isPersonalShelf,
+            ownerId,
+            roomId: roomInfo.roomId,
+            position: shelfNumber,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            itemList: [],
+            placedItems: items.filter((item): item is PlacedItemData => item !== null),
+          }}
         />
       </XStack>
       <XStack

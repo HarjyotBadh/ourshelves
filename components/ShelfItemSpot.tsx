@@ -3,11 +3,13 @@ import { View, Stack, Text, XStack, YStack, Avatar, Circle } from "tamagui";
 import { Pressable } from "react-native";
 import { ref as dbRef, onValue, remove, runTransaction, onDisconnect } from "firebase/database";
 import { auth, rtdb } from "firebaseConfig";
-import { PlacedItemData } from "../models/RoomData";
-import { Plus, X, Lock } from "@tamagui/lucide-icons";
+import { PlacedItemData, ShelfData } from "../models/RoomData";
+import { Plus, X, Lock, ArrowUpDown } from "@tamagui/lucide-icons";
 import { Button } from "tamagui";
 import items from "./items";
 import { AlertDialog } from "./AlertDialog";
+import { ItemData } from "./item";
+import { StyleSwitchDialog } from "./StyleSwitchDialog";
 
 interface ShelfItemSpotProps {
   item: PlacedItemData | null;
@@ -23,6 +25,8 @@ interface ShelfItemSpotProps {
     description: string;
     roomId: string;
   };
+  availableItems: ItemData[];
+  shelf?: ShelfData;
 }
 
 const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
@@ -34,6 +38,8 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   onItemDataUpdate,
   users,
   roomInfo,
+  availableItems,
+  shelf,
 }) => {
   const [lockStatus, setLockStatus] = useState<{
     lockedBy: string | null;
@@ -44,6 +50,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   const [hasLock, setHasLock] = useState<boolean>(false);
   const [removeAlertOpen, setRemoveAlertOpen] = useState(false);
   const [isItemActive, setIsItemActive] = useState(false);
+  const [styleSwitchOpen, setStyleSwitchOpen] = useState(false);
 
   useEffect(() => {
     if (item && item.shouldLock) {
@@ -180,6 +187,14 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
     setRemoveAlertOpen(false);
   };
 
+  const handleStyleSwitch = (newStyle: ItemData) => {
+    onItemDataUpdate(position, {
+      ...item,
+      styleName: newStyle.styleName,
+      imageUri: newStyle.imageUri,
+    });
+  };
+
   /**
    * Renders the item component for a given placed item.
    *
@@ -238,13 +253,7 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
       zIndex={10}
     >
       <YStack alignItems="center" gap="$3">
-        <XStack
-          backgroundColor="$gray1"
-          padding="$2"
-          alignItems="center"
-          gap="$2"
-          elevation={4}
-        >
+        <XStack backgroundColor="$gray1" padding="$2" alignItems="center" gap="$2" elevation={4}>
           <Avatar circular size="$4">
             <Avatar.Image src={lockStatus.userProfilePicture || undefined} />
             <Avatar.Fallback backgroundColor="$blue5">
@@ -273,16 +282,24 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
 
   if (!item) {
     if (showPlusSigns) {
+      // Check if this is someone else's personal shelf
+      const isOtherPersonalShelf = shelf?.isPersonalShelf && shelf.ownerId !== auth.currentUser?.uid;
+      
       return (
         <Button
           unstyled
-          onPress={() => onSpotPress(position)}
+          onPress={() => !isOtherPersonalShelf && onSpotPress(position)}
           width="30%"
           height="100%"
           justifyContent="center"
           alignItems="center"
+          opacity={isOtherPersonalShelf ? 0.5 : 1}
         >
-          <Plus color="black" size={24} />
+          {isOtherPersonalShelf ? (
+            <Lock color="gray" size={24} />
+          ) : (
+            <Plus color="black" size={24} />
+          )}
         </Button>
       );
     } else {
@@ -291,32 +308,59 @@ const ShelfItemSpot: React.FC<ShelfItemSpotProps> = ({
   } else {
     return (
       <Stack key={position} width="30%" height="100%" position="relative">
-        <Pressable 
-          onPress={handleItemPress} 
-          disabled={showPlusSigns || isLockedByAnotherUser} 
+        <Pressable
+          onPress={handleItemPress}
+          disabled={showPlusSigns || isLockedByAnotherUser}
           style={{ flex: 1 }}
         >
           {renderItem(item, position)}
         </Pressable>
         {isLockedByAnotherUser && <LockOverlay />}
         {showPlusSigns && item && (
-          <Button
-            unstyled
-            onPress={handleRemovePress}
-            position="absolute"
-            top={5}
-            right={5}
-            width={24}
-            height={24}
-            justifyContent="center"
-            alignItems="center"
-            backgroundColor="$red10"
-            zIndex={20}
-            elevate
-          >
-            <X color="white" size={16} />
-          </Button>
+          <>
+            {availableItems.filter((style) => style.itemId === item.itemId).length > 1 && (
+              <Button
+                unstyled
+                onPress={() => setStyleSwitchOpen(true)}
+                position="absolute"
+                top={5}
+                left={5}
+                width={24}
+                height={24}
+                justifyContent="center"
+                alignItems="center"
+                backgroundColor="$blue10"
+                zIndex={20}
+                elevate
+              >
+                <ArrowUpDown color="white" size={16} />
+              </Button>
+            )}
+            <Button
+              unstyled
+              onPress={handleRemovePress}
+              position="absolute"
+              top={5}
+              right={5}
+              width={24}
+              height={24}
+              justifyContent="center"
+              alignItems="center"
+              backgroundColor="$red10"
+              zIndex={20}
+              elevate
+            >
+              <X color="white" size={16} />
+            </Button>
+          </>
         )}
+        <StyleSwitchDialog
+          open={styleSwitchOpen}
+          onOpenChange={setStyleSwitchOpen}
+          onStyleSelect={handleStyleSwitch}
+          availableStyles={availableItems}
+          currentItemId={item?.itemId}
+        />
         <AlertDialog
           open={removeAlertOpen}
           onOpenChange={setRemoveAlertOpen}

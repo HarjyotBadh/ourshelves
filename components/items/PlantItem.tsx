@@ -26,6 +26,7 @@ type WateringZone = {
   bottom: number;
 };
 
+// Styled components with wood theme
 const PlantItemView = styled(TamaguiView, {
   width: "100%",
   height: "100%",
@@ -33,14 +34,80 @@ const PlantItemView = styled(TamaguiView, {
   justifyContent: "flex-end",
 });
 
-const StyledProgressBar = styled(Progress, {
-  height: 20,
-  backgroundColor: "$gray5",
+const DialogContainer = styled(Dialog.Content, {
+  backgroundColor: "#DEB887",
+  width: "90%",
+  maxWidth: 800,
+  padding: 0,
+  borderTopLeftRadius: 12,
+  borderTopRightRadius: 12,
   overflow: "hidden",
 });
 
+const ContentContainer = styled(YStack, {
+  padding: "$4",
+  backgroundColor: "#F5DEB3",
+});
+
+const StyledProgressBar = styled(Progress, {
+  height: 20,
+  backgroundColor: "#DEB887",
+  overflow: "hidden",
+  borderWidth: 1,
+  borderColor: "#8B4513",
+});
+
 const ProgressIndicator = styled(Progress.Indicator, {
-  backgroundColor: "$green9",
+  backgroundColor: "#8B4513",
+});
+
+const PlantCircle = styled(Circle, {
+  backgroundColor: "#DEB887",
+  borderWidth: 2,
+  borderColor: "#8B4513",
+});
+
+const ActionButton = styled(Button, {
+  backgroundColor: "#8B4513",
+  borderRadius: "$4",
+  marginTop: "$4",
+  variants: {
+    variant: {
+      test: {
+        backgroundColor: "#CD853F",
+      },
+      close: {
+        backgroundColor: "#A0522D",
+      },
+    },
+    disabled: {
+      true: {
+        backgroundColor: "#D2B48C",
+        opacity: 0.6,
+      },
+    },
+  },
+});
+
+const StyledText = styled(Text, {
+  color: "#8B4513",
+});
+
+const BottomBar = styled(View, {
+  height: 20,
+  backgroundColor: "#8B4513",
+  marginTop: "auto",
+});
+
+const NotificationBadge = styled(TamaguiView, {
+  position: "absolute",
+  top: 5,
+  left: 5,
+  borderRadius: "$full",
+  padding: "$1",
+  backgroundColor: "#DEB887",
+  borderWidth: 2,
+  borderColor: "#8B4513",
 });
 
 interface PlantItemProps {
@@ -52,7 +119,6 @@ interface PlantItemProps {
     placedUserId: string;
     [key: string]: any;
 
-    // Custom properties for PlantItem
     growthStage: number;
     lastWatered: Timestamp;
     seedType: string;
@@ -330,15 +396,9 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     <PlantItemView>
       <PlantComponent growth={growthStage} isWithered={isWithered} />
       {canWater && !isActive && (
-        <TamaguiView
-          position="absolute"
-          top={5}
-          left={5}
-          borderRadius="$full"
-          padding="$1"
-        >
-          <Droplet size={16} color="blue" />
-        </TamaguiView>
+        <NotificationBadge>
+          <Droplet size={16} color="#8B4513" />
+        </NotificationBadge>
       )}
     </PlantItemView>
   );
@@ -367,93 +427,71 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
             enterStyle={{ opacity: 0 }}
             exitStyle={{ opacity: 0 }}
           />
-          <Dialog.Content
-            bordered
-            elevate
-            key="content"
-            animation={[
-              "quick",
-              {
-                opacity: {
-                  overshootClamping: true,
-                },
-              },
-            ]}
-            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-            x={0}
-            y={0}
-            opacity={1}
-            scale={1}
-          >
-            <YStack gap="$4" maxWidth={350}>
-              <Dialog.Title>
-                <Text fontSize="$8" fontWeight="bold" color="$gray12">
-                  Your {seedType.charAt(0).toUpperCase() + seedType.slice(1)}
-                </Text>
-              </Dialog.Title>
-              <YStack alignItems="center" gap="$4">
-                <View style={styles.plantContainer}>
-                  <View
-                    ref={wateringZoneRef}
-                    onLayout={handleWateringZoneLayout}
-                    style={[
-                      styles.wateringZone,
-                      {
-                        // backgroundColor: canWater ? "rgba(0, 255, 0, 0.1)" : "rgba(255, 0, 0, 0.1)",
-                      },
-                    ]}
-                  />
-                  <Circle size={200} backgroundColor="$green3">
-                    <PlantComponent growth={growthStage} isWithered={isWithered} />
-                  </Circle>
-                </View>
-                <XStack alignItems="center" gap="$2">
-                  <Sun color="$yellow10" size={24} />
-                  <StyledProgressBar value={growthStage}>
-                    <ProgressIndicator />
-                  </StyledProgressBar>
-                </XStack>
-                <Text fontSize="$5" fontWeight="bold" color="$gray11">
-                  {isWithered
-                    ? "Withered"
-                    : isFullyGrown
-                    ? "Fully Grown"
-                    : `${Math.round(growthStage)}% Grown`}
-                </Text>
-                <XStack alignItems="center" gap="$2">
-                  <Droplet color="$blue10" size={24} />
-                  <Text fontSize="$4" color="$gray11">
-                    Next watering: {timeUntilWatering}
-                  </Text>
-                </XStack>
-                {growthStage > 0 && (
-                  <Text fontSize="$3" color="$gray10">
-                    Last watered: {format(lastWatered.toDate(), "MMM d, yyyy 'at' h:mm a")}
-                  </Text>
-                )}
-              </YStack>
+          <DialogContainer>
+            <ContentContainer>
+              <YStack gap="$4" maxWidth={350}>
+                <Dialog.Title>
+                  <StyledText fontSize="$8" fontWeight="bold">
+                    Your {seedType.charAt(0).toUpperCase() + seedType.slice(1)}
+                  </StyledText>
+                </Dialog.Title>
+                <YStack alignItems="center" gap="$4">
+                  <View style={styles.plantContainer}>
+                    <View
+                      ref={wateringZoneRef}
+                      onLayout={handleWateringZoneLayout}
+                      style={styles.wateringZone}
+                    />
+                    <PlantCircle size={200}>
+                      <PlantComponent growth={growthStage} isWithered={isWithered} />
+                    </PlantCircle>
+                  </View>
+                  <XStack alignItems="center" gap="$2">
+                    <Sun color="#CD853F" size={24} />
+                    <StyledProgressBar value={growthStage}>
+                      <ProgressIndicator />
+                    </StyledProgressBar>
+                  </XStack>
+                  <StyledText fontSize="$5" fontWeight="bold">
+                    {isWithered
+                      ? "Withered"
+                      : isFullyGrown
+                      ? "Fully Grown"
+                      : `${Math.round(growthStage)}% Grown`}
+                  </StyledText>
+                  <XStack alignItems="center" gap="$2">
+                    <Droplet color="#8B4513" size={24} />
+                    <StyledText fontSize="$4">
+                      Next watering: {timeUntilWatering}
+                    </StyledText>
+                  </XStack>
+                  {growthStage > 0 && (
+                    <StyledText fontSize="$3">
+                      Last watered: {format(lastWatered.toDate(), "MMM d, yyyy 'at' h:mm a")}
+                    </StyledText>
+                  )}
+                </YStack>
 
-              <YStack alignItems="center" gap="$2">
-                <Text fontSize="$3" color="$gray10">
-                  Drag cloud over plant to water
-                </Text>
-                <Animated.View
-                  {...panResponder.panHandlers}
-                  style={[styles.wateringCan, { transform: pan.getTranslateTransform() }]}
-                >
-                  <Cloud size={50} color="$blue9" />
-                </Animated.View>
-              </YStack>
+                <YStack alignItems="center" gap="$2">
+                  <StyledText fontSize="$3">
+                    Drag cloud over plant to water
+                  </StyledText>
+                  <Animated.View
+                    {...panResponder.panHandlers}
+                    style={[styles.wateringCan, { transform: pan.getTranslateTransform() }]}
+                  >
+                    <Cloud size={50} color="#8B4513" />
+                  </Animated.View>
+                </YStack>
 
-              <Button onPress={handleTestWater} backgroundColor="$blue3" color="$blue11">
-                <Text>Water (test)</Text>
-              </Button>
-              <Button onPress={handleTestWither} backgroundColor="$red3" color="$red11">
-                <Text>Wither (test)</Text>
-              </Button>
+                <ActionButton variant="test" onPress={handleTestWater}>
+                  <StyledText color="white">Water (test)</StyledText>
+                </ActionButton>
+                <ActionButton variant="test" onPress={handleTestWither}>
+                  <StyledText color="white">Wither (test)</StyledText>
+                </ActionButton>
 
-              {isWatering && (
+                {isWatering && (
                 <>
                   <Animated.View
                     style={[
@@ -556,17 +594,21 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                 </>
               )}
 
-              {showWateringMessage && (
-                <Text style={styles.wateringMessage}>Not ready for watering yet!</Text>
-              )}
+                {showWateringMessage && (
+                  <StyledText style={styles.wateringMessage}>
+                    Not ready for watering yet!
+                  </StyledText>
+                )}
 
-              <Dialog.Close asChild>
-                <Button onPress={handleDialogClose} backgroundColor="$gray3" color="$gray11">
-                  <Text>Close</Text>
-                </Button>
-              </Dialog.Close>
-            </YStack>
-          </Dialog.Content>
+                <Dialog.Close asChild>
+                  <ActionButton variant="close" onPress={handleDialogClose}>
+                    <StyledText color="white">Close</StyledText>
+                  </ActionButton>
+                </Dialog.Close>
+              </YStack>
+            </ContentContainer>
+            <BottomBar />
+          </DialogContainer>
         </Dialog.Portal>
       </Dialog>
     </YStack>
@@ -629,7 +671,7 @@ const styles = StyleSheet.create({
     left: 50,
     right: 50,
     textAlign: "center",
-    color: "$red9",
+    color: "#A0522D",
     zIndex: 15,
   },
 });

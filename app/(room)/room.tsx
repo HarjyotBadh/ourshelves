@@ -11,9 +11,9 @@ import {
   Spinner,
   Card,
   H4,
+  AlertDialog,
 } from "tamagui";
-import { ArrowLeft, X } from "@tamagui/lucide-icons";
-import Feather from "@expo/vector-icons/Feather";
+import { ArrowLeft, X, Menu, Lock, Plus } from "@tamagui/lucide-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   addDoc,
@@ -60,6 +60,7 @@ interface RoomData extends DocumentData {
   users: DocumentReference[];
   admins: DocumentReference[];
   shelfList: DocumentReference[];
+  hasPersonalShelves: boolean;
   isPublic: boolean;
 }
 
@@ -96,6 +97,10 @@ const RoomScreen = () => {
     isPublic: boolean;
   }>({ name: "", users: [], description: "", roomId: "", isPublic: false });
   const { stop, tracks } = useAudio();
+  const [hasPersonalShelves, setHasPersonalShelves] = useState(false);
+  const [hasPersonalShelf, setHasPersonalShelf] = useState(false);
+  const [personalShelfId, setPersonalShelfId] = useState<string | null>(null);
+  const [isRemoveShelfDialogOpen, setIsRemoveShelfDialogOpen] = useState(false);
 
   /**
    * Initializes shelves for a new room.
@@ -135,7 +140,10 @@ const RoomScreen = () => {
     }
 
     const roomRef = doc(db, "Rooms", roomId);
-    batch.update(roomRef, { shelfList: shelfRefs });
+    batch.update(roomRef, {
+      shelfList: shelfRefs,
+      hasPersonalShelves: false,
+    });
 
     await batch.commit();
     return newShelves;
@@ -197,6 +205,7 @@ const RoomScreen = () => {
 
           setRoomName(roomData.name);
           setRoomDescription(roomData.description);
+          setHasPersonalShelves(roomData.hasPersonalShelves ?? false);
 
           setLoadingProgress(20);
 
@@ -305,12 +314,23 @@ const RoomScreen = () => {
             const shelvesData: ShelfData[] = shelvesSnapshot
               .filter((docSnap) => docSnap.exists())
               .map((docSnap) => ({
-                // @ts-ignore
-                id: docSnap.id,
                 ...(docSnap.data() as ShelfData),
               }));
 
             setShelves(shelvesData);
+
+            // Check for existing personal shelf
+            const existingPersonalShelf = shelvesData.find(
+              (shelf) => shelf.isPersonalShelf && shelf.ownerId === auth.currentUser?.uid
+            );
+
+            if (existingPersonalShelf) {
+              setHasPersonalShelf(true);
+              setPersonalShelfId(existingPersonalShelf.id);
+            } else {
+              setHasPersonalShelf(false);
+              setPersonalShelfId(null);
+            }
 
             // Set up real-time listeners for each shelf
             shelfRefs.forEach((ref) => {
@@ -392,6 +412,8 @@ const RoomScreen = () => {
                   imageUri: purchasedItemData.imageUri,
                   cost: purchasedItemData.cost,
                   shouldLock: purchasedItemData.shouldLock || false,
+                  styleId: purchasedItemData.styleId,
+                  styleName: purchasedItemData.styleName,
                 };
               });
 
@@ -446,6 +468,12 @@ const RoomScreen = () => {
    */
   const handleItemSelect = async (item: ItemData) => {
     if (selectedSpot) {
+      const shelf = shelves.find((s) => s.id === selectedSpot.shelfId);
+      if (shelf?.isPersonalShelf && shelf.ownerId !== auth.currentUser?.uid) {
+        Alert.alert("Error", "You can't place items on someone else's personal shelf");
+        return;
+      }
+
       const { shelfId, position } = selectedSpot;
 
       const ItemComponent = items[item.itemId];
@@ -618,6 +646,201 @@ const RoomScreen = () => {
     }
   };
 
+  const handlePersonalShelvesToggle = async (value: boolean) => {
+    if (!roomId) return;
+
+    try {
+      const batch = writeBatch(db);
+      const roomRef = doc(db, "Rooms", roomId);
+
+      if (!value) {
+        // Find all personal shelves
+        const personalShelves = shelves.filter((shelf) => shelf.isPersonalShelf);
+
+        // Delete all placed items on personal shelves
+        for (const shelf of personalShelves) {
+          if (shelf.placedItems) {
+            for (const item of shelf.placedItems) {
+              const placedItemRef = doc(db, "PlacedItems", item.id);
+              batch.delete(placedItemRef);
+            }
+          }
+
+          // Delete the shelf document
+          const shelfRef = doc(db, "Shelves", shelf.id);
+          batch.delete(shelfRef);
+        }
+
+        // Update room's shelf list to remove personal shelves
+        const remainingShelves = shelves
+          .filter((shelf) => !shelf.isPersonalShelf)
+          .map((shelf) => doc(db, "Shelves", shelf.id));
+
+        batch.update(roomRef, {
+          shelfList: remainingShelves,
+          hasPersonalShelves: false,
+        });
+      } else {
+        // Simply enable personal shelves
+        batch.update(roomRef, {
+          hasPersonalShelves: true,
+        });
+      }
+
+      await batch.commit();
+
+      // Update local state
+      if (!value) {
+        setShelves((prevShelves) => prevShelves.filter((shelf) => !shelf.isPersonalShelf));
+        setHasPersonalShelf(false);
+        setPersonalShelfId(null);
+      }
+      setHasPersonalShelves(value);
+    } catch (error) {
+      console.error("Failed to update personal shelves setting:", error);
+      Alert.alert("Error", "Failed to update personal shelves setting. Please try again.");
+    }
+  };
+
+  const handleShelvesReorder = async (newOrder: { id: string; position: number }[]) => {
+    try {
+      const batch = writeBatch(db);
+      const roomRef = doc(db, "Rooms", roomId);
+
+      const roomDoc = await getDoc(roomRef);
+      if (!roomDoc.exists()) {
+        throw new Error("Room document not found");
+      }
+
+      const shelfRefsMap = new Map(
+        roomDoc.data().shelfList.map((ref: DocumentReference) => [ref.id, ref])
+      );
+
+      const orderedShelfRefs = newOrder
+        .sort((a, b) => a.position - b.position)
+        .map(({ id }) => shelfRefsMap.get(id))
+        .filter((ref): ref is DocumentReference => ref !== undefined);
+
+      batch.update(roomRef, {
+        shelfList: orderedShelfRefs,
+        updatedAt: new Date(),
+      });
+
+      newOrder.forEach(({ id, position }) => {
+        const shelfRef = doc(db, "Shelves", id);
+        batch.update(shelfRef, {
+          position,
+          updatedAt: new Date(),
+        });
+      });
+
+      await batch.commit();
+
+      setShelves((prevShelves) => {
+        const updatedShelves = [...prevShelves];
+        newOrder.forEach(({ id, position }) => {
+          const shelfIndex = updatedShelves.findIndex((shelf) => shelf.id === id);
+          if (shelfIndex !== -1) {
+            updatedShelves[shelfIndex] = {
+              ...updatedShelves[shelfIndex],
+              position,
+            };
+          }
+        });
+        return updatedShelves.sort((a, b) => a.position - b.position);
+      });
+    } catch (error) {
+      console.error("Failed to update shelf positions:", error);
+    }
+  };
+
+  const handleAddPersonalShelf = async () => {
+    if (!roomId || !auth.currentUser) return;
+
+    const existingPersonalShelf = shelves.find(
+      (shelf) => shelf.isPersonalShelf && shelf.ownerId === auth.currentUser?.uid
+    );
+
+    if (existingPersonalShelf) {
+      Alert.alert("Error", "You already have a personal shelf in this room");
+      return;
+    }
+
+    const batch = writeBatch(db);
+    const newShelfRef = doc(collection(db, "Shelves"));
+
+    const newShelfData: ShelfData = {
+      id: newShelfRef.id,
+      roomId,
+      position: shelves.length, // Place at the bottom
+      name: `${auth.currentUser.displayName}'s Shelf`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      itemList: [],
+      isPersonalShelf: true,
+      ownerId: auth.currentUser.uid,
+      placedItems: [],
+    };
+
+    batch.set(newShelfRef, newShelfData);
+
+    // Update room's shelf list
+    const roomRef = doc(db, "Rooms", roomId);
+    batch.update(roomRef, {
+      shelfList: arrayUnion(newShelfRef),
+    });
+
+    try {
+      await batch.commit();
+      setShelves((prevShelves) => [...prevShelves, newShelfData]);
+      setHasPersonalShelf(true);
+      setPersonalShelfId(newShelfRef.id);
+    } catch (error) {
+      console.error("Failed to add personal shelf:", error);
+      Alert.alert("Error", "Failed to add personal shelf");
+    }
+  };
+
+  const handleRemovePersonalShelf = async () => {
+    if (!personalShelfId || !roomId) return;
+
+    const batch = writeBatch(db);
+
+    // Get the shelf to find its placed items
+    const shelf = shelves.find((s) => s.id === personalShelfId);
+    if (!shelf) return;
+
+    // Delete all placed items on the shelf
+    if (shelf.placedItems && shelf.placedItems.length > 0) {
+      shelf.placedItems.forEach((item) => {
+        const placedItemRef = doc(db, "PlacedItems", item.id);
+        batch.delete(placedItemRef);
+      });
+    }
+
+    // Remove shelf document
+    const shelfRef = doc(db, "Shelves", personalShelfId);
+    batch.delete(shelfRef);
+
+    // Update room's shelf list
+    const roomRef = doc(db, "Rooms", roomId);
+    batch.update(roomRef, {
+      shelfList: arrayRemove(shelfRef),
+    });
+
+    try {
+      await batch.commit();
+      // Update local state by removing the shelf
+      setShelves((prevShelves) => prevShelves.filter((shelf) => shelf.id !== personalShelfId));
+      setHasPersonalShelf(false);
+      setPersonalShelfId(null);
+      setIsRemoveShelfDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to remove personal shelf:", error);
+      Alert.alert("Error", "Failed to remove personal shelf");
+    }
+  };
+
   if (isLoading) {
     return (
       <YStack f={1} ai="center" jc="center" backgroundColor={BACKGROUND_COLOR}>
@@ -674,7 +897,7 @@ const RoomScreen = () => {
             </Card.Header>
             <Card.Footer padded>
               <YStack gap="$4" alignItems="center">
-                <Feather name="lock" size={48} color={HEADER_BACKGROUND} />
+                <Lock size={48} color={HEADER_BACKGROUND} />
                 <Text fontSize="$4" color={HEADER_BACKGROUND} textAlign="center">
                   You have not been invited to the room:
                 </Text>
@@ -712,7 +935,7 @@ const RoomScreen = () => {
             </HeaderButton>
           ) : (
             <HeaderButton unstyled onPress={() => setIsSettingsOpen(true)}>
-              <Feather name="menu" color="white" size={24} />
+              <Menu color="white" size={24} />
             </HeaderButton>
           )}
         </Header>
@@ -746,6 +969,9 @@ const RoomScreen = () => {
                     roomInfo={{
                       ...roomInfo,
                     }}
+                    availableItems={availableItems}
+                    isPersonalShelf={shelf.isPersonalShelf}
+                    ownerId={shelf.ownerId}
                   />
                 ))}
               </YStack>
@@ -756,7 +982,7 @@ const RoomScreen = () => {
           isOpen={isSheetOpen}
           onClose={() => setIsSheetOpen(false)}
           onSelectItem={handleItemSelect}
-          items={availableItems}
+          items={availableItems as ItemData[]}
         />
         <RoomSettingsDialog
           open={isSettingsOpen}
@@ -765,7 +991,96 @@ const RoomScreen = () => {
           roomDescription={roomDescription}
           onRemoveUser={handleRemoveUser}
           currentUserId={auth.currentUser?.uid || ""}
+          hasPersonalShelves={hasPersonalShelves}
+          onPersonalShelvesToggle={handlePersonalShelvesToggle}
+          shelves={shelves.map(({ id, name, position }) => ({ id, name, position }))}
+          onShelvesReorder={handleShelvesReorder}
         />
+        {isEditMode && hasPersonalShelves && (
+          <XStack position="absolute" bottom={20} right={20} zIndex={1000}>
+            <Button
+              size="$4"
+              backgroundColor={HEADER_BACKGROUND}
+              color="white"
+              pressStyle={{ opacity: 0.8 }}
+              hoverStyle={{ opacity: 0.8 }}
+              animation="quick"
+              elevate
+              bordered
+              borderRadius="$4"
+              onPress={() => {
+                if (hasPersonalShelf) {
+                  setIsRemoveShelfDialogOpen(true);
+                } else {
+                  handleAddPersonalShelf();
+                }
+              }}
+            >
+              {hasPersonalShelf ? "Remove Personal Shelf" : "Add Personal Shelf"}
+            </Button>
+          </XStack>
+        )}
+        {isEditMode && hasPersonalShelves && (
+          <>
+            <AlertDialog open={isRemoveShelfDialogOpen} onOpenChange={setIsRemoveShelfDialogOpen}>
+              <AlertDialog.Portal>
+                <AlertDialog.Overlay
+                  key="overlay"
+                  animation="quick"
+                  opacity={0.5}
+                  enterStyle={{ opacity: 0 }}
+                  exitStyle={{ opacity: 0 }}
+                />
+                <AlertDialog.Content
+                  bordered
+                  elevate
+                  key="content"
+                  animation={[
+                    "quick",
+                    {
+                      opacity: {
+                        overshootClamping: true,
+                      },
+                    },
+                  ]}
+                  enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+                  exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+                  padding="$4"
+                  backgroundColor={BACKGROUND_COLOR}
+                >
+                  <YStack space>
+                    <AlertDialog.Title>
+                      <Text color={HEADER_BACKGROUND} fontSize="$6" fontWeight="bold">
+                        Remove Personal Shelf
+                      </Text>
+                    </AlertDialog.Title>
+                    <AlertDialog.Description>
+                      <Text color="$gray11" fontSize="$4">
+                        Are you sure you want to remove your personal shelf? All items on it will be
+                        removed.
+                      </Text>
+                    </AlertDialog.Description>
+
+                    <XStack space="$3" justifyContent="flex-end">
+                      <AlertDialog.Cancel asChild>
+                        <Button theme="alt1">Cancel</Button>
+                      </AlertDialog.Cancel>
+                      <AlertDialog.Action asChild>
+                        <Button
+                          backgroundColor="$red10"
+                          color="white"
+                          onPress={handleRemovePersonalShelf}
+                        >
+                          Remove
+                        </Button>
+                      </AlertDialog.Action>
+                    </XStack>
+                  </YStack>
+                </AlertDialog.Content>
+              </AlertDialog.Portal>
+            </AlertDialog>
+          </>
+        )}
       </Container>
     </SafeAreaWrapper>
   );

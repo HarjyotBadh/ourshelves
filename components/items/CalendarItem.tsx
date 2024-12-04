@@ -128,9 +128,10 @@ const CalendarItem: CalendarItemComponent = ({
   useEffect(() => {
     const newDate = addDays(currentDate, 1);
     const today = new Date();
-    const isBeforeToday = newDate.getDate() <= today.getDate() &&
-      newDate.getMonth() <= today.getMonth() &&
-      newDate.getFullYear() <= today.getFullYear();
+    const isBeforeToday = 
+      newDate.getFullYear() < today.getFullYear() || 
+      (newDate.getFullYear() === today.getFullYear() && newDate.getMonth() < today.getMonth()) || 
+      (newDate.getFullYear() === today.getFullYear() && newDate.getMonth() === today.getMonth() && newDate.getDate() <= today.getDate());
     setCanBeRipped(isBeforeToday);
   }, [currentDate]);
 
@@ -267,9 +268,10 @@ const CalendarItem: CalendarItemComponent = ({
       if (isRipMode)  {
         const newDate = addDays(currentDate, 1);
         const today = new Date();
-        const isBeforeToday = newDate.getDate() <= today.getDate() &&
-          newDate.getMonth() <= today.getMonth() &&
-          newDate.getFullYear() <= today.getFullYear();
+        const isBeforeToday = 
+      newDate.getFullYear() < today.getFullYear() || 
+      (newDate.getFullYear() === today.getFullYear() && newDate.getMonth() < today.getMonth()) || 
+      (newDate.getFullYear() === today.getFullYear() && newDate.getMonth() === today.getMonth() && newDate.getDate() <= today.getDate());
         
         if (isBeforeToday) {
           // Immediately disable ripping and update canBeRipped

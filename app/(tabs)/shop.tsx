@@ -34,6 +34,7 @@ import { ShopMetadata } from "models/ShopMetadata";
 import { WallpaperData, ShelfColorData } from "models/RoomData";
 import { UserData } from "models/UserData";
 import { ToastViewport, useToastController } from "@tamagui/toast";
+import { refreshShopManually } from "functions/src";
 
 const BACKGROUND_COLOR = "$pink6";
 
@@ -202,11 +203,38 @@ export default function ShopScreen() {
 
       // Fetch items
       const fetchedItems = await Promise.all(
-        gottenShopMetadata.items.map(async (itemRef: DocumentReference) => {
-          const itemDoc = await getDoc(itemRef);
-          return { itemId: itemDoc.id, ...itemDoc.data() } as ItemData;
+        gottenShopMetadata.items.map(async (itemWithStyle, index) => {
+          const itemDoc = await getDoc(itemWithStyle.ref);
+          if (!itemDoc.exists()) {
+            throw new Error(`Item document not found: ${itemWithStyle.ref.path}`);
+          }
+
+          const baseItemData = itemDoc.data() as ItemData;
+          
+          // Update progress for each item
+          setLoadingProgress(20 + ((index + 1) / gottenShopMetadata.items.length) * 30);
+          
+          // If item has style data, override base properties
+          const itemData: ItemData = itemWithStyle.styleData 
+            ? {
+                ...baseItemData,
+                itemId: itemDoc.id,  // Override with doc ID
+                name: baseItemData.name,
+                styleName: itemWithStyle.styleData.styleName,
+                cost: itemWithStyle.styleData.cost,
+                imageUri: itemWithStyle.styleData.imageUri,
+                styleId: itemWithStyle.styleData.id
+              }
+            : {
+                ...baseItemData,
+                itemId: itemDoc.id  // Override with doc ID
+              };
+          
+          return itemData;
         })
       );
+
+      setLoadingProgress(50);
 
       // Fetch wallpapers (unchanged)
       const fetchedWallpapers = await Promise.all(

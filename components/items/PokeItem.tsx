@@ -3,6 +3,27 @@ import { View, YStack, Image, Dialog, Text } from "tamagui";
 import { Timestamp } from "firebase/firestore";
 import PokeEggDialog from "../PokeItem/PokeEggDialog";
 import PokemonDialog from "../PokeItem/PokemonDialog";
+import { styled } from "tamagui";
+
+const NotificationBadge = styled(View, {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: 20,
+  height: 20,
+  borderRadius: 10,
+  backgroundColor: "#8B4513",
+  borderColor: "#DEB887",
+  borderWidth: 2,
+  justifyContent: "center",
+  alignItems: "center",
+});
+
+const NotificationText = styled(Text, {
+  color: "#F5DEB3",
+  fontSize: 12,
+  fontWeight: "bold",
+});
 
 interface PokeItemProps {
   itemData: {
@@ -99,6 +120,10 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
           height={containerSize}
           justifyContent="center"
           alignItems="center"
+          backgroundColor="#F5DEB3"
+          borderRadius={12}
+          borderWidth={1}
+          borderColor="#8B4513"
         >
           <Image
             source={{ uri: itemData.hatched ? itemData.pokemon?.imageUri : itemData.imageUri }}
@@ -107,23 +132,9 @@ const PokeItem: PokeItemComponent = ({ itemData, onDataUpdate, isActive, onClose
             objectFit="contain"
           />
           {isInteractionAvailable() && !itemData.hatched && (
-            <View
-              position="absolute"
-              top={0}
-              left={0}
-              width={20}
-              height={20}
-              borderRadius={10}
-              backgroundColor="#FFDE00"
-              borderColor="#3B4CCA"
-              borderWidth={2}
-              justifyContent="center"
-              alignItems="center"
-            >
-              <Text color="#3B4CCA" fontSize={12} fontWeight="bold">
-                !
-              </Text>
-            </View>
+            <NotificationBadge>
+              <NotificationText>!</NotificationText>
+            </NotificationBadge>
           )}
         </View>
       </YStack>

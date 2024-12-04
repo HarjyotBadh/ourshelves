@@ -1,44 +1,41 @@
 module.exports = {
-  root: true,
-  env: {
-    es6: true,
-    node: true,
+  "root": true,
+  "env": {
+      "es6": true,
+      "node": true
   },
-  extends: [
-    "eslint:recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "plugin:import/typescript",
-    "google",
-    "plugin:@typescript-eslint/recommended",
+  "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended"
   ],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: ["tsconfig.json"],
-    sourceType: "module",
-    tsconfigRootDir: __dirname,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+      "project": null  // Removed TypeScript project requirement
   },
-  ignorePatterns: [
-    "/lib/**/*", // Ignore built files.
-    ".eslintrc.js", // Ignore the eslint config file itself
+  "plugins": [
+      "@typescript-eslint"
   ],
-  plugins: [
-    "@typescript-eslint",
-    "import",
+  "ignorePatterns": [
+      "/lib/**/*",  // Ignore built files
+      ".eslintrc.js"  // Ignore the eslint config itself
   ],
-  rules: {
-    "quotes": ["error", "double"],
-    "import/no-unresolved": 0,
-    "linebreak-style": 0,
-    "object-curly-spacing": ["error", "always"],
-    "max-len": ["error", { "code": 120 }],
-  },
-  overrides: [
-    {
-      files: ["*.js"],
-      rules: {
-        "@typescript-eslint/no-var-requires": "off",
-      },
-    },
-  ],
+  "rules": {
+      "indent": "off",
+      "@typescript-eslint/indent": "off",
+      "quotes": ["error", "double"],
+      "require-jsdoc": ["error", {
+          "require": {
+              "FunctionDeclaration": true,
+              "MethodDefinition": true,
+              "ClassDeclaration": true,
+              "ArrowFunctionExpression": true,
+              "FunctionExpression": true
+          }
+      }],
+      "comma-dangle": ["error", "always-multiline"],
+      "arrow-parens": ["error", "always"],
+      "no-trailing-spaces": "error",
+      "padded-blocks": ["error", "never"],
+      "eol-last": ["error", "always"]
+  }
 };
