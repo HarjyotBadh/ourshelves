@@ -17,6 +17,7 @@ const items = {
   "1xFx35XueUeIA8JEI2Xu": lazy(() => import("./CalendarItem")),
   lfRPa063ZysWizht5XiU: lazy(() => import("./DailyQuoteItem")),
   vyvdVS3vtZhzv5oqhmY4: lazy(() => import("./LinkItem")),
+  dv42pUGpEhuENlseKHP1: lazy(() => import("./StorybookItem")),
   WN3gKAlxR2ImFMGh4Iop: lazy(() => import("./NoteBoxItem")),
   "3u3CsWfAQUXUxSBFqJ1u": lazy(() => import("./VotingBoxItem")),
   rc2IU3ypGty77bBsRkln: lazy(() => import("./EventPlannerItem")),
