@@ -69,12 +69,14 @@ export default function RoomPage() {
   }
 >();
 
+var tags: string[]  = []
+
 const showAlert = (messages) => {
   // Convert the array of strings into a single string separated by commas, newlines, or any other separator
   const messageString = messages.join('\n'); // Joining with newlines for better readability
 
   Alert.alert(
-    'Alert Title', // Title of the alert
+    roomPage!.roomName + "'s Tags" || "Room Tags", // Title of the alert
     messageString, // The stringified message
     [
       { text: 'OK', onPress: () => console.log('OK Pressed') }
@@ -102,18 +104,20 @@ const showAlert = (messages) => {
                 tags: roomPageData?.tags || [],
             });
 
-            let tag: string[] = [];
-
-            // Grabbing the users of the room
-            for (const ref of roomPageData?.tags) {
-              const tagDoc = await getDoc(ref);
-              if (tagDoc.exists()) {
-                tag.push(tagDoc.data() as string);
-              }
+            // Fetch tags
+          const tagNames: string[] = [];
+          for (const ref of roomPageData?.tags) {
+            const tagDoc = await getDoc(ref);
+            if (tagDoc.exists()) {
+              const tagData = tagDoc.data();
+              // Assuming tagData has a `name` property
+              // @ts-ignore
+              tagNames.push(tagData.name || "Unknown Tag");
             }
+          }
 
-          
-            setTagsList(tag);
+          // Set tagsList state
+          setTagsList(tagNames);
 
             // Grabbing the users of the room
             for (const ref of roomPageData?.users) {
