@@ -38,6 +38,7 @@ export default function SearchList() {
   const [familyRooms, setFamRooms] = useState<Room[]>([]);
   const [closeRooms, setCloseRooms] = useState<Room[]>([]);
   const [recRooms, setRecRooms] = useState<Room[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedFilters, setSelectedFilters] = useState({
     familyFriendly: false,
     zanyShenanigans: false,
@@ -157,6 +158,47 @@ export default function SearchList() {
     }
   };
 
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+        const dataRef = collection(db, "Rooms");
+        const querySnapshot = await getDocs(dataRef);
+        const rooms: Room[] = querySnapshot.docs.map((doc) => {
+          const data = doc.data() as { name: string; isPublic: boolean; tags: DocumentReference[] };
+          return {
+            id: doc.id,
+            roomName: data.name,
+            isPublic: data.isPublic,
+            tags: data.tags,
+          };
+        });
+
+        const publicRooms = rooms.filter((room) => room.isPublic);
+
+        for (let i = 0; i < publicRooms.length; i++) {
+          for (const ref of publicRooms[i].tags) {
+            const tagDoc = await getDoc(ref);
+            if (tagDoc.exists()) {
+              const tagData = tagDoc.data();
+              if (tagData.name === "Family Friendly") {
+                setFamRooms((prevFamRooms) => [...prevFamRooms, publicRooms[i]]);
+              } else if (tagData.name === "Close Community") {
+                setCloseRooms((prevCloseRooms) => [...prevCloseRooms, publicRooms[i]]);
+              } else if (tagData.name === "Zany Shenanigans") {
+                setZanyRooms((prevZanyRooms) => [...prevZanyRooms, publicRooms[i]]);
+              }
+            }
+          }
+        }
+
+        setRooms(publicRooms);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setUserNames([]);
@@ -167,6 +209,7 @@ export default function SearchList() {
   }, [searchQuery, isUsersMode]);
 
   const handleSwitchChange = (checked: boolean) => {
+    fetchRooms();
     setIsUsersMode(!checked);
     fetchUserNames();
   };
@@ -184,12 +227,11 @@ export default function SearchList() {
   };
 
   const selectRoom = (id: string) => {
+    setIsPopupVisible(false)
     router.push(`/other_room_page?roomId=${id}`);
   };
 
 const recommendedRooms = async () => {
-  fetchUserNames()
-
   let userTags: string[] = [];
   let recommendedRooms: Room[] = [];
   const currentUserId = auth.currentUser?.uid;
@@ -229,7 +271,12 @@ const recommendedRooms = async () => {
 
   if (userTags.length == 3) {
     // Get the sorted rooms
-    const sortedRooms = sortRoomsByTags(roomNames);
+    const sortedRooms = sortRoomsByTags(rooms);
+    sortedRooms.forEach(element => {
+      if (element.tags.length == 0) {
+        sortedRooms.pop(element)
+      }
+    });
     setRecRooms(sortedRooms);
     return;
   } 
