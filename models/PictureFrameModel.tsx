@@ -6,7 +6,6 @@ export interface PictureFrameItemData {
   name: string;
   imageUri: string;
   placedUserId: string;
-  location?: string;
 }
 
 export interface RoomUser {

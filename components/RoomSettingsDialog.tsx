@@ -39,10 +39,6 @@ import {
   HEADER_BACKGROUND,
 } from "../styles/RoomSettingsStyles";
 import { DraggableShelfList } from "./DraggableShelfList";
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
-import { useRouter, useLocalSearchParams } from "expo-router";
 
 interface User {
   id: string;
@@ -81,7 +77,6 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   const [userToRemove, setUserToRemove] = useState<User | null>(null);
   const [personalShelvesConfirmOpen, setPersonalShelvesConfirmOpen] = useState(false);
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
-  const { roomId } = useLocalSearchParams<{ roomId: string }>();
 
   const filteredUsers = users.filter((user) =>
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -90,45 +85,6 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   const handleRemoveUser = (user: User) => {
     setUserToRemove(user);
     setConfirmationOpen(true);
-  };
-
-  const handlePromoteUser = async (roomId: string, userIdToPromote: string) => {
-    const auth = getAuth();
-    const user = auth.currentUser;
-  
-    if (!user) {
-      alert('You must be logged in to promote a user.');
-      return;
-    }
-  
-    try {
-      // Step 1: Check if the current user is an admin of the room
-      const db = getFirestore(getApp());
-      const roomRef = doc(db, 'Rooms', roomId);
-      console.log("Fetched roomId:", roomId);
-      const roomDoc = await getDoc(roomRef);
-      console.log("Fetched room document:", roomDoc.data());
-      if (!roomDoc.exists()) {
-        alert('Room does not exist.');
-        return;
-      }
-  
-      const roomData = roomDoc.data();
-      const admins = roomData?.admins || [];
-      const userRef = doc(db, "Users", userIdToPromote);
-      // Step 2: Add the user to the admins array
-      if (!admins.includes(userIdToPromote)) {
-        await updateDoc(roomRef, {
-          admins: arrayUnion(userRef), // Use the reference to the user document
-        });
-        alert('User successfully promoted to admin.');
-      } else {
-        alert('User is already an admin.');
-      }
-    } catch (error) {
-      console.error('Error promoting user:', error);
-      alert('There was an error promoting the user.');
-    }
   };
 
   const confirmRemoveUser = () => {
@@ -278,56 +234,6 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
                       </StyledAccordionTrigger>
                       <StyledAccordionContent>{renderUserList()}</StyledAccordionContent>
                     </StyledAccordionItem>
-
-                    <StyledAccordionItem value="promotions">
-  <StyledAccordionTrigger>
-    {({ open }) => (
-      <XStack alignItems="center">
-        <IconWrapper backgroundColor="$green8">
-          <Users color="white" />
-        </IconWrapper>
-        <Text flex={1} fontSize="$5" fontWeight="600" color="white">
-          Promotions
-        </Text>
-        {open ? <ChevronUp color="white" /> : <ChevronDown color="white" />}
-      </XStack>
-    )}
-  </StyledAccordionTrigger>
-  <StyledAccordionContent>
-    <YStack gap="$2">
-      {filteredUsers.map((user) => (
-        <UserItem key={user.id}>
-          <Avatar circular size="$4" mr="$3">
-            {user.profilePicture ? (
-              <Avatar.Image source={{ uri: user.profilePicture }} />
-            ) : (
-              <Avatar.Fallback delayMs={600}>
-                <Text fontSize="$2" color="white">
-                  {user.displayName.charAt(0).toUpperCase()}
-                </Text>
-              </Avatar.Fallback>
-            )}
-          </Avatar>
-          <Text flex={1} fontSize="$4" fontWeight="500" color="black">
-            {user.displayName}
-          </Text>
-          {/* Show promote button only for non-admins and if the current user is an admin */}
-          {isCurrentUserAdmin && !user.isAdmin && (
-            <Button
-              onPress={() => handlePromoteUser(roomId, user.id)} // Pass roomId and user.id
-              backgroundColor={HEADER_BACKGROUND}
-              color="white"
-              size="$2"
-            >
-              Promote
-            </Button>
-          )}
-        </UserItem>
-      ))}
-    </YStack>
-  </StyledAccordionContent>
-</StyledAccordionItem>
-
 
                     <StyledAccordionItem value="settings">
                       <StyledAccordionTrigger>
