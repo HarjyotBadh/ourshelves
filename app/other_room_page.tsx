@@ -9,6 +9,7 @@ import {
   Button,
   Text,
   H2,
+  H3,
   H4,
   Spinner,
   XStack,
@@ -20,7 +21,7 @@ import { getTags, getTagById, getUserById } from "project-functions/homeFunction
 import { doc, DocumentReference, DocumentData, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DoorOpen, Tag } from "@tamagui/lucide-icons";
+import { ArrowLeftToLine, DoorOpen, Tag } from "@tamagui/lucide-icons";
 import AddUserToRoomDialog from "../components/AddUserToRoomDialog";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "firebaseConfig"; // Ensure this is correctly configured in your project
@@ -46,20 +47,17 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(true);
   const [roomPage, setRoomPage] = useState<RoomPage | null>(null);
   const [description, setDescription] = useState("");
-  const [tagsList, setTagsList] = useState<string[]>([]);
+  const [tagsList, setTagsList] = useState<string[]>([])
   const [userList, setUserList] = useState<
     {
       id: string;
       displayName: string;
     }[]
   >([]);
-  const [profileIcon, setIcon] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const router = useRouter();
-  const [isAddToRoomDialogOpen, setIsAddToRoomDialogOpen] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false); // State for showing tags modal
-  const [currentUser, setCurrentUser] = useState<{ id: string; name: string | null } | null>(null);
 
   const userMap = new Map<
   string,
@@ -68,6 +66,23 @@ export default function RoomPage() {
     displayName: string;
   }
 >();
+  const currentUserId = auth.currentUser?.uid;
+
+
+var tags: string[]  = []
+
+const showAlert = (messages) => {
+  // Convert the array of strings into a single string separated by commas, newlines, or any other separator
+  const messageString = messages.join('\n'); // Joining with newlines for better readability
+
+  Alert.alert(
+    roomPage!.roomName + ": Tags" || "Room Tags", // Title of the alert
+    messageString, // The stringified message
+    [
+      { text: 'OK', onPress: () => console.log('OK Pressed') }
+    ]
+  );
+};
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,10 +103,23 @@ export default function RoomPage() {
                 roomName: roomPageData?.name || "unknown room",
                 tags: roomPageData?.tags || [],
             });
-            
 
-            // TODO, somehow get the users and tags from the list of ids
-            console.log(roomPageData?.users)
+          // Fetch tags
+          const tagNames: string[] = [];
+          for (const ref of roomPageData?.tags) {
+            const tagDoc = await getDoc(ref);
+            if (tagDoc.exists()) {
+              const tagData = tagDoc.data();
+              // Assuming tagData has a `name` property
+              // @ts-ignore
+              tagNames.push(tagData.name || "Unknown Tag");
+            }
+          }
+
+          // Set tagsList state
+          setTagsList(tagNames);
+
+            // Grabbing the users of the room
             for (const ref of roomPageData?.users) {
                 const userDoc = await getDoc(ref);
                 if (userDoc.exists()) {
@@ -102,10 +130,6 @@ export default function RoomPage() {
                   });
                 }
             }
-
-            
-            console.log(userMap)
-
             const userNames = Array.from(userMap.values());
             setUserList(userNames)
     
@@ -141,9 +165,10 @@ export default function RoomPage() {
 
   // Function to handle viewing tags
   const viewTags = () => {
-    if (roomPage) {
-      setShowTagsModal(true); // Show the modal
-    }
+    showAlert(tagsList)
+    // if (roomPage) {
+    //   setShowTagsModal(true); // Show the modal
+    // }
   };
 
   const confirmAddUserToRoom = async () => {
@@ -168,8 +193,11 @@ export default function RoomPage() {
   };
 
   const handleUserClick = (userId: string) => {
-    // Define the action when a user is clicked. For example:
-    router.push(`/other_user_page?profileId=${userId}`);
+    if (currentUserId == userId) {
+      router.push(`/(tabs)/profile_page`);
+    } else {
+      router.push(`/other_user_page?profileId=${userId}`);
+    }
   };
 
   return (
@@ -185,24 +213,33 @@ export default function RoomPage() {
         <YStack ai="center" gap="$4" px="$10" pt="$1">
           <H2>{roomPage?.roomName}</H2>
 
-          <H4>Room Description:</H4>
-          <TextArea
-            height={50}
-            width={300}
-            textAlign="center"
-            value={description}
-            editable={false}
-            borderWidth={2}
-          />
+          <H3>Room Description:</H3>
+          <Text style={{
+              height:100,
+              width: "100%",
+              borderWidth: 3, // Adds a border
+              borderColor: "gray", // Border color (black in this case)
+              borderRadius: 10, // Optional: adds rounded corners
+              padding: 10, // Optional: space inside the border
+            }}>
+                    {description}
+          </Text>
 
-          <H4>Users:</H4>
-          <ScrollView style={{ maxHeight: 200, width: "100%" }}>
+          <H3>Users:</H3>
+          <ScrollView
+            style={{
+              height:250,
+              width: "100%",
+              borderWidth: 3, // Adds a border
+              borderColor: "gray", // Border color (black in this case)
+              borderRadius: 10, // Optional: adds rounded corners
+              padding: 10, // Optional: space inside the border
+            }}
+          >
             {userList.map((user) => (
-              <TouchableOpacity
-                onPress={() => handleUserClick(user.id)}
-              >
-                <Text fontSize="$9" color="$color" marginBottom="$2">
-                    {user.displayName}
+              <TouchableOpacity onPress={() => handleUserClick(user.id)}>
+                <Text fontSize="$9" textAlign="center" color="$color" marginBottom="$2">
+                  {user.displayName}
                 </Text>
               </TouchableOpacity>
             ))}
