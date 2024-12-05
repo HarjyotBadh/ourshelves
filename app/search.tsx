@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TouchableWithoutFeedback, Keyboard, Alert, Pressable } from "react-native";
+import { TouchableWithoutFeedback, Keyboard, Alert, Pressable, Modal } from "react-native";
 import {
   Text,
   YStack,
@@ -37,16 +37,20 @@ export default function SearchList() {
   const [zanyRooms, setZanyRooms] = useState<Room[]>([]);
   const [familyRooms, setFamRooms] = useState<Room[]>([]);
   const [closeRooms, setCloseRooms] = useState<Room[]>([]);
-  const [prevRooms, setPrevRooms] = useState<Room[]>([]);
+  const [recRooms, setRecRooms] = useState<Room[]>([]);
   const [selectedFilters, setSelectedFilters] = useState({
     familyFriendly: false,
     zanyShenanigans: false,
     closeCommunity: false,
   });
 
+
+  const [isPopupVisible, setIsPopupVisible] = useState(false); // Controls popup visibility
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null); // Tracks the selected room
+
+
   const [isUsersMode, setIsUsersMode] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [isButtonPressed, setIsButtonPressed] = useState(false);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -164,7 +168,6 @@ export default function SearchList() {
 
   const handleSwitchChange = (checked: boolean) => {
     setIsUsersMode(!checked);
-    setIsButtonPressed(false);
     fetchUserNames();
   };
 
@@ -185,14 +188,7 @@ export default function SearchList() {
   };
 
 const recommendedRooms = async () => {
-  setIsButtonPressed((prev) => !prev);
-  if (!isButtonPressed) {
-    Alert.alert("Recommended Rooms Displayed");
-  }
-
-  function intersection(arr1, arr2) {
-    return arr1.filter(value => arr2.includes(value));
-  }
+  fetchUserNames()
 
   let userTags: string[] = [];
   let recommendedRooms: Room[] = [];
@@ -200,7 +196,6 @@ const recommendedRooms = async () => {
 
   if (!currentUserId) {
     Alert.alert("User not authenticated");
-    setIsButtonPressed((prev) => !prev);
     return;
   }
 
@@ -229,16 +224,16 @@ const recommendedRooms = async () => {
     return rooms.sort((a, b) => b.tags.length - a.tags.length);
   };
 
-  setPrevRooms(roomNames);
+  setIsPopupVisible(true); // Show the popup
+
 
   if (userTags.length == 3) {
     // Get the sorted rooms
     const sortedRooms = sortRoomsByTags(roomNames);
-    setRoomNames(sortedRooms);
+    setRecRooms(sortedRooms);
     return;
   } 
   else if (userTags.length == 2) {
-
     // Filtering for recommended rooms
     if (userTags.includes("zanyShenanigans")) {
       recommendedRooms = zanyRooms;
@@ -250,7 +245,7 @@ const recommendedRooms = async () => {
         const cleanedRooms =  sortedRooms.filter((item, index) => {
           return sortedRooms.indexOf(item) === index;
         });
-        setRoomNames(cleanedRooms);
+        setRecRooms(cleanedRooms);
         return;
       } else {
         recommendedRooms = closeRooms
@@ -262,7 +257,7 @@ const recommendedRooms = async () => {
       const cleanedRooms =  sortedRooms.filter((item, index) => {
         return sortedRooms.indexOf(item) === index;
       });
-      setRoomNames(cleanedRooms);
+      setRecRooms(cleanedRooms);
       return;
     }
   }
@@ -277,39 +272,21 @@ const recommendedRooms = async () => {
     else if (userTags.includes("familyFriendly")) {
       recommendedRooms = familyRooms
     }
-    setRoomNames(recommendedRooms);
+    setRecRooms(recommendedRooms);
     return;
   }
   else {
     Alert.alert("Apply Tags to Your Profile For Room Recommendations");
-    setIsButtonPressed((prev) => !prev);
     return;
   }
 
-  // Filtering for recommended rooms
-  if (userTags.includes("zanyShenanigans")) {
-    recommendedRooms = zanyRooms;
-  }
-  if (userTags.includes("closeCommunity")) {
-    if (recommendedRooms.length > 0) {
-      recommendedRooms = intersection(recommendedRooms, closeRooms);
-    } else {
-      recommendedRooms = closeRooms
-    }
-  }
-  if (userTags.includes("familyFriendly")) {
-    if (recommendedRooms.length > 0) {
-      recommendedRooms = intersection(recommendedRooms, familyRooms);
-    } else {
-      recommendedRooms = familyRooms
-    }
-  }
-
   
-
-
 };
 
+const closePopup = () => {
+  setIsPopupVisible(false);
+  setRecRooms([]);
+};
 
 
   return (
@@ -338,6 +315,64 @@ const recommendedRooms = async () => {
               Rooms
             </SizableText>
 
+            {/* Popup Modal */}
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={isPopupVisible}
+              onRequestClose={closePopup}
+            >
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <YStack
+                  f={1}
+                  justifyContent="center"
+                  alignItems="center"
+                  backgroundColor="rgba(0, 0, 0, 0.5)"
+                >
+                  <YStack
+                    width="90%"
+                    maxHeight="70%"
+                    padding="$4"
+                    borderRadius="$4"
+                    backgroundColor="$background"
+                    shadowColor="black"
+                    shadowOffset={{ width: 0, height: 2 }}
+                    shadowOpacity={0.25}
+                    shadowRadius={4}
+                  >
+                    <Text fontSize="$7" marginBottom="$3" textAlign="center">
+                      Recommended Rooms
+                    </Text>
+                    <ScrollView>
+                      {recRooms.slice(0, 10).map((room) => (
+                        <Pressable
+                          key={room.id}
+                          onPress={() => selectRoom(room.id)}
+                          style={{
+                            padding: 10,
+                            borderBottomWidth: 1,
+                            borderColor: "$gray4",
+                          }}
+                        >
+                          <Text fontSize="$6">{room.roomName}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                    <Button
+                      onPress={closePopup}
+                      size="$4"
+                      color="$white"
+                      backgroundColor="$gray8"
+                      marginTop="$4"
+                    >
+                      Close
+                    </Button>
+                  </YStack>
+                </YStack>
+              </TouchableWithoutFeedback>
+            </Modal>
+
+
             {/* Conditionally render the button when isUsersMode is false */}
             {!isUsersMode && (
               <Button
@@ -347,7 +382,6 @@ const recommendedRooms = async () => {
                 justifyContent="center"
                 alignItems="center"
                 display="flex"
-                backgroundColor={isButtonPressed ? "$blue10" : "$gray8"}
                 onPress={() => recommendedRooms()}
                 icon={<WandSparkles size="$2" />}
               />
