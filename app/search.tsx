@@ -12,8 +12,8 @@ import {
   Checkbox,
   Stack as TamaguiStack
 } from "tamagui";
-import { collection, getDocs, DocumentReference, getDoc } from "firebase/firestore";
-import { db } from "firebaseConfig";
+import { collection, getDocs, DocumentReference, getDoc, doc } from "firebase/firestore";
+import { db, auth } from "firebaseConfig";
 import { useRouter, Stack } from "expo-router";
 import { WandSparkles, Filter } from "@tamagui/lucide-icons";
 
@@ -37,6 +37,7 @@ export default function SearchList() {
   const [zanyRooms, setZanyRooms] = useState<Room[]>([]);
   const [familyRooms, setFamRooms] = useState<Room[]>([]);
   const [closeRooms, setCloseRooms] = useState<Room[]>([]);
+  const [prevRooms, setPrevRooms] = useState<Room[]>([]);
   const [selectedFilters, setSelectedFilters] = useState({
     familyFriendly: false,
     zanyShenanigans: false,
@@ -183,12 +184,132 @@ export default function SearchList() {
     router.push(`/other_room_page?roomId=${id}`);
   };
 
-  const recommendedRooms = () => {
+const recommendedRooms = async () => {
+  setIsButtonPressed((prev) => !prev);
+  if (!isButtonPressed) {
+    Alert.alert("Recommended Rooms Displayed");
+  }
+
+  function intersection(arr1, arr2) {
+    return arr1.filter(value => arr2.includes(value));
+  }
+
+  let userTags: string[] = [];
+  let recommendedRooms: Room[] = [];
+  const currentUserId = auth.currentUser?.uid;
+
+  if (!currentUserId) {
+    Alert.alert("User not authenticated");
     setIsButtonPressed((prev) => !prev);
-    if (!isButtonPressed) {
-      Alert.alert("Recommended Rooms Displayed");
+    return;
+  }
+
+  try {
+    // Fetch the user document from Firestore by the user ID
+    const userDocRef = doc(db, "Users", currentUserId); // 'Users' is your collection name
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      // Get the 'tags' array from the user document
+      userTags= userDocSnap.data().tags || [];
+
+      console.log("User Tags:", userTags);
+
+    } else {
+      console.log("No user document found");
     }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    Alert.alert("Error fetching user data");
+  }
+
+
+  // Function to sort roomNames based on the number of tags
+  const sortRoomsByTags = (rooms) => {
+    return rooms.sort((a, b) => b.tags.length - a.tags.length);
   };
+
+  setPrevRooms(roomNames);
+
+  if (userTags.length == 3) {
+    // Get the sorted rooms
+    const sortedRooms = sortRoomsByTags(roomNames);
+    setRoomNames(sortedRooms);
+    return;
+  } 
+  else if (userTags.length == 2) {
+
+    // Filtering for recommended rooms
+    if (userTags.includes("zanyShenanigans")) {
+      recommendedRooms = zanyRooms;
+    }
+    if (userTags.includes("closeCommunity")) {
+      if (recommendedRooms.length > 0) {
+        recommendedRooms.push(...closeRooms);
+        const sortedRooms = sortRoomsByTags(recommendedRooms);
+        const cleanedRooms =  sortedRooms.filter((item, index) => {
+          return sortedRooms.indexOf(item) === index;
+        });
+        setRoomNames(cleanedRooms);
+        return;
+      } else {
+        recommendedRooms = closeRooms
+      }
+    }
+    if (userTags.includes("familyFriendly")) {
+      recommendedRooms.push(...familyRooms);
+      const sortedRooms = sortRoomsByTags(recommendedRooms);
+      const cleanedRooms =  sortedRooms.filter((item, index) => {
+        return sortedRooms.indexOf(item) === index;
+      });
+      setRoomNames(cleanedRooms);
+      return;
+    }
+  }
+  else if (userTags.length == 1) {
+    // Filtering for recommended rooms
+    if (userTags.includes("zanyShenanigans")) {
+      recommendedRooms = zanyRooms;
+    }
+    else if (userTags.includes("closeCommunity")) {
+        recommendedRooms = closeRooms
+    }
+    else if (userTags.includes("familyFriendly")) {
+      recommendedRooms = familyRooms
+    }
+    setRoomNames(recommendedRooms);
+    return;
+  }
+  else {
+    Alert.alert("Apply Tags to Your Profile For Room Recommendations");
+    setIsButtonPressed((prev) => !prev);
+    return;
+  }
+
+  // Filtering for recommended rooms
+  if (userTags.includes("zanyShenanigans")) {
+    recommendedRooms = zanyRooms;
+  }
+  if (userTags.includes("closeCommunity")) {
+    if (recommendedRooms.length > 0) {
+      recommendedRooms = intersection(recommendedRooms, closeRooms);
+    } else {
+      recommendedRooms = closeRooms
+    }
+  }
+  if (userTags.includes("familyFriendly")) {
+    if (recommendedRooms.length > 0) {
+      recommendedRooms = intersection(recommendedRooms, familyRooms);
+    } else {
+      recommendedRooms = familyRooms
+    }
+  }
+
+  
+
+
+};
+
 
 
   return (
