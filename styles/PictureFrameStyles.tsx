@@ -70,4 +70,21 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 2,
   },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginVertical: 5,
+    width: "90%",
+  },
+  invalidInput: {
+    borderColor: "red",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: -5,
+    marginBottom: 10,
+  },
 });

@@ -1,8 +1,8 @@
 // components/ProfileMenu.tsx
 import React, { useCallback, useEffect, useState } from "react";
-import { Sheet, Button, XStack, YStack, Switch, Label } from "tamagui";
+import { Sheet, Button, XStack, YStack, Switch, Label, Dialog, Input } from "tamagui";
 import { Menu, Tags, Volume2, Music } from "@tamagui/lucide-icons";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "firebaseConfig";
 
 interface ProfileMenuProps {
@@ -11,6 +11,7 @@ interface ProfileMenuProps {
   onAddTags: () => void;
   muteSfx: boolean;
   muteMusic: boolean;
+  onChangeUsername: () => void;
 }
 // ProfileMenu.tsx
 export const ProfileMenu: React.FC<ProfileMenuProps> = ({
@@ -19,7 +20,11 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   onAddTags,
   muteSfx,
   muteMusic,
+  onChangeUsername,
 }) => {
+
+  const [newUsername, setNewUsername] = useState("");
+  const [showChangeUsernameDialog, setShowChangeUsernameDialog] = useState(false);
   const handleMuteChange = async (type: "sfx" | "music", isChecked: boolean) => {
     if (!auth.currentUser) return;
 
@@ -30,6 +35,33 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       await updateDoc(userRef, updateData);
     } catch (error) {
       console.error("Error updating mute settings:", error);
+    }
+  };
+
+  const NAME_REGEX = /^[a-zA-Z0-9_]+$/; // Define the regex for valid usernames
+  const handleChangeUsername = async () => {
+    if (newUsername.trim() === "") {
+      alert("Username cannot be empty.");
+      return;
+    } else if (!NAME_REGEX.test(newUsername)) {
+      alert("Username can only contain letters, numbers, and underscores.");
+      return;
+    }
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = doc(db, "Users", user.uid);
+        await setDoc(userRef, { displayName: newUsername }, { merge: true });
+        alert("Username updated successfully!");
+      } else {
+        alert("No user is signed in.");
+      }
+    } catch (error) {
+      console.error("Error updating username:", error);
+      alert("Failed to update username. Please try again.");
+    } finally {
+      setShowChangeUsernameDialog(false);
+      setNewUsername("");
     }
   };
 
@@ -52,7 +84,38 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
           >
             Add Tags
           </Button>
-
+          <Button
+            onPress={() => setShowChangeUsernameDialog(true)}
+            theme="blue"
+          >
+            Change Username
+          </Button>
+          <Dialog open={showChangeUsernameDialog} onOpenChange={setShowChangeUsernameDialog}>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content
+            bordered
+            elevate
+            gap="$4"
+          >
+            <Dialog.Title>Change Username</Dialog.Title>
+            <Dialog.Description>Enter your new username:</Dialog.Description>
+            <Input
+              value={newUsername}
+              onChangeText={setNewUsername}
+              placeholder="New Username"
+            />
+            <XStack gap="$3" justifyContent="flex-end">
+              <Dialog.Close asChild>
+                <Button theme="alt1">Cancel</Button>
+              </Dialog.Close>
+              <Button theme="blue" onPress={handleChangeUsername}>
+                Change Username
+              </Button>
+            </XStack>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
           <XStack alignItems="center" justifyContent="space-between">
             <XStack space="$2" alignItems="center">
               <Volume2 size={20} />
@@ -83,5 +146,6 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
         </YStack>
       </Sheet.Frame>
     </Sheet>
+    
   );
 };
