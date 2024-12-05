@@ -69,7 +69,7 @@ const HomeScreen = () => {
                 name: roomData.name,
                 isAdmin: isAdmin,
                 tags: roomData.tags || [],
-                isPublic: roomData.isPublic
+                isPublic: roomData.isPublic,
                 color: roomData.color,
               };
             }
