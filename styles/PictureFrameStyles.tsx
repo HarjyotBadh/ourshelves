@@ -1,8 +1,6 @@
 import { StyleSheet } from "react-native";
 import { styled, View } from "tamagui";
 
-export const FRAME_HEIGHT = 100;
-
 export const PictureFrameView = styled(View, {
   width: "95%",
   backgroundColor: "#DEB887",
@@ -12,7 +10,6 @@ export const PictureFrameView = styled(View, {
   justifyContent: "center",
   padding: 20,
   overflow: "hidden",
-  height: FRAME_HEIGHT,
 });
 
 export const ImageContainer = styled(View, {
@@ -72,22 +69,5 @@ export const styles = StyleSheet.create({
     color: "#888",
     textAlign: "center",
     marginTop: 2,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 5,
-    width: "90%",
-  },
-  invalidInput: {
-    borderColor: "red",
-  },
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginTop: -5,
-    marginBottom: 10,
   },
 });
