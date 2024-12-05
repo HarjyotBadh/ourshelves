@@ -76,7 +76,7 @@ const showAlert = (messages) => {
   const messageString = messages.join('\n'); // Joining with newlines for better readability
 
   Alert.alert(
-    roomPage!.roomName + "'s Tags" || "Room Tags", // Title of the alert
+    roomPage!.roomName + ": Tags" || "Room Tags", // Title of the alert
     messageString, // The stringified message
     [
       { text: 'OK', onPress: () => console.log('OK Pressed') }
@@ -104,7 +104,7 @@ const showAlert = (messages) => {
                 tags: roomPageData?.tags || [],
             });
 
-            // Fetch tags
+          // Fetch tags
           const tagNames: string[] = [];
           for (const ref of roomPageData?.tags) {
             const tagDoc = await getDoc(ref);
