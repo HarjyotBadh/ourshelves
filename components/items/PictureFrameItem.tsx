@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Modal, View } from "react-native";
+import { Modal, View, Alert, TextInput } from "react-native";
 import { YStack, Button, Image, Text } from "tamagui";
 import * as ImagePicker from "expo-image-picker";
 import { ToastViewport, useToastController } from "@tamagui/toast";
@@ -59,6 +59,8 @@ const PictureFrameItem: PictureFrameItemComponent = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const toast = useToastController();
   const isOwner = itemData.placedUserId === auth.currentUser?.uid;
+  const [location, setLocation] = useState<string>(itemData.location || "");
+  const [isLocationValid, setIsLocationValid] = useState<boolean>(true);
 
   useEffect(() => {
     if (isActive && !dialogOpen) {
@@ -104,6 +106,44 @@ const PictureFrameItem: PictureFrameItemComponent = ({
       setIsUploading(false);
     }
   };
+
+  const validateLocation = (location: string): boolean => {
+    // Example: Ensure location is not empty and contains only letters and spaces
+    const locationRegex = /^[a-zA-Z\s,]+$/;
+    return locationRegex.test(location.trim());
+  }; 
+
+  const onUploadImage = async () => {
+    if (!imageUri) {
+      Alert.alert("No image selected!");
+      return;
+    }
+
+    if (!validateLocation(location)) {
+      setIsLocationValid(false); // Explicitly mark location as invalid
+      Alert.alert("Invalid location! Please enter a valid location.");
+      return;
+    }
+
+    setIsLocationValid(true); // Mark as valid if this point is reached
+
+    try {
+      const uploadedImageUri = await uploadImage(imageUri);
+      const updatedData = { ...itemData, imageUri: uploadedImageUri, location };
+      onDataUpdate(updatedData);
+      Alert.alert("Image uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Failed to upload image. Please try again.");
+    }
+  };
+
+  const handleLocationChange = (text: string) => {
+    setLocation(text);
+    setIsLocationValid(validateLocation(text)); // Update validity state in real-time
+  };
+
+
 
   const pickImage = async () => {
     try {
@@ -217,7 +257,15 @@ const PictureFrameItem: PictureFrameItemComponent = ({
               <Text style={styles.noImageText}>No image uploaded yet.</Text>
             )}
           </ImageContainer>
-
+          <TextInput
+        style={[styles.textInput, !isLocationValid && styles.invalidInput]}
+        placeholder="Enter location (e.g., City, Country)"
+        value={location}
+        onChangeText={handleLocationChange}
+      />
+      {!isLocationValid && (
+        <Text style={styles.errorText}>Please enter a valid location.</Text>
+      )}
           <ButtonContainer>
             {isOwner && (
               <>
