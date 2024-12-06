@@ -89,6 +89,7 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
 
+
   const filteredUsers = users.filter((user) =>
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -98,15 +99,23 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
     setConfirmationOpen(true);
   };
 
+  const confirmRemoveUser = () => {
+    if (userToRemove) {
+      onRemoveUser(userToRemove.id);
+    }
+    setConfirmationOpen(false);
+    setUserToRemove(null);
+  };
+
   const handlePromoteUser = async (roomId: string, userIdToPromote: string) => {
     const auth = getAuth();
     const user = auth.currentUser;
-  
+
     if (!user) {
       alert('You must be logged in to promote a user.');
       return;
     }
-  
+
     try {
       // Step 1: Check if the current user is an admin of the room
       const db = getFirestore(getApp());
@@ -118,7 +127,7 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
         alert('Room does not exist.');
         return;
       }
-  
+
       const roomData = roomDoc.data();
       const admins = roomData?.admins || [];
       const userRef = doc(db, "Users", userIdToPromote);
@@ -135,14 +144,6 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
       console.error('Error promoting user:', error);
       alert('There was an error promoting the user.');
     }
-  };
-
-  const confirmRemoveUser = () => {
-    if (userToRemove) {
-      onRemoveUser(userToRemove.id);
-    }
-    setConfirmationOpen(false);
-    setUserToRemove(null);
   };
 
   const handlePersonalShelvesChange = (value: boolean) => {
@@ -284,7 +285,6 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
                       </StyledAccordionTrigger>
                       <StyledAccordionContent>{renderUserList()}</StyledAccordionContent>
                     </StyledAccordionItem>
-
                     <StyledAccordionItem value="promotions">
   <StyledAccordionTrigger>
     {({ open }) => (
@@ -333,8 +333,6 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
     </YStack>
   </StyledAccordionContent>
 </StyledAccordionItem>
-
-
                     <StyledAccordionItem value="settings">
                       <StyledAccordionTrigger>
                         {({ open }) => (

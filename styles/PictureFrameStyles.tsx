@@ -1,8 +1,6 @@
 import { StyleSheet } from "react-native";
 import { styled, View } from "tamagui";
 
-export const FRAME_HEIGHT = 100;
-
 export const PictureFrameView = styled(View, {
   width: "95%",
   backgroundColor: "#DEB887",
@@ -12,7 +10,6 @@ export const PictureFrameView = styled(View, {
   justifyContent: "center",
   padding: 20,
   overflow: "hidden",
-  height: FRAME_HEIGHT,
 });
 
 export const ImageContainer = styled(View, {

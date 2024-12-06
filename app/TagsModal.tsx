@@ -13,7 +13,7 @@ const TagsModal: React.FC<TagsModalProps> = ({ visible, onClose, tags }) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.title}>User Tags:</Text>
-          <Text>{tags.join(', ') || 'No tags available'}</Text>
+          <Text>{tags[0] || 'No tags available'}</Text>
           <Button title="Close" onPress={onClose} />
         </View>
       </View>

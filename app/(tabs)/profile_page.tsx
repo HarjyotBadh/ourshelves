@@ -19,19 +19,18 @@ import {
   Spinner,
   XStack,
   YStack,
-  SizableText, 
+  SizableText,
   Dialog,
   Sheet,
   Label,
   Switch,
   Checkbox,
-  Input,
 } from "tamagui";
 import type { CheckboxProps } from "tamagui";
 import {
   doc,
   getDoc,
-  deleteDoc, setDoc,
+  deleteDoc,
   updateDoc,
   onSnapshot,
 } from "firebase/firestore";
@@ -109,7 +108,6 @@ export function CheckboxWithLabel({
   );
 }
 
-
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [profilePage, setProfilePage] = useState<ProfilePage | null>(null);
@@ -125,7 +123,6 @@ export default function ProfilePage() {
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [showAddTagsDialog, setShowAddTagsDialog] = useState(false);
   const router = useRouter();
-
   const [checkedTags, setCheckedTags] = useState({
     closeCommunity: false,
     zanyShenanigans: false,
@@ -210,7 +207,7 @@ export default function ProfilePage() {
       );
     }
   };
-  
+
   const handleDeleteAccount = async () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -323,23 +320,24 @@ export default function ProfilePage() {
         }}
       />
       <ProfileMenu
-        open={isMenuOpen}
-        onOpenChange={handleMenuChange}
-        onAddTags={() => {
-          setShowAddTagsDialog(true);
-          setIsMenuOpen(false);
-        }}
-        muteSfx={profilePage?.muteSfx ?? false}
-        muteMusic={profilePage?.muteMusic ?? false}
-        onChangeUsername={() => {
-          // Handle username change
-        }}
-      />
+      open={isMenuOpen}
+      onOpenChange={handleMenuChange}
+      onAddTags={() => {
+        setShowAddTagsDialog(true);
+        setIsMenuOpen(false);
+      }}
+      muteSfx={profilePage?.muteSfx ?? false}
+      muteMusic={profilePage?.muteMusic ?? false}
+    />
 
       <Dialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
         <Dialog.Portal>
           <Dialog.Overlay
             key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
           />
           <Dialog.Content
             bordered
@@ -379,6 +377,10 @@ export default function ProfilePage() {
         <Dialog.Portal>
           <Dialog.Overlay
             key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
           />
           <Dialog.Content
             bordered

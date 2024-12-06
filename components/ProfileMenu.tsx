@@ -22,9 +22,9 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   muteMusic,
   onChangeUsername,
 }) => {
+
   const [newUsername, setNewUsername] = useState("");
   const [showChangeUsernameDialog, setShowChangeUsernameDialog] = useState(false);
-
   const handleMuteChange = async (type: "sfx" | "music", isChecked: boolean) => {
     if (!auth.currentUser) return;
 
@@ -39,7 +39,6 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   };
 
   const NAME_REGEX = /^[a-zA-Z0-9_]+$/; // Define the regex for valid usernames
-
   const handleChangeUsername = async () => {
     if (newUsername.trim() === "") {
       alert("Username cannot be empty.");
@@ -48,7 +47,6 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       alert("Username can only contain letters, numbers, and underscores.");
       return;
     }
-
     try {
       const user = auth.currentUser;
       if (user) {
@@ -86,14 +84,38 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
           >
             Add Tags
           </Button>
-          
           <Button
             onPress={() => setShowChangeUsernameDialog(true)}
             theme="blue"
           >
             Change Username
           </Button>
-          
+          <Dialog open={showChangeUsernameDialog} onOpenChange={setShowChangeUsernameDialog}>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content
+            bordered
+            elevate
+            gap="$4"
+          >
+            <Dialog.Title>Change Username</Dialog.Title>
+            <Dialog.Description>Enter your new username:</Dialog.Description>
+            <Input
+              value={newUsername}
+              onChangeText={setNewUsername}
+              placeholder="New Username"
+            />
+            <XStack gap="$3" justifyContent="flex-end">
+              <Dialog.Close asChild>
+                <Button theme="alt1">Cancel</Button>
+              </Dialog.Close>
+              <Button theme="blue" onPress={handleChangeUsername}>
+                Change Username
+              </Button>
+            </XStack>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
           <XStack alignItems="center" justifyContent="space-between">
             <XStack space="$2" alignItems="center">
               <Volume2 size={20} />
@@ -123,33 +145,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
           </XStack>
         </YStack>
       </Sheet.Frame>
-
-      <Dialog open={showChangeUsernameDialog} onOpenChange={setShowChangeUsernameDialog}>
-        <Dialog.Portal>
-          <Dialog.Overlay />
-          <Dialog.Content
-            bordered
-            elevate
-            gap="$4"
-          >
-            <Dialog.Title>Change Username</Dialog.Title>
-            <Dialog.Description>Enter your new username:</Dialog.Description>
-            <Input
-              value={newUsername}
-              onChangeText={setNewUsername}
-              placeholder="New Username"
-            />
-            <XStack gap="$3" justifyContent="flex-end">
-              <Dialog.Close asChild>
-                <Button theme="alt1">Cancel</Button>
-              </Dialog.Close>
-              <Button theme="blue" onPress={handleChangeUsername}>
-                Change Username
-              </Button>
-            </XStack>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog>
     </Sheet>
+    
   );
 };

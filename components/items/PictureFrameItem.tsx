@@ -58,9 +58,9 @@ const PictureFrameItem: PictureFrameItemComponent = ({
   const [isUploading, setIsUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const toast = useToastController();
+  const isOwner = itemData.placedUserId === auth.currentUser?.uid;
   const [location, setLocation] = useState<string>(itemData.location || "");
   const [isLocationValid, setIsLocationValid] = useState<boolean>(true);
-  const isOwner = itemData.placedUserId === auth.currentUser?.uid;
 
   useEffect(() => {
     if (isActive && !dialogOpen) {
@@ -112,7 +112,39 @@ const PictureFrameItem: PictureFrameItemComponent = ({
     const locationRegex = /^[a-zA-Z\s,]+$/;
     return locationRegex.test(location.trim());
   }; 
-    
+
+  const onUploadImage = async () => {
+    if (!imageUri) {
+      Alert.alert("No image selected!");
+      return;
+    }
+
+    if (!validateLocation(location)) {
+      setIsLocationValid(false); // Explicitly mark location as invalid
+      Alert.alert("Invalid location! Please enter a valid location.");
+      return;
+    }
+
+    setIsLocationValid(true); // Mark as valid if this point is reached
+
+    try {
+      const uploadedImageUri = await uploadImage(imageUri);
+      const updatedData = { ...itemData, imageUri: uploadedImageUri, location };
+      onDataUpdate(updatedData);
+      Alert.alert("Image uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Failed to upload image. Please try again.");
+    }
+  };
+
+  const handleLocationChange = (text: string) => {
+    setLocation(text);
+    setIsLocationValid(validateLocation(text)); // Update validity state in real-time
+  };
+
+
+
   const pickImage = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -141,38 +173,6 @@ const PictureFrameItem: PictureFrameItemComponent = ({
       });
     }
   };
-
-  
-  const onUploadImage = async () => {
-    if (!imageUri) {
-      Alert.alert("No image selected!");
-      return;
-    }
-  
-    if (!validateLocation(location)) {
-      setIsLocationValid(false); // Explicitly mark location as invalid
-      Alert.alert("Invalid location! Please enter a valid location.");
-      return;
-    }
-  
-    setIsLocationValid(true); // Mark as valid if this point is reached
-  
-    try {
-      const uploadedImageUri = await uploadImage(imageUri);
-      const updatedData = { ...itemData, imageUri: uploadedImageUri, location };
-      onDataUpdate(updatedData);
-      Alert.alert("Image uploaded successfully!");
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      Alert.alert("Failed to upload image. Please try again.");
-    }
-  };
-  
-  const handleLocationChange = (text: string) => {
-    setLocation(text);
-    setIsLocationValid(validateLocation(text)); // Update validity state in real-time
-  };
-  
 
   const handleClose = useCallback(async () => {
     try {
@@ -266,7 +266,6 @@ const PictureFrameItem: PictureFrameItemComponent = ({
       {!isLocationValid && (
         <Text style={styles.errorText}>Please enter a valid location.</Text>
       )}
-
           <ButtonContainer>
             {isOwner && (
               <>
