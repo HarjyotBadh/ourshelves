@@ -247,20 +247,6 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
     );
   }, []);
 
-  const handleQuickHatch = async () => {
-    const newData = {
-      ...itemData,
-      interactionCount: 7,
-      hatched: true,
-      nextInteractionTime: Timestamp.now().toDate(),
-    };
-    const pokemon = await generatePokemon();
-    if (pokemon) {
-      newData.pokemon = pokemon;
-    }
-    onDataUpdate(newData);
-  };
-
   return (
     <DialogContainer>
       <ContentContainer>
@@ -292,10 +278,7 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
           />
         </YStack>
 
-        <InteractionButton
-          onPress={handleInteraction}
-          disabled={!isInteractionAvailable()}
-        >
+        <InteractionButton onPress={handleInteraction} disabled={!isInteractionAvailable()}>
           <YStack alignItems="center">
             <Text color="white" fontSize={20} fontWeight="bold">
               Take care of the egg
@@ -306,22 +289,8 @@ const PokeEggDialog: React.FC<PokeEggDialogProps> = ({ itemData, onDataUpdate, o
           </YStack>
         </InteractionButton>
 
-        <Button
-          onPress={handleQuickHatch}
-          backgroundColor="#D2691E"
-          color="white"
-          marginTop="$4"
-        >
-          Quick Hatch (Test)
-        </Button>
-
         <Dialog.Close asChild>
-          <Button
-            onPress={onClose}
-            backgroundColor="#CD853F"
-            color="white"
-            marginTop="$4"
-          >
+          <Button onPress={onClose} backgroundColor="#CD853F" color="white" marginTop="$4">
             Close
           </Button>
         </Dialog.Close>

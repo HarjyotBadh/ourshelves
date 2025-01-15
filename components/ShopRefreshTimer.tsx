@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Text, XStack, Button, YStack } from 'tamagui';
+import React, { useState, useEffect } from "react";
+import { Text, XStack, Button, YStack } from "tamagui";
 
 interface ShopRefreshTimerProps {
   nextRefreshTime: Date;
-  isDemoMode: boolean;
-  demoRefreshTime: number | null;
   onManualRefresh: () => void;
-  onDemoRefresh: () => void;
 }
 
 const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
   nextRefreshTime,
-  isDemoMode,
-  demoRefreshTime,
   onManualRefresh,
-  onDemoRefresh
 }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
 
@@ -45,35 +39,18 @@ const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
       <Text fontSize="$4" textAlign="center" marginTop="$4">
         Next Refresh In:
       </Text>
-      <Text
-        fontSize="$5"
-        fontWeight="bold"
-        textAlign="center"
-        marginBottom="$4"
-      >
-        {isDemoMode ? `Demo: ${formatTime(demoRefreshTime || 0)}` : formatTime(timeRemaining)}
+      <Text fontSize="$5" fontWeight="bold" textAlign="center" marginBottom="$4">
+        {formatTime(timeRemaining)}
       </Text>
-      <XStack justifyContent="space-between" marginTop="$4">
+      <XStack justifyContent="center" marginTop="$4">
         <Button
           onPress={onManualRefresh}
           backgroundColor="$orange8"
           color="$white"
           fontSize="$3"
           flex={1}
-          marginRight="$2"
         >
           Refresh Shop
-        </Button>
-        <Button
-          onPress={onDemoRefresh}
-          backgroundColor="$purple8"
-          color="$white"
-          fontSize="$3"
-          flex={1}
-          marginLeft="$2"
-          disabled={demoRefreshTime !== null}
-        >
-          Demo Refresh (10s)
         </Button>
       </XStack>
     </YStack>
