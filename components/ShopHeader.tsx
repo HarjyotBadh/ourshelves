@@ -34,7 +34,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({ coins, onEarnCoins, onLoseCoins
         <Text fontSize="$4" fontWeight="bold">
           🪙 {coins}
         </Text>
-        <Button
+        {/* <Button
           onPress={onLoseCoins}
           backgroundColor="$red8"
           color="$white"
@@ -53,7 +53,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({ coins, onEarnCoins, onLoseCoins
           paddingVertical="$1"
         >
           +50 Coins (Test)
-        </Button>
+        </Button> */}
       </XStack>
     </>
   );
