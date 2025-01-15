@@ -2,14 +2,8 @@ import {
     doc,
     getDoc,
     updateDoc,
-    collection,
-    addDoc,
-    getDocs,
-    deleteDoc,
-    arrayRemove,
 } from "firebase/firestore";
 import { db, auth } from "firebaseConfig";
-import { ShelfData } from "../models/RoomData";
 
 export const blockUser = async (blockedUserId: string): Promise<{ success: boolean; message: string }> => {
     const userId = auth.currentUser.uid;
@@ -18,6 +12,8 @@ export const blockUser = async (blockedUserId: string): Promise<{ success: boole
     try {
         const userDocRef = doc(db, "Users", userId);
         const userDoc = await getDoc(userDocRef);
+
+        console.log(auth.currentUser.uid);
 
         if (userDoc.exists()) {
             // remove the blockedUserId from the user's "blockedUsers" list

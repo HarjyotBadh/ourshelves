@@ -1,19 +1,18 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Dialog, Button, XStack, YStack, Text, View, styled, SelectSeparator } from 'tamagui';
-import { Animated } from 'react-native';
-import { SlotMachineSlotIcon } from 'components/SlotMachineItem/SlotMachineSlotIcon'; // Adjust the import path as necessary
-import { earnCoins, loseCoins } from 'project-functions/shopFunctions';
+import React, { useRef, useEffect, useState } from "react";
+import { Dialog, Button, XStack, YStack, Text, View, styled, SelectSeparator } from "tamagui";
+import { Animated } from "react-native";
+import { SlotMachineSlotIcon } from "components/SlotMachineItem/SlotMachineSlotIcon"; // Adjust the import path as necessary
+import { earnCoins, loseCoins } from "project-functions/shopFunctions";
 import { auth, db } from "../../firebaseConfig";
-import { doc, getDoc } from 'firebase/firestore';
-import { UserData } from 'models/UserData';
-
+import { doc, getDoc } from "firebase/firestore";
+import { UserData } from "models/UserData";
 
 const slotOptions = [
-    { symbol: "apple", weight: 5, reward: 5 },
-    { symbol: "banana", weight: 4, reward: 10 },
-    { symbol: "ham", weight: 3, reward: 20 },
+    { symbol: "apple", weight: 500000, reward: 20 },
+    { symbol: "banana", weight: 4, reward: 30 },
+    { symbol: "ham", weight: 3, reward: 40 },
     { symbol: "cherry", weight: 2, reward: 50 },
-    { symbol: "seven", weight: 1, reward: 777 }
+    { symbol: "seven", weight: 1, reward: 777 },
 ];
 
 const getRandomSlotValue = () => {
@@ -36,10 +35,7 @@ interface SlotMachineDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
-export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
-    open,
-    onOpenChange
-}) => {
+export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({ open, onOpenChange }) => {
     const [slotValues, setSlotValues] = useState(["apple", "cherry", "seven"]);
     const [isBreathing, setIsBreathing] = useState(false);
 
@@ -47,9 +43,9 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
         width: 100,
         height: 100,
         borderWidth: 3,
-        borderColor: 'rgba(0,0,0,0.1)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderColor: "rgba(0,0,0,0.1)",
+        justifyContent: "center",
+        alignItems: "center",
     });
 
     // Create animated values for each slot
@@ -69,13 +65,12 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
                     toValue: 0,
                     duration: 200,
                     useNativeDriver: false,
-                })
+                }),
             ])
         );
     };
 
     const onLeverPulled = async () => {
-
         console.log("Pulled lever");
 
         const currentUser = auth.currentUser;
@@ -97,18 +92,13 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
             console.log("User not authenticated");
         }
 
-
         setIsBreathing(true);
-        setSlotValues([
-            getRandomSlotValue(),
-            getRandomSlotValue(),
-            getRandomSlotValue()
-        ]);
+        setSlotValues([getRandomSlotValue(), getRandomSlotValue(), getRandomSlotValue()]);
 
         setTimeout(() => {
             setIsBreathing(false);
         }, 2000);
-    }
+    };
 
     useEffect(() => {
         // Start isBreathing animation only if 'isBreathing' is true
@@ -139,24 +129,25 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
 
     const grantCoins = () => {
         if (slotValues[0] === slotValues[1] && slotValues[1] === slotValues[2]) {
-            const reward = slotOptions.find(option => option.symbol === slotValues[0])?.reward || 0;
+            const reward =
+                slotOptions.find((option) => option.symbol === slotValues[0])?.reward || 0;
             earnCoins(auth.currentUser.uid, reward);
             alert(`Jackpot! All slots show "${slotValues[0]}". You've earned ${reward} coins!`);
         }
-    }
+    };
 
     // Interpolated color values
     const color1 = colorAnim1.interpolate({
         inputRange: [0, 1],
-        outputRange: ['black', 'white']
+        outputRange: ["black", "white"],
     });
     const color2 = colorAnim2.interpolate({
         inputRange: [0, 1],
-        outputRange: ['black', 'white']
+        outputRange: ["black", "white"],
     });
     const color3 = colorAnim3.interpolate({
         inputRange: [0, 1],
-        outputRange: ['black', 'white']
+        outputRange: ["black", "white"],
     });
 
     return (
@@ -168,7 +159,7 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
                     elevate
                     key="content"
                     animation={[
-                        'quick',
+                        "quick",
                         {
                             opacity: {
                                 overshootClamping: true,
@@ -210,7 +201,7 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
                         </XStack>
 
                         <Button onPress={onLeverPulled}>
-                            <Text>Pull Lever (temp)</Text>
+                            <Text>Pull Lever (-10 coins)</Text>
                         </Button>
                     </YStack>
 
@@ -220,7 +211,8 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
                                 onOpenChange(false);
                             }}
                             theme="alt1"
-                            aria-label="Save">
+                            aria-label="Save"
+                        >
                             Close
                         </Button>
                     </Dialog.Close>
@@ -228,5 +220,4 @@ export const SlotMachineDialog: React.FC<SlotMachineDialogProps> = ({
             </Dialog.Portal>
         </Dialog>
     );
-}
-
+};

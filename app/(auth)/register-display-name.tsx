@@ -60,6 +60,7 @@ export default function DisplayNameInputScreen() {
             shelfColors: [],
             wallpapers: [],
             pushToken: pushToken || null, // Store the push token
+            blockedUsers: []
           });
 
           // Update the displayName and photoURL of the current user
