@@ -39,7 +39,7 @@ import items from "../../components/items";
 import { PlacedItemData, ItemData, ShelfData } from "../../models/RoomData";
 import { UserData } from "../../models/UserData";
 import { PurchasedItem } from "models/PurchasedItem";
-import { removeUserFromRoom } from "project-functions/homeFunctions";
+import { changeRoomColor, removeUserFromRoom } from "project-functions/homeFunctions";
 import {
   BACKGROUND_COLOR,
   HEADER_BACKGROUND,
@@ -51,6 +51,7 @@ import {
 } from "../../styles/RoomStyles";
 import { Audio } from "expo-av";
 import { useAudio } from "../../components/AudioContext";
+import { set } from "date-fns";
 
 // ==================================================== //
 
@@ -62,6 +63,7 @@ interface RoomData extends DocumentData {
   shelfList: DocumentReference[];
   hasPersonalShelves: boolean;
   isPublic: boolean;
+  color: string;
 }
 
 const RoomScreen = () => {
@@ -101,6 +103,7 @@ const RoomScreen = () => {
   const [hasPersonalShelf, setHasPersonalShelf] = useState(false);
   const [personalShelfId, setPersonalShelfId] = useState<string | null>(null);
   const [isRemoveShelfDialogOpen, setIsRemoveShelfDialogOpen] = useState(false);
+  const [color, setColor] = useState("#000000");
 
   /**
    * Initializes shelves for a new room.
@@ -206,6 +209,8 @@ const RoomScreen = () => {
           setRoomName(roomData.name);
           setRoomDescription(roomData.description);
           setHasPersonalShelves(roomData.hasPersonalShelves ?? false);
+
+          setColor(roomData.color);
 
           setLoadingProgress(20);
 
@@ -631,6 +636,20 @@ const RoomScreen = () => {
     }
   };
 
+  const handleChangeColor = async (newColor: string) => {
+    if (!roomId) return;
+
+    console.log("change the color to ", newColor);
+    const result = await changeRoomColor(roomId, newColor);
+
+    if (result.success) {
+      setColor(newColor);
+      Alert.alert("Success", "Room color changed successfully");
+    } else {
+      Alert.alert("Error", result.message);
+    }
+  };
+
   const handleShelfNameChange = async (shelfId: string, newName: string) => {
     try {
       await updateDoc(doc(db, "Shelves", shelfId), {
@@ -990,6 +1009,8 @@ const RoomScreen = () => {
           users={users}
           roomDescription={roomDescription}
           onRemoveUser={handleRemoveUser}
+          color={color}
+          onColorChange={handleChangeColor}
           currentUserId={auth.currentUser?.uid || ""}
           hasPersonalShelves={hasPersonalShelves}
           onPersonalShelvesToggle={handlePersonalShelvesToggle}

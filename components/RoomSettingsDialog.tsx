@@ -43,6 +43,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { getApp } from 'firebase/app';
 import { useRouter, useLocalSearchParams } from "expo-router";
+import ColorPickerModal from "./ColorPickerModal";
 
 interface User {
   id: string;
@@ -57,6 +58,8 @@ interface RoomSettingsDialogProps {
   users: User[];
   roomDescription?: string;
   onRemoveUser: (userId: string) => void;
+  color: string;
+  onColorChange: (color: string) => void;
   currentUserId: string;
   hasPersonalShelves: boolean;
   onPersonalShelvesToggle: (value: boolean) => void;
@@ -70,6 +73,8 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   users,
   roomDescription,
   onRemoveUser,
+  color,
+  onColorChange,
   currentUserId,
   hasPersonalShelves,
   onPersonalShelvesToggle,
@@ -82,6 +87,7 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
   const [personalShelvesConfirmOpen, setPersonalShelvesConfirmOpen] = useState(false);
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
+  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
 
 
   const filteredUsers = users.filter((user) =>
@@ -373,6 +379,19 @@ const RoomSettingsDialog: React.FC<RoomSettingsDialogProps> = ({
                                   Reorder
                                 </Button>
                               </XStack>
+
+                              <XStack margin="$2" gap="$4" justifyContent="center" alignItems="center">
+                          <ColorPickerModal
+                            isVisible={isColorPickerVisible}
+                            onClose={() => setIsColorPickerVisible(false)}
+                            onColorSelected={onColorChange}
+                            initialColor={color}
+                          />
+                        </XStack>
+                        <Button onPress={() => setIsColorPickerVisible(true)}>
+                          <Text>Set Room Color</Text>
+                        </Button>
+                        
                             </>
                           )}
                         </YStack>

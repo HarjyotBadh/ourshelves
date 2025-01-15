@@ -2,7 +2,7 @@ import { StyleSheet, Alert } from "react-native";
 import { View, ScrollView, styled } from "tamagui";
 import HomeTile from "../../components/HomeTile";
 import CreateHomeTile from "../../components/CreateHomeTile";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import { auth } from "firebaseConfig";
 import {
   getRooms,
@@ -13,7 +13,7 @@ import {
   addTag,
   deleteRoom,
 } from "project-functions/homeFunctions";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { PushTokenContext } from "../_layout";
 import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "firebaseConfig";
@@ -23,6 +23,7 @@ interface RoomData {
   admins: { path: string }[];
   tags?: string[];
   isPublic: boolean;
+  color: string;
 }
 
 interface Room {
@@ -31,6 +32,7 @@ interface Room {
   isAdmin: boolean;
   tags: string[];
   isPublic: boolean;
+  color: string;
 }
 
 const HomeScreen = () => {
@@ -67,7 +69,8 @@ const HomeScreen = () => {
                 name: roomData.name,
                 isAdmin: isAdmin,
                 tags: roomData.tags || [],
-                isPublic: roomData.isPublic
+                isPublic: roomData.isPublic,
+                color: roomData.color,
               };
             }
             return null;
@@ -88,7 +91,7 @@ const HomeScreen = () => {
     if (result.success) {
       setRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
 
-      Alert.alert("Room Left", `Left room "${roomName}".`);
+      Alert.alert("Room Left", `Left room  "${roomName}".`);
     } else {
       Alert.alert("Error", `${result.message}`);
     }
@@ -145,25 +148,27 @@ const HomeScreen = () => {
     });
   };
 
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+  useFocusEffect(
+    useCallback(() => {
+      let unsubscribe: (() => void) | undefined;
 
-    if (auth.currentUser) {
-      unsubscribe = homeSetRooms();
+      if (auth.currentUser) {
+        unsubscribe = homeSetRooms();
 
-      getTags().then((result) => {
-        setTagsList(result.tagNames);
-        setTagIdsList(result.tagIds);
-      });
-    }
-
-    // Cleanup function
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+        getTags().then((result) => {
+          setTagsList(result.tagNames);
+          setTagIdsList(result.tagIds);
+        });
       }
-    };
-  }, []);
+
+      // Cleanup function
+      return () => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (pushToken) {
@@ -189,6 +194,7 @@ const HomeScreen = () => {
             isPublic={room.isPublic}
             tagsList={tagsList}
             tagIdsList={tagIdsList}
+            color={room.color}
             enterRoom={enterRoom}
             homeLeaveRoom={homeLeaveRoom}
             homeAddTag={homeAddTag}

@@ -243,6 +243,7 @@ export const createRoom = async (
         users: [userRef],
         admins: [userRef],
         tags: [],
+        color: "#ff0000",
       });
 
       const userRooms = userDoc.data().rooms || [];
@@ -433,3 +434,17 @@ export const sendRoomInvite = async (
     return { success: false, message: "Failed to send invitation" };
   }
 };
+
+
+export const changeRoomColor = async (
+  roomId: string,
+  color: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const roomRef = doc(db, "Rooms", roomId);
+    await updateDoc(roomRef, { color });
+    return { success: true, message: "Room color updated successfully" };
+  } catch (error) {
+    return { success: false, message: "Failed to update room color" };
+  }
+}

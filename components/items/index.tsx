@@ -21,6 +21,7 @@ const items = {
   WN3gKAlxR2ImFMGh4Iop: lazy(() => import("./NoteBoxItem")),
   "3u3CsWfAQUXUxSBFqJ1u": lazy(() => import("./VotingBoxItem")),
   rc2IU3ypGty77bBsRkln: lazy(() => import("./EventPlannerItem")),
+  k4PB2IbThIziVaVtFMhQ: lazy(() => import('./SlotMachineItem')),
   // Add new items here, for example:
   // '{ID of item from Firestore (in the Items collection) }': lazy(() => import('./{Name of file}')),
 };
