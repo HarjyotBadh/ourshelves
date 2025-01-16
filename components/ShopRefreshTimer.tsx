@@ -42,7 +42,7 @@ const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
       <Text fontSize="$5" fontWeight="bold" textAlign="center" marginBottom="$4">
         {formatTime(timeRemaining)}
       </Text>
-      <XStack justifyContent="center" marginTop="$4">
+      {/* <XStack justifyContent="center" marginTop="$4">
         <Button
           onPress={onManualRefresh}
           backgroundColor="$orange8"
@@ -52,7 +52,7 @@ const ShopRefreshTimer: React.FC<ShopRefreshTimerProps> = ({
         >
           Refresh Shop
         </Button>
-      </XStack>
+      </XStack> */}
     </YStack>
   );
 };
