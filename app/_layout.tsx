@@ -98,25 +98,19 @@ export default function RootLayout() {
   const responseListener = useRef<Notifications.Subscription>();
   const router = useRouter();
 
-  // Move auth state listener to top of useEffect hooks
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsUserAuthenticated(!!user);
 
-      try {
-        if (user) {
-          if (!user.displayName) {
-            router.replace("/register-display-name");
-          } else {
-            router.replace("/(tabs)");
-          }
+      if (user) {
+        // User is signed in
+        if (!user.displayName) {
+          router.replace("/register-display-name");
         } else {
-          // User is signed out
-          router.replace("/(auth)/login");
+          router.replace("/(tabs)");
         }
-      } catch (error) {
-        console.error("Navigation error:", error);
-        // Force navigation to login as fallback
+      } else {
+        // User is signed out - ensure they can only access auth screens
         router.replace("/(auth)/login");
       }
     });
@@ -166,6 +160,15 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const [expoPushToken] = useState("");
+  const router = useRouter();
+  const isAuthenticated = auth.currentUser !== null;
+
+  // Prevent access to protected routes when not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/(auth)/login");
+    }
+  }, [isAuthenticated]);
 
   return (
     <TamaguiProvider config={config}>
