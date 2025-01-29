@@ -15,6 +15,7 @@ import config from "tamagui.config";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 LogBox.ignoreLogs([
   /Warning:.*Support for defaultProps will be removed from function components in a future major release\. Use JavaScript default parameters instead\./,
@@ -169,6 +170,7 @@ function RootLayoutNav() {
 
   return (
     <TamaguiProvider config={config}>
+      <SafeAreaProvider>
       <ToastProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <PushTokenContext.Provider value={expoPushToken}>
@@ -217,6 +219,7 @@ function RootLayoutNav() {
           </PushTokenContext.Provider>
         </GestureHandlerRootView>
       </ToastProvider>
+      </SafeAreaProvider>
     </TamaguiProvider>
   );
 }
