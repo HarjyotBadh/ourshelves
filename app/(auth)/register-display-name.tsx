@@ -56,7 +56,7 @@ export default function DisplayNameInputScreen() {
             rooms: [],
             inventory: [],
             lastDailyGiftClaim: Timestamp.fromDate(oneWeekAgo),
-            coins: 100,
+            coins: 1000,
             shelfColors: [],
             wallpapers: [],
             pushToken: pushToken || null, // Store the push token

@@ -427,34 +427,6 @@ const CalendarItem: CalendarItemComponent = ({
                 Add Event
               </Button>
             </XStack>
-            <XStack space justifyContent="center" marginVertical="$4">
-              <Button
-                onPress={() => {
-                  const newDate = addDays(currentDate, -1);
-                  setCurrentDate(newDate);
-                  onDataUpdate({
-                    ...itemData,
-                    currentDate: newDate.toISOString(),
-                  });
-                }}
-                backgroundColor="$blue10"
-              >
-                Previous Day (Dev)
-              </Button>
-              <Button
-                onPress={() => {
-                  const newDate = addDays(currentDate, 1);
-                  setCurrentDate(newDate);
-                  onDataUpdate({
-                    ...itemData,
-                    currentDate: newDate.toISOString(),
-                  });
-                }}
-                backgroundColor="$blue10"
-              >
-                Next Day (Dev)
-              </Button>
-            </XStack>
             <Button theme="red" onPress={handleCloseModal} marginBottom="$4">
               Close
             </Button>

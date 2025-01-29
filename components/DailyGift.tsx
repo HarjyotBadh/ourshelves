@@ -62,12 +62,12 @@ const DailyGift: React.FC<DailyGiftProps> = ({
     if (!user || !canClaim || !shopMetadata) return;
 
     const now = Timestamp.now();
-    const newCoins = user.coins + 100;
+    const newCoins = user.coins + 200;
     onClaimDailyGift(newCoins, now);
     setCanClaim(false);
     
     toast.show('Daily Gift Claimed!', {
-      message: 'You received 100 coins.',
+      message: 'You received 200 coins.',
       duration: 3000,
     });
   };
