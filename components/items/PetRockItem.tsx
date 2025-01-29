@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Modal, TouchableOpacity, Image, Dimensions } from "react-native";
+import { Modal, TouchableOpacity, Image, Dimensions, SafeAreaView } from "react-native";
 import { View, Button, XStack, YStack, Text } from "tamagui";
 import {
   ChevronLeft,
@@ -331,7 +331,7 @@ const PetRockItem: PetRockItemComponent = ({
       animationType="fade"
       onRequestClose={handleCloseModal}
     >
-      <View style={petRockStyles.modalContainer}>
+      <SafeAreaView style={petRockStyles.modalContainer}>
         <View style={petRockStyles.modalWrapper}>
           <View style={petRockStyles.modalContent}>
             <View style={petRockStyles.canvas}>
@@ -356,7 +356,7 @@ const PetRockItem: PetRockItemComponent = ({
               )}
             </View>
 
-            <YStack space padding="$4">
+            <YStack space padding="$4" style={{ position: 'relative', zIndex: 1 }}>
               {isEditMode ? (
                 <XStack space justifyContent="center" alignItems="center">
                   <TouchableOpacity
@@ -421,9 +421,10 @@ const PetRockItem: PetRockItemComponent = ({
             left: 0,
             right: 0,
             alignItems: "center",
+            zIndex: 2,
           }}
         />
-      </View>
+      </SafeAreaView>
 
       <RockShopModal
         onClose={() => setIsShopModalVisible(false)}
