@@ -10,7 +10,8 @@
     "ios": "expo run:ios",
     "web": "npx expo start --web",
     "test": "jest --watchAll",
-    "build:ios:preview:local": "dotenv -- eas build -p ios --profile preview --local"
+    "build:ios:preview:local": "dotenv -- eas build -p ios --profile preview --local",
+    "build:ios:development:local": "dotenv -- eas build -p ios --profile development --local"
   },
   "jest": {
     "preset": "jest-expo"

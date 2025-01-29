@@ -174,54 +174,54 @@ function RootLayoutNav() {
   return (
     <TamaguiProvider config={config}>
       <SafeAreaProvider>
-      <ToastProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <PushTokenContext.Provider value={expoPushToken}>
-            <Provider>
-              <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                <Stack>
-                  <Stack.Screen
-                    name="(auth)"
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="profile-icons"
-                    options={{
-                      headerShown: true,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="other_user_page"
-                    options={{
-                      headerShown: true,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="(room)"
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="(tutorial)"
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                </Stack>
-              </ThemeProvider>
-            </Provider>
-          </PushTokenContext.Provider>
-        </GestureHandlerRootView>
-      </ToastProvider>
+        <ToastProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <PushTokenContext.Provider value={expoPushToken}>
+              <Provider>
+                <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                  <Stack>
+                    <Stack.Screen
+                      name="(auth)"
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="profile-icons"
+                      options={{
+                        headerShown: true,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="other_user_page"
+                      options={{
+                        headerShown: true,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="(room)"
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="(tutorial)"
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
+                  </Stack>
+                </ThemeProvider>
+              </Provider>
+            </PushTokenContext.Provider>
+          </GestureHandlerRootView>
+        </ToastProvider>
       </SafeAreaProvider>
     </TamaguiProvider>
   );
