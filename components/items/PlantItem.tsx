@@ -209,12 +209,12 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
   useEffect(() => {
     setGrowthStage(itemData.growthStage || 0);
     setLastWatered(
-      itemData.lastWatered instanceof Timestamp 
+      itemData.lastWatered instanceof Timestamp
         ? itemData.lastWatered
-        // @ts-ignore
-        : itemData.lastWatered instanceof Date
-          ? Timestamp.fromDate(itemData.lastWatered)
-          : Timestamp.fromDate(subDays(new Date(), 1))
+        : // @ts-ignore
+        itemData.lastWatered instanceof Date
+        ? Timestamp.fromDate(itemData.lastWatered)
+        : Timestamp.fromDate(subDays(new Date(), 1))
     );
     setSeedType(itemData.seedType || "sunflower");
     setIsWithered(itemData.isWithered || false);
@@ -321,6 +321,11 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
     handleWater,
   ]);
 
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    onClose();
+  };
+
   const onPanResponderRelease = useCallback(
     (_, gesture) => {
       if (isOverWateringZone(gesture.moveX, gesture.moveY)) {
@@ -353,42 +358,6 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
       }),
     [onPanResponderRelease, pan]
   );
-
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    onClose();
-  };
-
-  const handleTestWater = useCallback(() => {
-    let newGrowthStage = Math.min(growthStage + 10, 100);
-    const newLastWatered = Timestamp.now();
-    setGrowthStage(newGrowthStage);
-    setLastWatered(newLastWatered);
-    setIsWithered(false);
-
-    const updatedData = {
-      ...itemData,
-      growthStage: newGrowthStage,
-      lastWatered: newLastWatered.toDate(),
-      isWithered: false,
-    };
-
-    onDataUpdate(updatedData);
-  }, [growthStage, itemData, onDataUpdate]);
-
-  const handleTestWither = useCallback(() => {
-    const newLastWatered = Timestamp.fromDate(subDays(new Date(), 4)); // Set watering date to 4 days ago
-    setLastWatered(newLastWatered);
-    setIsWithered(true);
-
-    const updatedData = {
-      ...itemData,
-      lastWatered: newLastWatered,
-      isWithered: true,
-    };
-
-    onDataUpdate(updatedData);
-  }, [itemData, onDataUpdate]);
 
   const PlantComponent = plants[seedType] || plants["sunflower"];
 
@@ -461,9 +430,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                   </StyledText>
                   <XStack alignItems="center" gap="$2">
                     <Droplet color="#8B4513" size={24} />
-                    <StyledText fontSize="$4">
-                      Next watering: {timeUntilWatering}
-                    </StyledText>
+                    <StyledText fontSize="$4">Next watering: {timeUntilWatering}</StyledText>
                   </XStack>
                   {growthStage > 0 && (
                     <StyledText fontSize="$3">
@@ -473,9 +440,7 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                 </YStack>
 
                 <YStack alignItems="center" gap="$2">
-                  <StyledText fontSize="$3">
-                    Drag cloud over plant to water
-                  </StyledText>
+                  <StyledText fontSize="$3">Drag cloud over plant to water</StyledText>
                   <Animated.View
                     {...panResponder.panHandlers}
                     style={[styles.wateringCan, { transform: pan.getTranslateTransform() }]}
@@ -484,115 +449,108 @@ const PlantItem: PlantItemComponent = ({ itemData, onDataUpdate, isActive, onClo
                   </Animated.View>
                 </YStack>
 
-                <ActionButton variant="test" onPress={handleTestWater}>
-                  <StyledText color="white">Water (test)</StyledText>
-                </ActionButton>
-                <ActionButton variant="test" onPress={handleTestWither}>
-                  <StyledText color="white">Wither (test)</StyledText>
-                </ActionButton>
-
                 {isWatering && (
-                <>
-                  <Animated.View
-                    style={[
-                      styles.waterDrop,
-                      styles.waterDrop1,
-                      {
-                        opacity: waterDropAnimation1,
-                        transform: [
-                          {
-                            translateY: waterDropAnimation1.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 100],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Droplet size={12} color="$blue9" />
-                  </Animated.View>
-                  <Animated.View
-                    style={[
-                      styles.waterDrop,
-                      styles.waterDrop2,
-                      {
-                        opacity: waterDropAnimation2,
-                        transform: [
-                          {
-                            translateY: waterDropAnimation2.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 120],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Droplet size={10} color="$blue9" />
-                  </Animated.View>
-                  <Animated.View
-                    style={[
-                      styles.waterDrop,
-                      styles.waterDrop3,
-                      {
-                        opacity: waterDropAnimation3,
-                        transform: [
-                          {
-                            translateY: waterDropAnimation3.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 110],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Droplet size={11} color="$blue9" />
-                  </Animated.View>
-                  <Animated.View
-                    style={[
-                      styles.waterDrop,
-                      styles.waterDrop4,
-                      {
-                        opacity: waterDropAnimation4,
-                        transform: [
-                          {
-                            translateY: waterDropAnimation4.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 130],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Droplet size={9} color="$blue9" />
-                  </Animated.View>
-                  <Animated.View
-                    style={[
-                      styles.waterDrop,
-                      styles.waterDrop5,
-                      {
-                        opacity: waterDropAnimation5,
-                        transform: [
-                          {
-                            translateY: waterDropAnimation5.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 115],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Droplet size={10} color="$blue9" />
-                  </Animated.View>
-                  <View style={styles.cloudContainer}>
-                    <Cloud size={60} color="$blue9" />
-                  </View>
-                </>
-              )}
+                  <>
+                    <Animated.View
+                      style={[
+                        styles.waterDrop,
+                        styles.waterDrop1,
+                        {
+                          opacity: waterDropAnimation1,
+                          transform: [
+                            {
+                              translateY: waterDropAnimation1.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 100],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Droplet size={12} color="$blue9" />
+                    </Animated.View>
+                    <Animated.View
+                      style={[
+                        styles.waterDrop,
+                        styles.waterDrop2,
+                        {
+                          opacity: waterDropAnimation2,
+                          transform: [
+                            {
+                              translateY: waterDropAnimation2.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 120],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Droplet size={10} color="$blue9" />
+                    </Animated.View>
+                    <Animated.View
+                      style={[
+                        styles.waterDrop,
+                        styles.waterDrop3,
+                        {
+                          opacity: waterDropAnimation3,
+                          transform: [
+                            {
+                              translateY: waterDropAnimation3.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 110],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Droplet size={11} color="$blue9" />
+                    </Animated.View>
+                    <Animated.View
+                      style={[
+                        styles.waterDrop,
+                        styles.waterDrop4,
+                        {
+                          opacity: waterDropAnimation4,
+                          transform: [
+                            {
+                              translateY: waterDropAnimation4.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 130],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Droplet size={9} color="$blue9" />
+                    </Animated.View>
+                    <Animated.View
+                      style={[
+                        styles.waterDrop,
+                        styles.waterDrop5,
+                        {
+                          opacity: waterDropAnimation5,
+                          transform: [
+                            {
+                              translateY: waterDropAnimation5.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 115],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Droplet size={10} color="$blue9" />
+                    </Animated.View>
+                    <View style={styles.cloudContainer}>
+                      <Cloud size={60} color="$blue9" />
+                    </View>
+                  </>
+                )}
 
                 {showWateringMessage && (
                   <StyledText style={styles.wateringMessage}>

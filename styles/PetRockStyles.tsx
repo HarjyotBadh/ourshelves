@@ -2,6 +2,8 @@ import { Dimensions, StyleSheet } from "react-native";
 import { BOTTOM_BAR_HEIGHT } from "./WhiteboardStyles";
 import { Toast } from "@tamagui/toast";
 import { YStack, Text } from "tamagui";
+import { SafeAreaView } from 'react-native';
+
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const ROCK_SIZE = 100;
 const CANVAS_PADDING = 20;
@@ -23,6 +25,7 @@ export const petRockStyles = StyleSheet.create({
   modalContent: {
     flex: 1,
     padding: 20,
+    position: 'relative',
   },
   canvas: {
     flex: 1,
@@ -33,6 +36,8 @@ export const petRockStyles = StyleSheet.create({
     overflow: 'hidden',
     marginTop: 10,
     height: screenHeight * 0.5 + CANVAS_PADDING,
+    position: 'relative',
+    minHeight: 300,
   },
   rock: {
     width: ROCK_SIZE,

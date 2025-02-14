@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ScrollView } from "react-native";
-import {
-  Image,
-  Text,
-  View,
-  XStack,
-  YStack,
-  styled,
-  Spinner,
-  Progress,
-} from "tamagui";
+import { Image, Text, View, XStack, YStack, styled, Spinner, Progress } from "tamagui";
 import { doc, DocumentReference, getDoc, Timestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { differenceInSeconds } from "date-fns";
@@ -102,8 +93,6 @@ export default function ShopScreen() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [loadedItems, setLoadedItems] = useState(0);
-  const [demoRefreshTime, setDemoRefreshTime] = useState<number | null>(null); //for sprint 1 testing
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [wallpapers, setWallpapers] = useState<WallpaperData[]>([]);
   const [shelfColors, setShelfColors] = useState<ShelfColorData[]>([]);
   const [expandedSections, setExpandedSections] = useState({
@@ -114,7 +103,6 @@ export default function ShopScreen() {
   });
   const [shopMetadata, setShopMetadata] = useState<ShopMetadata | null>(null);
   const [nextRefreshTime, setNextRefreshTime] = useState<Date>(new Date());
-  const [isDemoRefreshComplete, setIsDemoRefreshComplete] = useState(false);
 
   const dataFetchedRef = useRef(false);
 
@@ -124,9 +112,7 @@ export default function ShopScreen() {
   const fetchShopMetadata = async (): Promise<ShopMetadata | null> => {
     const shopMetadataRef = doc(db, "GlobalSettings", "shopMetadata");
     const shopMetadataDoc = await getDoc(shopMetadataRef);
-    return shopMetadataDoc.exists()
-      ? (shopMetadataDoc.data() as ShopMetadata)
-      : null;
+    return shopMetadataDoc.exists() ? (shopMetadataDoc.data() as ShopMetadata) : null;
   };
 
   const preloadImages = async (items: ItemData[]) => {
@@ -162,23 +148,6 @@ export default function ShopScreen() {
     await Promise.all(preloadPromises);
   };
 
-  //for sprint 1 testing
-  const handleDemoRefresh = () => {
-    setDemoRefreshTime(10);
-    setIsDemoMode(true);
-    setIsDemoRefreshComplete(false);
-
-    // Update shopMetadata for demo mode
-    if (shopMetadata) {
-      const now = new Date();
-      const demoNextRefresh = new Date(now.getTime() + 10000); // 10 seconds from now
-      setShopMetadata({
-        ...shopMetadata,
-        nextRefresh: Timestamp.fromDate(demoNextRefresh),
-      });
-    }
-  };
-
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -210,26 +179,26 @@ export default function ShopScreen() {
           }
 
           const baseItemData = itemDoc.data() as ItemData;
-          
+
           // Update progress for each item
           setLoadingProgress(20 + ((index + 1) / gottenShopMetadata.items.length) * 30);
-          
+
           // If item has style data, override base properties
-          const itemData: ItemData = itemWithStyle.styleData 
+          const itemData: ItemData = itemWithStyle.styleData
             ? {
                 ...baseItemData,
-                itemId: itemDoc.id,  // Override with doc ID
+                itemId: itemDoc.id, // Override with doc ID
                 name: baseItemData.name,
                 styleName: itemWithStyle.styleData.styleName,
                 cost: itemWithStyle.styleData.cost,
                 imageUri: itemWithStyle.styleData.imageUri,
-                styleId: itemWithStyle.styleData.id
+                styleId: itemWithStyle.styleData.id,
               }
             : {
                 ...baseItemData,
-                itemId: itemDoc.id  // Override with doc ID
+                itemId: itemDoc.id, // Override with doc ID
               };
-          
+
           return itemData;
         })
       );
@@ -280,9 +249,7 @@ export default function ShopScreen() {
       // Add a short delay to ensure smooth transition
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
       setIsLoading(false);
       setLoadedItems(0);
@@ -297,45 +264,19 @@ export default function ShopScreen() {
     fetchData();
   }, [fetchData]);
 
-  //for sprint 1 testing
-  const performShopRefresh = async (isDemo: boolean) => {
+  const handleManualRefresh = async () => {
     setIsLoading(true);
     try {
-      if (isDemo) {
-        // Simulate shop refresh for demo mode
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-        // You might want to generate new random items here for demo purposes
-      } else {
-        // Perform actual shop refresh
-        const refreshShop = httpsCallable(functions, "refreshShopManually");
-        await refreshShop();
-      }
-      await fetchData(); // Fetch new data after refresh
-      setIsDemoRefreshComplete(true);
+      const refreshShop = httpsCallable(functions, "refreshShopManually");
+      await refreshShop();
+      await fetchData();
     } catch (error) {
       console.error("Error refreshing shop:", error);
       setError("Failed to refresh shop. Please try again.");
     } finally {
       setIsLoading(false);
-      setIsDemoMode(false);
-      setDemoRefreshTime(null);
     }
   };
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (demoRefreshTime !== null && demoRefreshTime > 0) {
-      timer = setTimeout(() => {
-        setDemoRefreshTime(demoRefreshTime - 1);
-      }, 1000);
-    } else if (demoRefreshTime === 0) {
-      setIsDemoRefreshComplete(true);
-      performShopRefresh(true); // Perform demo refresh when timer hits zero
-    }
-    return () => clearTimeout(timer);
-  }, [demoRefreshTime]);
-
-  const handleManualRefresh = () => performShopRefresh(false);
 
   const handlePurchase = async (item: ItemData) => {
     if (!user) return;
@@ -386,7 +327,9 @@ export default function ShopScreen() {
     let userId = auth.currentUser?.uid;
     const result = await earnCoins(userId, 50);
     if (result.success && result.newCoins !== null) {
-      setUser(prevUser => prevUser ? { ...prevUser, coins: result.newCoins ?? prevUser.coins } : prevUser);
+      setUser((prevUser) =>
+        prevUser ? { ...prevUser, coins: result.newCoins ?? prevUser.coins } : prevUser
+      );
     } else {
       toast.show("Error", {
         message: result.message,
@@ -399,7 +342,9 @@ export default function ShopScreen() {
     let userId = auth.currentUser?.uid;
     const result = await loseCoins(userId, 50);
     if (result.success && result.newCoins !== null) {
-      setUser(prevUser => prevUser ? { ...prevUser, coins: result.newCoins ?? prevUser.coins } : prevUser);
+      setUser((prevUser) =>
+        prevUser ? { ...prevUser, coins: result.newCoins ?? prevUser.coins } : prevUser
+      );
     } else {
       toast.show("Error", {
         message: result.message,
@@ -408,10 +353,7 @@ export default function ShopScreen() {
     }
   };
 
-  const handleDailyGiftClaimClick = async (
-    newCoins: number,
-    newLastClaimTime: Timestamp
-  ) => {
+  const handleDailyGiftClaimClick = async (newCoins: number, newLastClaimTime: Timestamp) => {
     if (!user) return;
     const result = await handleDailyGiftClaim(user);
     if (result.success && result.updatedUser) {
@@ -445,37 +387,27 @@ export default function ShopScreen() {
   return (
     <ShopContainer>
       <ContentContainer>
-        <ShopHeader
-          coins={user?.coins || 0}
-          onEarnCoins={handleEarnCoinsClick}
-          onLoseCoins={handleLoseCoinsClick}
-        />
+        <ShopHeader coins={user?.coins || 0} />
 
         <CollapsibleSection
           title="Daily Gift"
           isExpanded={expandedSections.dailyGift}
           onToggle={() => toggleSection("dailyGift")}
         >
-          {user && shopMetadata && (
-            <DailyGift
-              user={user}
-              shopMetadata={shopMetadata}
-              onClaimDailyGift={handleDailyGiftClaimClick}
-              isDemoMode={isDemoMode}
-              isDemoRefreshComplete={isDemoRefreshComplete}
-            />
-          )}
+          <DailyGift
+            user={user}
+            shopMetadata={shopMetadata}
+            onClaimDailyGift={handleDailyGiftClaimClick}
+            isDemoMode={false}
+            isDemoRefreshComplete={false}
+          />
         </CollapsibleSection>
         <CollapsibleSection
           title="Shop Items"
           isExpanded={expandedSections.shopItems}
           onToggle={() => toggleSection("shopItems")}
         >
-          <ShopItemsList
-            items={items}
-            userCoins={user?.coins || 0}
-            onPurchase={handlePurchase}
-          />
+          <ShopItemsList items={items} userCoins={user?.coins || 0} onPurchase={handlePurchase} />
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -503,13 +435,8 @@ export default function ShopScreen() {
         </CollapsibleSection>
 
         <ShopRefreshTimer
-          nextRefreshTime={
-            shopMetadata ? shopMetadata.nextRefresh.toDate() : new Date()
-          }
-          isDemoMode={isDemoMode}
-          demoRefreshTime={demoRefreshTime}
+          nextRefreshTime={shopMetadata ? shopMetadata.nextRefresh.toDate() : new Date()}
           onManualRefresh={handleManualRefresh}
-          onDemoRefresh={handleDemoRefresh}
         />
       </ContentContainer>
       <ToastViewport name="shop" />

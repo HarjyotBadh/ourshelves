@@ -425,15 +425,6 @@ const PokemonDialog = ({ itemData, onDataUpdate, onClose }) => {
               </Text>
             </ActionButton>
 
-            <ActionButton 
-              variant="evolution"
-              onPress={handleFillInteractions}
-              size="$2"
-            >
-              <Text color="#F5DEB3" fontSize={12}>
-                Fill Interactions (Test)
-              </Text>
-            </ActionButton>
           </YStack>
         </ContentContainer>
       </ScrollView>

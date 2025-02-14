@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Modal, TouchableOpacity, Image, Dimensions } from "react-native";
-import { View, Button, XStack, YStack, Text } from "tamagui";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ShoppingBag,
-  Edit3,
-  X,
-} from "@tamagui/lucide-icons";
+import { Modal, TouchableOpacity, Image, Dimensions, SafeAreaView } from "react-native";
+import { View, Button, XStack, YStack, Text, Dialog } from "tamagui";
+import { ChevronLeft, ChevronRight, ShoppingBag, Edit3, X } from "@tamagui/lucide-icons";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -35,18 +29,11 @@ const GRAVITY = 2000;
 const COIN_SIZE = 40;
 const SPAWN_DELAY = 1000; // 1 second cooldown
 
-const PetRockItem: PetRockItemComponent = ({
-  itemData,
-  onDataUpdate,
-  isActive,
-  onClose,
-}) => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
+const PetRockItem: PetRockItemComponent = ({ itemData, onDataUpdate, isActive, onClose }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [isShopModalVisible, setIsShopModalVisible] = useState(false);
   const [outfits, setOutfits] = useState<RockOutfit[]>(itemData.outfits || []);
-  const [currentOutfitIndex, setCurrentOutfitIndex] = useState(
-    itemData.currentOutfitIndex || -1
-  );
+  const [currentOutfitIndex, setCurrentOutfitIndex] = useState(itemData.currentOutfitIndex || -1);
   const [isEditMode, setIsEditMode] = useState(false);
   const [coinPosition, setCoinPosition] = useState({ x: 0, y: 0 });
   const [isCoinVisible, setIsCoinVisible] = useState(true);
@@ -79,12 +66,11 @@ const PetRockItem: PetRockItemComponent = ({
       }
     };
     fetchUserCoins();
-    // spawnCoin();
   }, []);
 
   useEffect(() => {
-    if (isActive && !isModalVisible) {
-      setIsModalVisible(true);
+    if (isActive && !dialogOpen) {
+      setDialogOpen(true);
     }
   }, [isActive]);
 
@@ -110,7 +96,7 @@ const PetRockItem: PetRockItemComponent = ({
   }, [outfits]);
 
   const handleCloseModal = useCallback(() => {
-    setIsModalVisible(false);
+    setDialogOpen(false);
     setIsShopModalVisible(false);
     onDataUpdate({ ...itemData, outfits, currentOutfitIndex });
     onClose();
@@ -154,10 +140,7 @@ const PetRockItem: PetRockItemComponent = ({
   );
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-    ],
+    transform: [{ translateX: translateX.value }, { translateY: translateY.value }],
   }));
 
   const clamp = (value: number, min: number, max: number) => {
@@ -179,7 +162,7 @@ const PetRockItem: PetRockItemComponent = ({
   }, [playAreaWidth, playAreaHeight, translateX, translateY]);
 
   useEffect(() => {
-    if (isModalVisible) {
+    if (dialogOpen) {
       // Reset rock position
       translateX.value = playAreaWidth / 2 - ROCK_SIZE / 2 + CANVAS_PADDING;
       translateY.value = playAreaHeight / 2 - ROCK_SIZE / 2 + CANVAS_PADDING;
@@ -187,7 +170,7 @@ const PetRockItem: PetRockItemComponent = ({
       // Spawn initial coin
       spawnCoin();
     }
-  }, [isModalVisible, spawnCoin, playAreaWidth, playAreaHeight]);
+  }, [dialogOpen, spawnCoin, playAreaWidth, playAreaHeight]);
 
   const checkCoinCollision = useCallback(() => {
     if (!isCoinVisible || isCollecting.current || !isMoving.value) return;
@@ -197,8 +180,7 @@ const PetRockItem: PetRockItemComponent = ({
     const coinCenterY = coinPosition.y + COIN_SIZE / 2;
 
     const distance = Math.sqrt(
-      Math.pow(rockCenterX - coinCenterX, 2) +
-        Math.pow(rockCenterY - coinCenterY, 2)
+      Math.pow(rockCenterX - coinCenterX, 2) + Math.pow(rockCenterY - coinCenterY, 2)
     );
 
     if (distance < ROCK_SIZE / 2 + COIN_SIZE / 2) {
@@ -211,7 +193,6 @@ const PetRockItem: PetRockItemComponent = ({
       earnCoins(auth.currentUser!.uid, 1).then((result) => {
         if (result.success && result.newCoins !== null) {
           setUserCoins(result.newCoins);
-
         }
         setTimeout(() => {
           spawnCoin();
@@ -256,7 +237,7 @@ const PetRockItem: PetRockItemComponent = ({
       }
 
       if (
-        translateX.value <= CANVAS_PADDING - EXTRA_RIGHT_PADDING||
+        translateX.value <= CANVAS_PADDING - EXTRA_RIGHT_PADDING ||
         translateX.value >= canvasWidth - ROCK_SIZE - CANVAS_PADDING - EXTRA_RIGHT_PADDING
       ) {
         velocityX.value *= -0.5;
@@ -318,112 +299,134 @@ const PetRockItem: PetRockItemComponent = ({
 
   if (!isActive) {
     return (
-      <View style={petRockStyles.inactiveContainer}>
-        {renderRockWithOutfit()}
-      </View>
+      <YStack flex={1}>
+        <View style={petRockStyles.inactiveContainer}>{renderRockWithOutfit()}</View>
+      </YStack>
     );
   }
 
   return (
-    <Modal
-      visible={isModalVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleCloseModal}
-    >
-      <View style={petRockStyles.modalContainer}>
-        <View style={petRockStyles.modalWrapper}>
-          <View style={petRockStyles.modalContent}>
-            <View style={petRockStyles.canvas}>
-              <GestureDetector gesture={gesture}>
-                <Animated.View style={[petRockStyles.rock, animatedStyle]}>
-                  {renderRockWithOutfit()}
-                </Animated.View>
-              </GestureDetector>
-              {isCoinVisible && (
-                <Image
-                  source={{
-                    uri: "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/coin.png?alt=media&token=756280c2-4c34-47b3-9d64-2652fafb97d3",
-                  }} // Replace with actual coin image URL
-                  style={{
-                    position: "absolute",
-                    left: coinPosition.x,
-                    top: coinPosition.y,
-                    width: COIN_SIZE,
-                    height: COIN_SIZE,
-                  }}
-                />
-              )}
-            </View>
+    <YStack flex={1}>
+      <View style={petRockStyles.inactiveContainer}>{renderRockWithOutfit()}</View>
+      <Dialog
+        modal
+        open={dialogOpen}
+        onOpenChange={(isOpen) => {
+          setDialogOpen(isOpen);
+          if (!isOpen) {
+            onClose();
+          }
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay
+            key="overlay"
+            animation="quick"
+            opacity={0.5}
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <Dialog.Content
+            bordered
+            elevate
+            key="content"
+            animation={[
+              "quick",
+              {
+                opacity: {
+                  overshootClamping: true,
+                },
+              },
+            ]}
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            y={0}
+            opacity={1}
+            scale={1}
+            style={petRockStyles.modalWrapper}
+          >
+            <View style={petRockStyles.modalContent}>
+              <View style={petRockStyles.canvas}>
+                <GestureDetector gesture={gesture}>
+                  <Animated.View style={[petRockStyles.rock, animatedStyle]}>
+                    {renderRockWithOutfit()}
+                  </Animated.View>
+                </GestureDetector>
+                {isCoinVisible && (
+                  <Image
+                    source={{
+                      uri: "https://firebasestorage.googleapis.com/v0/b/ourshelves-33a94.appspot.com/o/coin.png?alt=media&token=756280c2-4c34-47b3-9d64-2652fafb97d3",
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: coinPosition.x,
+                      top: coinPosition.y,
+                      width: COIN_SIZE,
+                      height: COIN_SIZE,
+                    }}
+                  />
+                )}
+              </View>
 
-            <YStack space padding="$4">
-              {isEditMode ? (
-                <XStack space justifyContent="center" alignItems="center">
-                  <TouchableOpacity
-                    onPress={() => handleOutfitChange("prev")}
-                    disabled={outfits.length === 0}
-                  >
-                    <ChevronLeft
-                      size={24}
-                      color={outfits.length === 0 ? "gray" : "black"}
-                    />
-                  </TouchableOpacity>
-                  <Text>
-                    {outfits[currentOutfitIndex]?.name || "No outfit"}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => handleOutfitChange("next")}
-                    disabled={outfits.length === 0}
-                  >
-                    <ChevronRight
-                      size={24}
-                      color={outfits.length === 0 ? "gray" : "black"}
-                    />
-                  </TouchableOpacity>
-                  <Button
-                    backgroundColor="$pink6"
-                    icon={X}
-                    onPress={() => setIsEditMode(false)}
-                  >
-                    Done
-                  </Button>
-                </XStack>
-              ) : (
-                <XStack space justifyContent="center">
-                  <Button
-                    backgroundColor="$pink6"
-                    icon={Edit3}
-                    onPress={() => setIsEditMode(true)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    backgroundColor="$pink6"
-                    icon={ShoppingBag}
-                    onPress={() => setIsShopModalVisible(true)}
-                  >
-                    Rock Shop
-                  </Button>
-                  <Button backgroundColor="$red10" onPress={handleCloseModal}>
-                    Close
-                  </Button>
-                </XStack>
-              )}
-            </YStack>
-          </View>
-          <BottomBar />
-        </View>
-        <ToastViewport
-          name="pet-rock-viewport"
-          style={{
-            position: "absolute",
-            top: 40,
-            left: 0,
-            right: 0,
-            alignItems: "center",
-          }}
-        />
-      </View>
+              <YStack space padding="$4" style={{ position: "relative", zIndex: 1 }}>
+                {isEditMode ? (
+                  <XStack space justifyContent="center" alignItems="center">
+                    <TouchableOpacity
+                      onPress={() => handleOutfitChange("prev")}
+                      disabled={outfits.length === 0}
+                    >
+                      <ChevronLeft size={24} color={outfits.length === 0 ? "gray" : "black"} />
+                    </TouchableOpacity>
+                    <Text>{outfits[currentOutfitIndex]?.name || "No outfit"}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleOutfitChange("next")}
+                      disabled={outfits.length === 0}
+                    >
+                      <ChevronRight size={24} color={outfits.length === 0 ? "gray" : "black"} />
+                    </TouchableOpacity>
+                    <Button backgroundColor="$pink6" icon={X} onPress={() => setIsEditMode(false)}>
+                      Done
+                    </Button>
+                  </XStack>
+                ) : (
+                  <XStack space justifyContent="center">
+                    <Button
+                      backgroundColor="$pink6"
+                      icon={Edit3}
+                      onPress={() => setIsEditMode(true)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      backgroundColor="$pink6"
+                      icon={ShoppingBag}
+                      onPress={() => setIsShopModalVisible(true)}
+                    >
+                      Rock Shop
+                    </Button>
+                    <Button backgroundColor="$red10" onPress={handleCloseModal}>
+                      Close
+                    </Button>
+                  </XStack>
+                )}
+              </YStack>
+            </View>
+            <BottomBar />
+            <ToastViewport
+              name="pet-rock-viewport"
+              style={{
+                position: "absolute",
+                top: 40,
+                left: 0,
+                right: 0,
+                alignItems: "center",
+                zIndex: 2,
+              }}
+            />
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
 
       <RockShopModal
         onClose={() => setIsShopModalVisible(false)}
@@ -436,7 +439,7 @@ const PetRockItem: PetRockItemComponent = ({
         userCoins={userCoins}
         onCoinUpdate={setUserCoins}
       />
-    </Modal>
+    </YStack>
   );
 };
 

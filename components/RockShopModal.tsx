@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Modal, ScrollView } from "react-native";
-import { View, Text, Button, Image, YStack, XStack } from "tamagui";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  updateDoc,
-} from "firebase/firestore";
+import { ScrollView } from "react-native";
+import { View, Text, Button, Image, YStack, XStack, Dialog } from "tamagui";
+import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebaseConfig";
-import { ToastViewport, useToastController, Toast } from "@tamagui/toast";
-import { RockShopModalProps, RockOutfit } from 'models/PetRockModel';
-import { rockShopStyles } from 'styles/PetRockStyles';
+import { ToastViewport, useToastController } from "@tamagui/toast";
+import { RockShopModalProps, RockOutfit } from "models/PetRockModel";
+import { rockShopStyles } from "styles/PetRockStyles";
 
 export const RockShopModal: React.FC<RockShopModalProps> = ({
   onClose,
@@ -22,7 +16,6 @@ export const RockShopModal: React.FC<RockShopModalProps> = ({
   onCoinUpdate,
 }) => {
   const [outfits, setOutfits] = useState<RockOutfit[]>([]);
-
   const toast = useToastController();
 
   useEffect(() => {
@@ -73,41 +66,78 @@ export const RockShopModal: React.FC<RockShopModalProps> = ({
           <Text>{item.name}</Text>
           <Text>{item.cost} coins</Text>
         </YStack>
-        <Button onPress={() => onPurchase(item)} disabled={isOwned}>
-          {isOwned ? "Owned" : "Buy"}
+        <Button
+          onPress={() => onPurchase(item)}
+          disabled={isOwned}
+          backgroundColor={isOwned ? "$gray8" : "$blue9"}
+        >
+          <Text color="white">{isOwned ? "Owned" : "Buy"}</Text>
         </Button>
       </XStack>
     );
   };
 
   return (
-    <Modal visible={isVisible} transparent animationType="fade">
-      <View style={rockShopStyles.modalContainer}>
-        <YStack backgroundColor="$pink6" style={rockShopStyles.modalContent}>
-          <Text fontSize="$6" fontWeight="bold" marginBottom="$4">
-            Rock Outfit Shop
-          </Text>
-          <Text>Coins: {userCoins} 🪙</Text>
-          <ScrollView style={rockShopStyles.scrollView}>
-            {outfits.map(renderOutfitItem)}
-          </ScrollView>
-          <Button onPress={onClose} marginTop="$4">
-            Close
-          </Button>
-        </YStack>
-        <ToastViewport 
-          name="rock-shop"
-          style={{
-            position: "absolute",
-            top: 50,
-            left: 0,
-            right: 0,
-            alignItems: "center",
-            justifyContent: "flex-start",
-            zIndex: 1000,
-          }}
+    <Dialog modal open={isVisible} onOpenChange={(open) => !open && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          animation="quick"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
         />
-      </View>
-    </Modal>
+        <Dialog.Content
+          bordered
+          elevate
+          key="content"
+          animation={[
+            "quick",
+            {
+              opacity: {
+                overshootClamping: true,
+              },
+            },
+          ]}
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          x={0}
+          y={0}
+          opacity={1}
+          scale={1}
+          backgroundColor="$pink6"
+          width="80%"
+          maxWidth={500}
+          maxHeight="80%"
+        >
+          <YStack padding="$4" space>
+            <Text fontSize="$6" fontWeight="bold" color="white">
+              Rock Outfit Shop
+            </Text>
+            <Text fontSize="$4" color="white">
+              Coins: {userCoins} 🪙
+            </Text>
+            <ScrollView style={{ maxHeight: 400 }}>
+              <YStack space="$2">{outfits.map(renderOutfitItem)}</YStack>
+            </ScrollView>
+            <Button onPress={onClose} marginTop="$4" backgroundColor="$red10">
+              <Text color="white">Close</Text>
+            </Button>
+          </YStack>
+          <ToastViewport
+            name="rock-shop"
+            style={{
+              position: "absolute",
+              top: 50,
+              left: 0,
+              right: 0,
+              alignItems: "center",
+              justifyContent: "flex-start",
+              zIndex: 1000,
+            }}
+          />
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
   );
 };

@@ -3561,29 +3561,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-community/datetimepicker@npm:^8.2.0":
-  version: 8.2.0
-  resolution: "@react-native-community/datetimepicker@npm:8.2.0"
+"@react-native-community/datetimepicker@npm:8.0.1":
+  version: 8.0.1
+  resolution: "@react-native-community/datetimepicker@npm:8.0.1"
   dependencies:
     invariant: "npm:^2.2.4"
   peerDependencies:
-    expo: ">=50.0.0"
     react: "*"
     react-native: "*"
     react-native-windows: "*"
   peerDependenciesMeta:
-    expo:
-      optional: true
     react-native-windows:
       optional: true
-  checksum: 10/57b51a9423d3ba49029e2d9905db040f7091285c51578eef5273baf3dd2e22bde6d1a17962a8dc5e0ac588dccff0ab36c9774f9da76363fca458ec42d30c4d66
+  checksum: 10/d6ec07197ad12ca49188c17b5dc5c62626f55381b20f474a36314ce4b8a3705e366244f8a565f38525730834c48dfe59c5b3b5ae17dafc82618ec2a8c05d1b32
   languageName: node
   linkType: hard
 
-"@react-native-community/slider@npm:^4.5.5":
-  version: 4.5.5
-  resolution: "@react-native-community/slider@npm:4.5.5"
-  checksum: 10/8c49f7e0b7d7c37b91c936805106e88ee31011dc210d5c237c07e35d330870536b560b48e6212195fffc2e2706b16c31715b6cebbb2cc33127702bff9850f134
+"@react-native-community/slider@npm:4.5.2":
+  version: 4.5.2
+  resolution: "@react-native-community/slider@npm:4.5.2"
+  checksum: 10/414a0074ecc20f314d53ce4cdcdc7d962395ffab183b618988bb2c2b7c49bb22c7f190dcff3588f5e9ad72b3d4f59d181003054087c5d6aef6331ec8fadb1963
   languageName: node
   linkType: hard
 
@@ -4222,9 +4219,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shopify/react-native-skia@npm:^1.4.2":
-  version: 1.6.0
-  resolution: "@shopify/react-native-skia@npm:1.6.0"
+"@shopify/react-native-skia@npm:1.2.3":
+  version: 1.2.3
+  resolution: "@shopify/react-native-skia@npm:1.2.3"
   dependencies:
     canvaskit-wasm: "npm:0.39.1"
     react-reconciler: "npm:0.27.0"
@@ -4238,8 +4235,8 @@ __metadata:
     react-native-reanimated:
       optional: true
   bin:
-    setup-skia-web: ./scripts/setup-canvaskit.js
-  checksum: 10/d2df5faac6697a6cb983493dd8bb681b435a6a1a8cb954cfc906ff29f65810e44558a3597445ad99be84de45019e0831082a98c29ff290541ee5c4e81ca8a53e
+    setup-skia-web: scripts/setup-canvaskit.js
+  checksum: 10/4540392d5fdb2f4dab553d1abd627ac60e32f65e4f30e9f19d9e95573cfac033bfea4c498323ec6a4d531e0362fd17834b607abb3c34b7cc20e678fd5d29b0a0
   languageName: node
   linkType: hard
 
@@ -7741,7 +7738,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.5":
+"cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.5, cross-spawn@npm:^7.0.6":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
   dependencies:
@@ -8134,6 +8131,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-cli@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "dotenv-cli@npm:8.0.0"
+  dependencies:
+    cross-spawn: "npm:^7.0.6"
+    dotenv: "npm:^16.3.0"
+    dotenv-expand: "npm:^10.0.0"
+    minimist: "npm:^1.2.6"
+  bin:
+    dotenv: cli.js
+  checksum: 10/3acbc2712f97de5a7b916e2e611682377b5f62efb7ebe63ede314800bedd9c63e9ae1e8b1f819efe0e87f9d813842695cfed991a276290a79cac63d48c60df05
+  languageName: node
+  linkType: hard
+
+"dotenv-expand@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "dotenv-expand@npm:10.0.0"
+  checksum: 10/b41eb278bc96b92cbf3037ca5f3d21e8845bf165dc06b6f9a0a03d278c2bd5a01c0cfbb3528ae3a60301ba1a8a9cace30e748c54b460753bc00d4c014b675597
+  languageName: node
+  linkType: hard
+
 "dotenv-expand@npm:~11.0.6":
   version: 11.0.7
   resolution: "dotenv-expand@npm:11.0.7"
@@ -8143,7 +8161,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.4.5, dotenv@npm:~16.4.5":
+"dotenv@npm:^16.3.0, dotenv@npm:^16.4.5, dotenv@npm:~16.4.5":
   version: 16.4.7
   resolution: "dotenv@npm:16.4.7"
   checksum: 10/f13bfe97db88f0df4ec505eeffb8925ec51f2d56a3d0b6d916964d8b4af494e6fb1633ba5d09089b552e77ab2a25de58d70259b2c5ed45ec148221835fc99a0c
@@ -8771,12 +8789,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-blur@npm:^13.0.2":
-  version: 13.0.2
-  resolution: "expo-blur@npm:13.0.2"
+"expo-blur@npm:~13.0.3":
+  version: 13.0.3
+  resolution: "expo-blur@npm:13.0.3"
   peerDependencies:
     expo: "*"
-  checksum: 10/b98260d29abf6003ada13db2c7dac10ff896935baf0bc8a4d7fe1d5a3cfcf442b3c82f191b93e8c7f84476e9e4e57706fb940b87dfce1f94025503a0fb4fd65f
+  checksum: 10/2021dc115f0b15f671a4d2b0fc0a2f32c6adc8eb5cd5ba8fe675337ab23ca474a0b44080b7428308c56c900c7b27aa16884e5145135e91afd5332ff25be21421
   languageName: node
   linkType: hard
 
@@ -8957,14 +8975,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-image-picker@npm:^15.0.7":
-  version: 15.0.7
-  resolution: "expo-image-picker@npm:15.0.7"
+"expo-image-picker@npm:~15.1.0":
+  version: 15.1.0
+  resolution: "expo-image-picker@npm:15.1.0"
   dependencies:
     expo-image-loader: "npm:~4.7.0"
   peerDependencies:
     expo: "*"
-  checksum: 10/6ebd8638ce41c13f63c51494d4c95a991eac31ef6625dc8c4fffa4ce4ccda3fa1bc0b4b3528995262435ddfa76080752ac7f6762c62c1122d7933a4ad85629f6
+  checksum: 10/c2acb65a50da29ca8cc24ded80acbc367dff9c717487d49df0bfe5bc7d827a65ce27a876b0a8b5acf86690972e8905dc36ae3fe2c2afa18c02e148a0dc8404ab
   languageName: node
   linkType: hard
 
@@ -9069,7 +9087,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-modules-core@npm:1.12.26":
+"expo-modules-core@npm:1.12.26, expo-modules-core@npm:~1.12.26":
   version: 1.12.26
   resolution: "expo-modules-core@npm:1.12.26"
   dependencies:
@@ -13116,10 +13134,10 @@ __metadata:
     "@expo/metro-config": "npm:~0.18.4"
     "@expo/metro-runtime": "npm:~3.2.1"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
-    "@react-native-community/datetimepicker": "npm:^8.2.0"
-    "@react-native-community/slider": "npm:^4.5.5"
+    "@react-native-community/datetimepicker": "npm:8.0.1"
+    "@react-native-community/slider": "npm:4.5.2"
     "@react-navigation/native": "npm:^6.1.17"
-    "@shopify/react-native-skia": "npm:^1.4.2"
+    "@shopify/react-native-skia": "npm:1.2.3"
     "@tamagui/babel-plugin": "npm:^1.110.3"
     "@tamagui/config": "npm:^1.110.5"
     "@tamagui/core": "npm:^1.110.5"
@@ -13145,10 +13163,11 @@ __metadata:
     date-fns: "npm:^4.1.0"
     date-fns-tz: "npm:^3.1.3"
     dotenv: "npm:^16.4.5"
+    dotenv-cli: "npm:^8.0.0"
     eslint: "npm:^9.10.0"
     expo: "npm:~51.0.36"
     expo-av: "npm:^14.0.7"
-    expo-blur: "npm:^13.0.2"
+    expo-blur: "npm:~13.0.3"
     expo-constants: "npm:^16.0.2"
     expo-dev-client: "npm:~4.0.29"
     expo-device: "npm:~6.0.2"
@@ -13156,9 +13175,10 @@ __metadata:
     expo-firebase-recaptcha: "npm:2.3.1"
     expo-font: "npm:^12.0.10"
     expo-image: "npm:^1.13.0"
-    expo-image-picker: "npm:^15.0.7"
+    expo-image-picker: "npm:~15.1.0"
     expo-linear-gradient: "npm:^13.0.2"
     expo-linking: "npm:~6.3.1"
+    expo-modules-core: "npm:~1.12.26"
     expo-notifications: "npm:~0.28.19"
     expo-router: "npm:~3.5.15"
     expo-splash-screen: "npm:~0.27.6"
@@ -13174,12 +13194,12 @@ __metadata:
     react-native-color-picker: "npm:^0.6.0"
     react-native-country-picker-modal: "npm:^2.0.0"
     react-native-draggable-flatlist: "npm:^4.0.1"
-    react-native-gesture-handler: "npm:^2.21.1"
+    react-native-gesture-handler: "npm:~2.16.1"
     react-native-phone-number-input: "npm:^2.1.0"
     react-native-reanimated: "npm:~3.10.1"
     react-native-safe-area-context: "npm:4.10.5"
     react-native-screens: "npm:~3.31.1"
-    react-native-svg: "npm:^15.8.0"
+    react-native-svg: "npm:15.2.0"
     react-native-toast-message: "npm:^2.2.1"
     react-native-web: "npm:^0.19.12"
     react-native-webview: "npm:13.8.6"
@@ -13903,18 +13923,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-gesture-handler@npm:^2.21.1":
-  version: 2.21.2
-  resolution: "react-native-gesture-handler@npm:2.21.2"
+"react-native-gesture-handler@npm:~2.16.1":
+  version: 2.16.2
+  resolution: "react-native-gesture-handler@npm:2.16.2"
   dependencies:
     "@egjs/hammerjs": "npm:^2.0.17"
     hoist-non-react-statics: "npm:^3.3.0"
     invariant: "npm:^2.2.4"
+    lodash: "npm:^4.17.21"
     prop-types: "npm:^15.7.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/b098fdfdda8ac9e834b0165d3f17d09682119fa2bf85ddb19a6f63257825cec073362f93d75b94da3b3581eccbce775d711aa044e9ea1ac888be2c071f9f00fd
+  checksum: 10/227799f5e16f9725d81db524fc06c1fbef226835a5ee989642d132748832f7543ebc750d4309e49bcaa0fb6d1e7dd6b74028785e4b755978ab7f66f05b414c18
   languageName: node
   linkType: hard
 
@@ -13987,17 +14008,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-svg@npm:^15.8.0":
-  version: 15.10.0
-  resolution: "react-native-svg@npm:15.10.0"
+"react-native-svg@npm:15.2.0":
+  version: 15.2.0
+  resolution: "react-native-svg@npm:15.2.0"
   dependencies:
     css-select: "npm:^5.1.0"
     css-tree: "npm:^1.1.3"
-    warn-once: "npm:0.1.1"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/330339f7359c9d5424053f5a20b66380aabc64f038ebb3aec3c6eb35b65e4c9ebb31f357340d7e3272783f86db4af631f36195f9c24b48d1fa7f4ed5b926022f
+  checksum: 10/5042e1377b9d66679898ce812760691d01602efac27a32eed0914b518652c66d575dc7eb1493d3315a7db043d4974796d9107fe17f4b331b6bbbff16906016e9
   languageName: node
   linkType: hard
 
@@ -16335,7 +16355,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"warn-once@npm:0.1.1, warn-once@npm:^0.1.0":
+"warn-once@npm:^0.1.0":
   version: 0.1.1
   resolution: "warn-once@npm:0.1.1"
   checksum: 10/e6a5a1f5a8dba7744399743d3cfb571db4c3947897875d4962a7c5b1bf2195ab4518c838cb4cea652e71729f21bba2e98dc75686f5fccde0fabbd894e2ed0c0d

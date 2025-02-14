@@ -386,6 +386,20 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
     });
   }, [happinessLevel, canPlay, itemData, onDataUpdate]);
 
+  const handleNameChange = (newName: string) => {
+    const trimmedName = newName.trim();
+    if (trimmedName) {
+      setPetName(trimmedName);
+      onDataUpdate({
+        ...itemData,
+        petName: trimmedName,
+      });
+    } else {
+      setPetName("Unnamed Pet");
+    }
+    setIsEditingName(false);
+  };
+
   const onPanResponderRelease = useCallback(
     (_, gesture) => {
       if (isOverFeedingZone(gesture.moveX, gesture.moveY)) {
@@ -451,60 +465,6 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
       });
     }
   }, [dialogOpen]);
-
-  const handleNameChange = (newName: string) => {
-    const trimmedName = newName.trim();
-    if (trimmedName) {
-      setPetName(trimmedName);
-      onDataUpdate({
-        ...itemData,
-        petName: trimmedName,
-      });
-    } else {
-      setPetName("Unnamed Pet");
-    }
-    setIsEditingName(false);
-  };
-
-  const handleTimeAdjust = (hoursToAdjust: number) => {
-    const secondsToAdjust = hoursToAdjust * 60 * 60;
-    const newLastFed = new Timestamp(lastFed.seconds - secondsToAdjust, lastFed.nanoseconds);
-    const newLastPlayed = new Timestamp(
-      lastPlayed.seconds - secondsToAdjust,
-      lastPlayed.nanoseconds
-    );
-
-    setLastFed(newLastFed);
-    setLastPlayed(newLastPlayed);
-
-    // Calculate new levels based on the time change
-    const { newHunger, newHappiness } = calculateDecayedLevels(
-      newLastFed,
-      newLastPlayed,
-      hungerLevel,
-      happinessLevel
-    );
-
-    setHungerLevel(newHunger);
-    setHappinessLevel(newHappiness);
-
-    onDataUpdate({
-      ...itemData,
-      lastFed: newLastFed,
-      lastPlayed: newLastPlayed,
-      hungerLevel: newHunger,
-      happinessLevel: newHappiness,
-    });
-
-    toast.show(
-      `Time ${hoursToAdjust > 0 ? "fast-forwarded" : "rewound"} by ${Math.abs(
-        hoursToAdjust
-      )} hours!`,
-      {
-        backgroundColor: "$purple9",
-      }
-    );
-  };
 
   // Renders item when not active/clicked
   if (!isActive) {
@@ -681,20 +641,6 @@ const PetItem: PetItemComponent = ({ itemData, onDataUpdate, isActive, onClose, 
                   flex={1}
                 >
                   <StyledButtonText>🛍️ Food Shop</StyledButtonText>
-                </StyledButton>
-                <StyledButton
-                  onPress={() => handleTimeAdjust(-6)}
-                  backgroundColor="$purple9"
-                  flex={1}
-                >
-                  <StyledButtonText>⏪ -6h</StyledButtonText>
-                </StyledButton>
-                <StyledButton
-                  onPress={() => handleTimeAdjust(6)}
-                  backgroundColor="$purple9"
-                  flex={1}
-                >
-                  <StyledButtonText>⏩ +6h</StyledButtonText>
                 </StyledButton>
               </XStack>
               <FoodShopDialog

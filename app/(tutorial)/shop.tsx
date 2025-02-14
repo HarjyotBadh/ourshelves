@@ -49,7 +49,7 @@ export default function TutorialShop() {
   }>({
     show: true,
     title: "Welcome to the Shop!",
-    description: "Here you can buy items for your room. You have 100 coins to start!",
+    description: "Here you can buy items for your room. You have 1000 coins to start!",
     action: "Next",
     onAction: () => showSelectItemDialog(),
   });
@@ -92,7 +92,7 @@ export default function TutorialShop() {
       const userRef = doc(db, "Users", user.uid);
       await updateDoc(userRef, {
         inventory: arrayUnion(doc(db, "PurchasedItems", item.itemId)),
-        coins: 50, // Set coins to 50 after purchase
+        coins: 950, // Set coins to 50 after purchase
       });
 
       setPurchasedItem(true);

@@ -24,13 +24,17 @@ self.define_singleton_method(use_autolinking_method_symbol) do |*args|
     ]
     origin_autolinking_method.call(config_command)
   else
-    origin_autolinking_method.call()
+    origin_autolinking_method.call
   end
 end
 
-platform :ios, podfile_properties['ios.deploymentTarget'] || '13.4'
+platform :ios, podfile_properties['ios.deploymentTarget'] || '16.0'
 install! 'cocoapods',
   :deterministic_uuids => false
+
+# source 'https://github.com/CocoaPods/Specs.git'
+# require_relative '../node_modules/react-native/scripts/react_native_pods'
+# require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
 prepare_react_native_project!
 
